@@ -158,13 +158,13 @@ namespace UmbraChronos.Player
             }
             else
             {
-                coyoteTimer -= Time.deltaTime;
+                coyoteTimer -= UnityEngine.Time.deltaTime;
             }
 
             // Jump buffer timer
             if (jumpBufferTimer > 0f)
             {
-                jumpBufferTimer -= Time.deltaTime;
+                jumpBufferTimer -= UnityEngine.Time.deltaTime;
             }
 
             // Variable jump cut
@@ -188,7 +188,7 @@ namespace UmbraChronos.Player
             float targetSpeed = horizontalInput * moveSpeed;
             float accelRate = isGrounded ? (Mathf.Abs(targetSpeed) > 0.01f ? acceleration : deceleration) : (acceleration * airControl);
 
-            float newVelX = Mathf.MoveTowards(rb.linearVelocity.x, targetSpeed, accelRate * Time.fixedDeltaTime);
+            float newVelX = Mathf.MoveTowards(rb.linearVelocity.x, targetSpeed, accelRate * UnityEngine.Time.fixedDeltaTime);
             rb.linearVelocity = new Vector2(newVelX, rb.linearVelocity.y);
 
             // Sprite facing direction
