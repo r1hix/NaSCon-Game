@@ -41,6 +41,8 @@
 ## 3. Tech Stack & Environment
 
 * **Engine:** Unity 6 (`6000.6.3f1` / `6000.6.x LTS`).
+* **Unity CLI:** Unity CLI `v1.0.0-beta.13` (Manage with `unity self-update` / `unity doctor`).
+* **Template:** Universal 2D (`com.unity.template.universal-2d`).
 * **Rendering Pipeline:** Universal Render Pipeline (URP) with **2D Renderer**.
 * **Lighting:** 2D Light System (Global Light 2D, Freeform Light 2D, Shadow Caster 2D).
 * **Cross-Platform Target:**
@@ -157,3 +159,44 @@ Assets/
 2. **Explicit Fields:** Use `[SerializeField] private ...` instead of `public` variables for inspector tuning.
 3. **Null-Safety:** Always check event subscriptions with null-conditional invocations: `TimeEvents.OnSunAngleChanged?.Invoke(angle);`.
 4. **Game Feel (Juice):** When writing player movement, make it feel crisp (high gravity scale on descent, coyote time 0.15s, jump buffer 0.1s). Sluggish movement ruins gameplay trailers!
+
+---
+
+## 8. Unity CLI Tooling Standards & Automation Reference
+
+The project uses the modern **Unity CLI (`v1.0.0-beta.13`)** for headless automation, project initialization, testing, and builds.
+
+### Key CLI Operations:
+* **Project Scaffolding (Universal 2D):**
+  ```bash
+  unity projects new UmbraChronos --editor-version 6000.6.3f1 --template com.unity.template.universal-2d --path .
+  ```
+* **Opening Project in Editor:**
+  ```bash
+  unity open [project-path] --editor-version 6000.6.3f1
+  ```
+* **Recompiling Active Scripts:**
+  ```bash
+  unity recompile
+  ```
+* **Running Automated Tests (PlayMode / EditMode):**
+  ```bash
+  unity test [project-path] --editor-version 6000.6.3f1 --mode EditMode --report-format junit --output ./test-results.xml
+  ```
+* **Building Executables:**
+  ```bash
+  # macOS build
+  unity build [project-path] --editor-version 6000.6.3f1 --target StandaloneOSX
+  # Windows build
+  unity build [project-path] --editor-version 6000.6.3f1 --target StandaloneWindows64
+  ```
+* **Environment Diagnostics:**
+  ```bash
+  unity doctor
+  ```
+
+### CLI Automation Invariants for AI Agents:
+1. **Never pass `-batchmode` or `-quit`** to `unity run` or `unity build`. The CLI automatically manages batch execution and forwarding.
+2. **Suppress interactive prompts** in headless runs using `--non-interactive --yes`.
+3. **Machine parsing:** Prefer `--format json` for predictable output envelopes. Check `success: true` in the output envelope rather than relying solely on process return codes.
+4. **Stay up to date:** Check CLI status with `unity version` and run `unity self-update` if a major release breaks schema.
