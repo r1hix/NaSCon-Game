@@ -80,9 +80,37 @@
   }
   ```
 
-### Rule 4: Clean Git Hygiene
-* Always pull with rebase before pushing: `git pull --rebase origin main`.
-* Never touch or delete `.meta` files manually. Whenever you create, rename, or move an asset in Unity, commit both the asset AND its corresponding `.meta` file.
+### Rule 4: Clean Git Hygiene & AI Commit Protocol
+* **Branch-First Rule for AI Agents:**
+  * When an AI agent is tasked with making edits or committing code, it must **never commit directly to `main`** unless explicitly instructed by the user.
+  * Always create and work on dedicated feature/bugfix branches:
+    * `feat/<feature-name>` (e.g. `feat/player-controller`, `feat/time-rewind-buffer`)
+    * `fix/<bug-name>` (e.g. `fix/collider-drift`, `fix/shadow-rotation`)
+    * `refactor/<module>`
+    * `chore/<task>`
+  * Before branching, ensure your local main is up to date: `git pull --rebase origin main`.
+* **Conventional Commits Standard:**
+  * All commit messages written by developers or AI agents **must follow the Conventional Commits specification**:
+    ```
+    <type>(<scope>): <imperative present-tense description>
+    ```
+  * **Allowed Types:**
+    * `feat`: A new feature or gameplay mechanic
+    * `fix`: A bug fix or patch
+    * `docs`: Documentation updates (`README.md`, `AGENTS.md`, design docs)
+    * `style`: Formatting, whitespace, or code styling adjustments
+    * `refactor`: Code restructures that neither fix a bug nor add a feature
+    * `perf`: Performance optimizations (e.g., GC allocation reduction)
+    * `test`: PlayMode or EditMode unit test scripts
+    * `chore`: Build scripts, project configs, `.gitignore`, package dependencies
+  * **Examples:**
+    * `feat(player): implement coyote time and jump buffering in PlayerController`
+    * `feat(time): add circular buffer history recording for rewind mechanic`
+    * `fix(shadows): prevent edge collider vertex flickering during rapid light rotation`
+    * `chore(git): update .gitattributes for Unity YAML merge tool`
+* **Atomic Meta-File Pairing:**
+  * Never commit a Unity asset without its corresponding `.meta` file. Whenever you create, rename, or move an asset, commit both the asset AND its `.meta` file in the same commit.
+  * Never commit cache folders (`Library/`, `Temp/`, `Logs/`, `UserSettings/`).
 
 ---
 
