@@ -135,12 +135,45 @@ Assets/
 │   │   └── Sandboxes/        # Sandbox_Shaf, Sandbox_Partner
 │   ├── Scripts/
 │   │   ├── Core/             # TimeEvents.cs, GameManager.cs
-│   │   ├── Environment/      # SunDial.cs, DynamicShadowCollider.cs, PressurePlate.cs
+│   │   ├── Environment/      # SunDial.cs, DynamicShadowCollider.cs, PressurePlate.cs, LethalLightZone.cs
 │   │   ├── Player/           # PlayerController.cs, PlayerAnimation.cs
-│   │   └── Time/             # TimeBody.cs, RewindManager.cs, UmbralEcho.cs
+│   │   └── Time/             # TimeBody.cs, RewindManager.cs, UmbralEcho.cs, IRewindable.cs
 │   ├── Shaders/              # Rewind post-processing & silhouette shaders
 │   └── Sprites/              # 2D Silhouette environment and character sprites
 ```
+
+### 5.1 Art Style & Visual Direction ("The Ink & Solar Flare" Aesthetic)
+
+* **Visual Identity:** High-contrast monochromatic silhouettes grounded against vibrant, shifting celestial skies (Inspirations: *Limbo*, *Braid*, *Gris*).
+* **Color Palette & Exact Tokens:**
+  * **Solid Obsidian Matter:** `#0D0D15` (Player, stone ruins, monoliths, solid shadow floors).
+  * **Searing Celestial Sunlight:** `#FFF8E7` &rarr; `#FFD166` (Blinding light source; lethal radiation).
+  * **Umbral Echo (Past Clone):** `#1E1B4B` (Translucent ink silhouette with glowing cyan rim `#38BDF8` at 70% opacity).
+  * **Lethal Light Zones:** Searing white-hot glare enhanced with URP Bloom (Threshold: `0.85`, Intensity: `1.4`).
+  * **Sky Gradients across the Sun Arc:**
+    * *Dawn (0° - 90°):* Deep Midnight Indigo (`#1E1B4B`) &rarr; Rose Coral (`#F43F5E`)
+    * *Noon (90° - 180°):* Azure Sky (`#0284C7`) &rarr; White Hot Solar Flare (`#FFFFFF`)
+    * *Dusk (180° - 270°):* Burnt Amber (`#D97706`) &rarr; Deep Wine Maroon (`#4C0519`)
+    * *Eclipse (270° - 360°):* Obsidian Void (`#030712`) &rarr; Cosmic Violet (`#581C87`)
+* **Lighting & Shaders:**
+  * Use **Sprite-Lit-Default** or unlit pure silhouette shaders for all level geometry.
+  * URP 2D Light Stack: 1x Point Light 2D for the orbital sun, 1x Global Light 2D for ambient sky tint, and `ShadowCaster2D` components attached to all monoliths.
+  * **Rewind Screen Filter:** Post-processing Volume with dynamic Chromatic Aberration (`0.8`), subtle Vignette (`0.45`), and pitch-shifted audio to instantly sell the tape-rewind sensation.
+
+### 5.2 Core Script Architecture & Responsibility Breakdown
+
+| Script | Namespace & Location | Primary Responsibilities & Contracts |
+| :--- | :--- | :--- |
+| **`TimeEvents.cs`** | `UmbraChronos.Core`<br>`Scripts/Core/` | Global static event bus. Decouples player, sundial, rewind manager, and interactables. Exposes `OnSunAngleChanged`, `OnRewindStateChanged`, `OnEchoCreated`, `OnPlayerDied`, `OnPuzzleSolved`. |
+| **`IRewindable.cs`** | `UmbraChronos.Time`<br>`Scripts/Time/` | Interface implemented by any object that rewinds. Defines `RecordSnapshot()`, `RewindSnapshot()`, `OnStartRewind()`, `OnStopRewind()`. |
+| **`PlayerController.cs`** | `UmbraChronos.Player`<br>`Scripts/Player/` | Snappy 2D platformer movement (`Rigidbody2D`). Features coyote time (0.15s), jump buffering (0.1s), gravity scaling on fall, ground detection raycasts. Implements `IRewindable`. |
+| **`TimeBody.cs`** | `UmbraChronos.Time`<br>`Scripts/Time/` | Component attached to rewindable entities. Stores a 300-frame (~5 sec at 60Hz) circular buffer of `(Vector2 pos, Vector2 vel, float rot, bool isGrounded)`. Driven by `RewindManager`. |
+| **`RewindManager.cs`** | `UmbraChronos.Time`<br>`Scripts/Time/` | Global controller for the rewind mechanic. Listens for `R` / `Shift` input, slows audio pitch, ramps chromatic aberration VFX, and commands all `IRewindable` components to step backward. |
+| **`UmbralEcho.cs`** | `UmbraChronos.Time`<br>`Scripts/Time/` | Instantiated shadow clone. Receives recorded snapshot history buffer and replays it in forward time. Possesses physical `Collider2D` to hold pressure plates and trigger switches. |
+| **`SunDialController.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Moves the celestial 2D light source across an orbital path using `Q`/`E` or mouse scroll. Invokes `TimeEvents.OnSunAngleChanged(float angle)`. |
+| **`DynamicShadowCollider.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Reads the 2D shadow caster geometry projected by sunlight and updates an `EdgeCollider2D` or `PolygonCollider2D` in real time so cast shadows act as solid ground. |
+| **`PressurePlate.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Detects physical contact from `Player` OR `UmbralEcho`. Broadcasts activation signals to paired `TimedGate` or puzzle doors. |
+| **`LethalLightZone.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Performs raycasts from the orbital sun to the player. If the player steps outside physical shadows into direct sunlight, invokes `TimeEvents.OnPlayerDied`. |
 
 ---
 

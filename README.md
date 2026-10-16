@@ -37,6 +37,39 @@ By turning the **Celestial Sundial**, the player rotates the light source across
 
 ---
 
+## 🎨 Visual Direction & Art Style
+
+* **Aesthetic:** *"Ink & Solar Flare"* — High-contrast silhouette art style set against rich, shifting celestial gradients (inspired by *Limbo*, *Braid*, and *Gris*).
+* **Color Palette & Design Tokens:**
+  * **Obsidian Foreground (`#0D0D15`):** Character, monoliths, architectural ruins, and solid shadow bridges.
+  * **Searing Sunlight (`#FFF8E7` &rarr; `#FFD166`):** Celestial radiance with high-intensity bloom (`Threshold: 0.85`, `Intensity: 1.4`).
+  * **Umbral Echo (`#1E1B4B` with `#38BDF8` rim):** Translucent ghost silhouette of your past self.
+  * **Celestial Sky Arc:**
+    * *Dawn (0° - 90°):* Midnight Indigo (`#1E1B4B`) to Rose Coral (`#F43F5E`)
+    * *Noon (90° - 180°):* Azure Sky (`#0284C7`) to Solar Flare White (`#FFFFFF`)
+    * *Dusk (180° - 270°):* Burnt Amber (`#D97706`) to Deep Maroon (`#4C0519`)
+    * *Eclipse (270° - 360°):* Cosmic Void (`#030712`) to Royal Violet (`#581C87`)
+* **Visual Effects:** Dynamic Chromatic Aberration and Vignette during Tape-Reel Rewind.
+
+---
+
+## 📜 Core Script Architecture
+
+| Script | Namespace & Path | Responsibility |
+| :--- | :--- | :--- |
+| **`TimeEvents.cs`** | `UmbraChronos.Core`<br>`Scripts/Core/` | Global event bus (`OnSunAngleChanged`, `OnRewindStateChanged`, `OnEchoCreated`, `OnPlayerDied`). |
+| **`IRewindable.cs`** | `UmbraChronos.Time`<br>`Scripts/Time/` | Interface implemented by all objects that record and reverse state across time. |
+| **`PlayerController.cs`** | `UmbraChronos.Player`<br>`Scripts/Player/` | 2D physics movement, coyote time (0.15s), jump buffering (0.1s), and ground checks. |
+| **`TimeBody.cs`** | `UmbraChronos.Time`<br>`Scripts/Time/` | Circular state buffer (300 frames) tracking position, velocity, and rotation history. |
+| **`RewindManager.cs`** | `UmbraChronos.Time`<br>`Scripts/Time/` | Central rewind coordinator; drives rewind state, audio pitch drop, and screen distortion. |
+| **`UmbralEcho.cs`** | `UmbraChronos.Time`<br>`Scripts/Time/` | Shadow clone controller; replays recorded movements in forward time to hold plates and doors. |
+| **`SunDialController.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Controls celestial light orbit via user input and updates the day/night sky cycle. |
+| **`DynamicShadowCollider.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Generates real-time solid 2D colliders from 2D shadow caster boundaries. |
+| **`PressurePlate.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Pressure sensor triggered by either the player or their shadow echo clone. |
+| **`LethalLightZone.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Detects direct solar exposure and triggers player vaporization outside of shadows. |
+
+---
+
 ## 🛠️ Tech Stack & Engine Requirements
 
 * **Game Engine:** Unity 6 (`6000.6.3f1` / `6000.6.x LTS`).
