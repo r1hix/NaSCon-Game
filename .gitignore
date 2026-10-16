@@ -1,0 +1,75 @@
+# =========================================================================
+# Unity 6 Bulletproof .gitignore (Cross-Platform Mac & Windows)
+# =========================================================================
+
+# Unity generated directories (matches root or subfolder project)
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+**/[Ll]ibrary/
+**/[Tt]emp/
+**/[Oo]bj/
+**/[Bb]uild/
+**/[Bb]uilds/
+**/[Ll]ogs/
+**/[Uu]ser[Ss]ettings/
+**/[Mm]emoryCaptures/
+**/[Rr]ecordings/
+
+# AssetStore Tools
+[Aa]ssets/AssetStoreTools*
+**/[Aa]ssets/AssetStoreTools*
+
+# Visual Studio / VS Code / Rider IDE generated files
+.vs/
+.idea/
+.vscode/
+**/.vs/
+**/.idea/
+**/.vscode/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Unity Package Manager lock backups
+Packages/packages-lock.json.backup
+**/Packages/packages-lock.json.backup
+
+# Crash & Diagnostic dumps
+sysinfo.txt
+*.stackdump
+
+# OS-specific clutter (macOS & Windows)
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Unity meta files for ignored items
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Unity CLI local configs
+.unity/

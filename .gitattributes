@@ -1,0 +1,89 @@
+# =========================================================================
+# Unity .gitattributes - Cross-Platform (macOS <-> Windows)
+# =========================================================================
+
+# Auto-detect text files and normalize line endings to LF in Git repo
+* text=auto eol=lf
+
+# C# script files
+*.cs text diff=csharp eol=lf
+*.cginc text eol=lf
+*.shader text eol=lf
+*.compute text eol=lf
+*.hlsl text eol=lf
+*.glsl text eol=lf
+
+# Unity YAML text files
+*.mat text merge=unityyamlmerge eol=lf
+*.anim text merge=unityyamlmerge eol=lf
+*.controller text merge=unityyamlmerge eol=lf
+*.overrideController text merge=unityyamlmerge eol=lf
+*.physicMaterial text merge=unityyamlmerge eol=lf
+*.physicsMaterial2D text merge=unityyamlmerge eol=lf
+*.playable text merge=unityyamlmerge eol=lf
+*.mask text merge=unityyamlmerge eol=lf
+*.brush text merge=unityyamlmerge eol=lf
+*.flare text merge=unityyamlmerge eol=lf
+*.fontsettings text merge=unityyamlmerge eol=lf
+*.guiskin text merge=unityyamlmerge eol=lf
+*.giparams text merge=unityyamlmerge eol=lf
+*.renderTexture text merge=unityyamlmerge eol=lf
+*.spriteatlas text merge=unityyamlmerge eol=lf
+*.terrainlayer text merge=unityyamlmerge eol=lf
+
+# Unity Scenes & Prefabs (YAML text)
+*.unity text merge=unityyamlmerge eol=lf
+*.prefab text merge=unityyamlmerge eol=lf
+*.asset text merge=unityyamlmerge eol=lf
+*.meta text merge=unityyamlmerge eol=lf
+
+# Configurations & Project Settings
+*.json text eol=lf
+*.xml text eol=lf
+*.txt text eol=lf
+*.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Binary Assets (Prevent corrupting during git checkouts)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.psd binary
+*.tga binary
+*.tif binary
+*.tiff binary
+*.gif binary
+*.bmp binary
+*.exr binary
+*.hdr binary
+
+# Audio
+*.mp3 binary
+*.ogg binary
+*.wav binary
+*.aif binary
+*.aiff binary
+
+# 3D Models
+*.fbx binary
+*.obj binary
+*.blend binary
+*.dae binary
+*.3ds binary
+*.dxf binary
+*.max binary
+
+# Fonts
+*.ttf binary
+*.otf binary
+*.fon binary
+*.fnt binary
+
+# Compressed / Packages / Libraries
+*.zip binary
+*.tar.gz binary
+*.unitypackage binary
+*.dll binary
+*.so binary
+*.dylib binary
