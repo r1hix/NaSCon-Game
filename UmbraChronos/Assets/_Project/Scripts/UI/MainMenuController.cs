@@ -226,8 +226,9 @@ namespace UmbraChronos.UI
             bool pPressed = false;
 #if ENABLE_INPUT_SYSTEM
             if (Keyboard.current != null && Keyboard.current.pKey.wasPressedThisFrame) pPressed = true;
+#else
+            if (Input.GetKeyDown(KeyCode.P)) pPressed = true;
 #endif
-            if (!pPressed && Input.GetKeyDown(KeyCode.P)) pPressed = true;
 
             if (pPressed)
             {

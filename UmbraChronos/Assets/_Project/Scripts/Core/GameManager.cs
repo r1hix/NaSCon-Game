@@ -125,9 +125,10 @@ namespace UmbraChronos.Core
                     if (UnityEngine.InputSystem.Keyboard.current.rKey.wasPressedThisFrame) retry = true;
                     if (UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame) quit = true;
                 }
+#else
+                if (Input.GetKeyDown(KeyCode.R)) retry = true;
+                if (Input.GetKeyDown(KeyCode.Escape)) quit = true;
 #endif
-                if (!retry && Input.GetKeyDown(KeyCode.R)) retry = true;
-                if (!quit && Input.GetKeyDown(KeyCode.Escape)) quit = true;
 
                 if (retry)
                 {
