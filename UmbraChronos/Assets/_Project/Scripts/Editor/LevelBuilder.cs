@@ -16,7 +16,7 @@ namespace UmbraChronos.Editor
     /// Builds and packages:
     /// 1. Level_Master.unity: One unified, seamless contiguous master level containing all 4 interconnected
     ///    puzzle chambers (Courtyard of Dawn -> Echo Vault -> Clockwork Spire -> Eclipse Paradox Climax).
-    /// 2. Level_01, Level_02, Level_03: Standalone showcase levels.
+    /// 2. Level_01 (Dawn of the Sundial), Level_02 (Echo of the Vault), Level_03 (The Eclipse Paradox).
     /// Features:
     /// - Hollow Knight / Gris inspired multi-layered atmospheric background (deep indigo/abyss gradients,
     ///   distant cathedral arches, ruined gothic pillars, and soft hovering chasm mist).
@@ -25,17 +25,16 @@ namespace UmbraChronos.Editor
     /// </summary>
     public static class LevelBuilder
     {
-        private const string LevelsFolder = "Assets/_Project/Scenes/Levels";
-        private const string PrefabEnvFolder = "Assets/_Project/Prefabs/Environment";
-        private const string PrefabCoreFolder = "Assets/_Project/Prefabs/Core";
-        private const string PrefabInteractFolder = "Assets/_Project/Prefabs/Interactables";
-        private const string PrefabPlayerFolder = "Assets/_Project/Prefabs/Player";
-        private const string SpriteFolder = "Assets/_Project/Sprites";
+        public const string LevelsFolder = "Assets/_Project/Scenes/Levels";
+        public const string PrefabEnvFolder = "Assets/_Project/Prefabs/Environment";
+        public const string PrefabCoreFolder = "Assets/_Project/Prefabs/Core";
+        public const string PrefabInteractFolder = "Assets/_Project/Prefabs/Interactables";
+        public const string PrefabPlayerFolder = "Assets/_Project/Prefabs/Player";
+        public const string SpriteFolder = "Assets/_Project/Sprites";
 
         [MenuItem("Umbra Chronos/Build Master Level (Level_Master.unity)")]
         public static void BuildMasterLevel()
         {
-            AssetDatabase.Refresh();
             EnsureLevelsDirectory();
             Sprite squareSprite = GetOrCreateSquareSprite();
             Sprite gradientSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Environment/Bg_Gradient_Hollow.png");
@@ -45,7 +44,6 @@ namespace UmbraChronos.Editor
             Sprite lichenA = LoadSprite($"{SpriteFolder}/Environment/Glow_Lichen_A.png");
             Sprite lichenB = LoadSprite($"{SpriteFolder}/Environment/Glow_Lichen_B.png");
             Sprite lichenC = LoadSprite($"{SpriteFolder}/Environment/Glow_Lichen_C.png");
-            Debug.Log($"[LevelBuilder] Lichen sprites: A={lichenA != null}, B={lichenB != null}, C={lichenC != null}");
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -67,50 +65,40 @@ namespace UmbraChronos.Editor
             // -------------------------------------------------------------
             // WING 1: Courtyard of Dawn (Room 0, x = -14 to 12, Center 0)
             // -------------------------------------------------------------
-            // Left Cliff (x = -14 to -3, surface at y = -1.75)
             CreatePlatform("W1_Cliff_Left", new Vector3(-8.5f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), squareSprite);
             CreatePlatform("W1_Wall_Left", new Vector3(-14.5f, 2.5f, 0f), new Vector3(1.5f, 9.0f, 1f), squareSprite);
             GameObject w1SpawnShelter = CreatePlatform("W1_Spawn_Shelter", new Vector3(-10.0f, 1.5f, 0f), new Vector3(7.0f, 0.6f, 1f), squareSprite);
             AddInteriorBackdrop(w1SpawnShelter, -1.75f, 0.5f);
 
-            // Monolith 1 at edge of cliff: Base embedded at y = -1.75, height = 4.0
             CreateMonolithObject(squareSprite, new Vector3(-3.0f, 0.25f, 0f), new Vector2(1.6f, 4.0f), -1.75f, sunInst.transform, 1.5f);
 
-            // Center Island / Receiving Plateau (x = 4 to 12, surface at y = -1.75)
             GameObject w1PlateauRight = CreatePlatform("W1_Plateau_Right", new Vector3(8.0f, -2.5f, 0f), new Vector3(8.0f, 1.5f, 1f), squareSprite);
             AddSunlitSheen(w1PlateauRight, sunInst.transform);
 
             GameObject w1ThresholdShelter = CreatePlatform("W1_Threshold_Shelter", new Vector3(8.0f, 1.5f, 0f), new Vector3(6.0f, 0.6f, 1f), squareSprite);
             AddInteriorBackdrop(w1ThresholdShelter, -1.75f, 0.5f);
 
-            // Bioluminescent Glow Lichens (Safe ambient lighting)
+            // Bioluminescent Glow Lichens
             CreateGlowLichen(lichenC, new Vector3(-11.5f, 1.15f, 0f), new Vector3(1.2f, 1.2f, 1f), new Color(0.22f, 0.74f, 0.97f, 1f), 0.55f, 3.2f);
             CreateGlowLichen(lichenA, new Vector3(-3.5f, -1.65f, 0f), new Vector3(1.3f, 1.0f, 1f), new Color(0.22f, 0.74f, 0.97f, 1f), 0.50f, 3.0f);
             CreateGlowLichen(lichenA, new Vector3(5.5f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), new Color(0.22f, 0.74f, 0.97f, 1f), 0.50f, 3.0f);
 
-            // Deep Chasm Floor (x = -14 to 12 at y = -7.0)
             CreatePlatform("W1_Chasm_Floor", new Vector3(0f, -7.0f, 0f), new Vector3(26f, 2f, 1f), squareSprite);
 
             // -------------------------------------------------------------
             // WING 2: The Echo Vault (Room 1, x = 12 to 36, Center 24)
             // -------------------------------------------------------------
-            // Vault Ceiling sealing from lethal sunlight
             GameObject w2VaultCeiling = CreatePlatform("W2_Vault_Ceiling", new Vector3(24.0f, 5.0f, 0f), new Vector3(26.0f, 1.0f, 1f), squareSprite);
             AddInteriorBackdrop(w2VaultCeiling, -1.75f, 0.8f);
 
-            // Vault Floor 1 (x = 12 to 24, surface at y = -1.75)
             CreatePlatform("W2_Floor_1", new Vector3(18.0f, -2.5f, 0f), new Vector3(12.0f, 1.5f, 1f), squareSprite);
-
-            // Ruined steps climbing to high balcony
             CreatePlatform("W2_Step_1", new Vector3(15.5f, -0.90f, 0f), new Vector3(2.4f, 0.4f, 1f), squareSprite);
             CreatePlatform("W2_Balcony", new Vector3(19.0f, 0.15f, 0f), new Vector3(4.5f, 0.4f, 1f), squareSprite);
 
-            // TimedGate 1 blocking passage to Screen 2
             GameObject gate1 = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
             gate1.name = "TimedGate_W2";
             gate1.transform.position = new Vector3(24.5f, -0.25f, 0f);
 
-            // PressurePlate 1 on the high balcony
             GameObject plate1 = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
             plate1.name = "PressurePlate_W2";
             plate1.transform.position = new Vector3(19.0f, 0.50f, 0f);
@@ -123,10 +111,8 @@ namespace UmbraChronos.Editor
                 so1.ApplyModifiedProperties();
             }
 
-            // Vault Floor 2 behind the gate (x = 24 to 36, surface at y = -1.75)
             CreatePlatform("W2_Floor_2", new Vector3(30.0f, -2.5f, 0f), new Vector3(12.0f, 1.5f, 1f), squareSprite);
 
-            // Glow Lichens in Vault (illuminating dark crypt crevices)
             CreateGlowLichen(lichenB, new Vector3(13.0f, 0.0f, 0f), new Vector3(1.0f, 1.3f, 1f), new Color(0.25f, 0.80f, 0.98f, 1f), 0.60f, 3.5f);
             CreateGlowLichen(lichenC, new Vector3(18.0f, 4.4f, 0f), new Vector3(1.4f, 1.4f, 1f), new Color(0.25f, 0.80f, 0.98f, 1f), 0.65f, 3.8f);
             CreateGlowLichen(lichenA, new Vector3(15.0f, -0.65f, 0f), new Vector3(1.2f, 1.0f, 1f), new Color(0.25f, 0.80f, 0.98f, 1f), 0.50f, 3.0f);
@@ -137,25 +123,17 @@ namespace UmbraChronos.Editor
             // -------------------------------------------------------------
             // WING 3: The Clockwork Spire (Room 2, x = 36 to 60, Center 48)
             // -------------------------------------------------------------
-            // Lower Terrace (x = 36 to 43, surface at y = -1.75)
             CreatePlatform("W3_Lower_Terrace", new Vector3(39.5f, -2.5f, 0f), new Vector3(7.0f, 1.5f, 1f), squareSprite);
-
-            // Spire Central Monolith (at x = 43.5, height = 4.8)
             CreateMonolithObject(squareSprite, new Vector3(43.5f, 0.65f, 0f), new Vector2(1.8f, 4.8f), -1.75f, sunInst.transform, 1.6f);
-
-            // Left Switch Balcony (surface at y = 1.0)
             CreatePlatform("W3_Left_Balcony", new Vector3(38.5f, 0.8f, 0f), new Vector3(3.5f, 0.4f, 1f), squareSprite);
 
-            // Upper Exit Ledge (x = 53 to 60, surface at y = 0.25)
             GameObject w3UpperLedge = CreatePlatform("W3_Upper_Ledge", new Vector3(56.5f, -0.5f, 0f), new Vector3(7.0f, 1.5f, 1f), squareSprite);
             AddSunlitSheen(w3UpperLedge, sunInst.transform);
 
-            // TimedGate 2 blocking the upper exit ledge
             GameObject gate2 = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
             gate2.name = "TimedGate_W3";
             gate2.transform.position = new Vector3(53.0f, 1.75f, 0f);
 
-            // PressurePlate 2 on the Left Switch Balcony
             GameObject plate2 = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
             plate2.name = "PressurePlate_W3";
             plate2.transform.position = new Vector3(38.5f, 1.15f, 0f);
@@ -168,48 +146,40 @@ namespace UmbraChronos.Editor
                 so2.ApplyModifiedProperties();
             }
 
-            // Glow Lichens in Spire
             CreateGlowLichen(lichenA, new Vector3(37.5f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), new Color(0.22f, 0.74f, 0.97f, 1f), 0.50f, 3.0f);
             CreateGlowLichen(lichenB, new Vector3(37.0f, 0.5f, 0f), new Vector3(1.0f, 1.2f, 1f), new Color(0.22f, 0.74f, 0.97f, 1f), 0.55f, 3.2f);
             CreateGlowLichen(lichenA, new Vector3(42.5f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), new Color(0.22f, 0.74f, 0.97f, 1f), 0.50f, 3.0f);
             CreateGlowLichen(lichenA, new Vector3(57.5f, 0.40f, 0f), new Vector3(1.2f, 1.0f, 1f), new Color(0.22f, 0.74f, 0.97f, 1f), 0.50f, 3.0f);
 
-            // Chasm 3 Floor (under x = 36 to 60 at y = -7.0)
             CreatePlatform("W3_Chasm_Floor", new Vector3(48.0f, -7.0f, 0f), new Vector3(26f, 2f, 1f), squareSprite);
 
             // -------------------------------------------------------------
             // WING 4: The Eclipse Paradox Sanctuary (Room 3, x = 60 to 86, Center 72)
             // -------------------------------------------------------------
-            // Western Altar (x = 61 to 67, surface at y = -1.75)
             GameObject w4WesternAltar = CreatePlatform("W4_Western_Altar", new Vector3(64.0f, -2.5f, 0f), new Vector3(6.0f, 1.5f, 1f), squareSprite);
             AddSunlitSheen(w4WesternAltar, sunInst.transform);
 
             GameObject w4WesternShelter = CreatePlatform("W4_Western_Shelter", new Vector3(64.0f, 1.5f, 0f), new Vector3(5.0f, 0.5f, 1f), squareSprite);
             AddInteriorBackdrop(w4WesternShelter, -1.75f, 0.5f);
 
-            // Central Hub & Monolith (x = 70 to 74, surface at y = -1.75)
             CreatePlatform("W4_Center_Hub", new Vector3(72.0f, -2.5f, 0f), new Vector3(6.0f, 1.5f, 1f), squareSprite);
             GameObject w4CenterRoof = CreatePlatform("W4_Center_Roof", new Vector3(72.0f, 2.5f, 0f), new Vector3(6.0f, 0.5f, 1f), squareSprite);
             AddInteriorBackdrop(w4CenterRoof, -1.75f, 0.5f);
 
             CreateMonolithObject(squareSprite, new Vector3(72.0f, 0.5f, 0f), new Vector2(1.8f, 4.5f), -1.75f, sunInst.transform, 2.2f);
 
-            // Eastern Citadel (x = 77 to 86, surface at y = -1.75)
             GameObject w4EasternCitadel = CreatePlatform("W4_Eastern_Citadel", new Vector3(81.5f, -2.5f, 0f), new Vector3(9.0f, 1.5f, 1f), squareSprite);
             AddSunlitSheen(w4EasternCitadel, sunInst.transform);
 
             GameObject w4CitadelCeiling = CreatePlatform("W4_Citadel_Ceiling", new Vector3(81.5f, 3.5f, 0f), new Vector3(9.0f, 1.0f, 1f), squareSprite);
             AddInteriorBackdrop(w4CitadelCeiling, -1.75f, 0.5f);
 
-            // Right World Boundary Wall
             CreatePlatform("W4_Wall_Right", new Vector3(86.5f, 1.5f, 0f), new Vector3(1.5f, 9.0f, 1f), squareSprite);
 
-            // TimedGate 3 sealing the Sanctuary Arch
             GameObject gate3 = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
             gate3.name = "TimedGate_Sanctuary";
             gate3.transform.position = new Vector3(79.0f, -0.25f, 0f);
 
-            // PressurePlate 3 on Western Altar
             GameObject plate3 = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
             plate3.name = "PressurePlate_Western_Altar";
             plate3.transform.position = new Vector3(64.0f, -1.60f, 0f);
@@ -222,33 +192,26 @@ namespace UmbraChronos.Editor
                 so3.ApplyModifiedProperties();
             }
 
-            // Glow Lichens in Sanctuary (Cosmic twilight cyan)
             CreateGlowLichen(lichenA, new Vector3(62.5f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), new Color(0.38f, 0.65f, 0.98f, 1f), 0.55f, 3.2f);
             CreateGlowLichen(lichenC, new Vector3(64.0f, 1.2f, 0f), new Vector3(1.2f, 1.2f, 1f), new Color(0.38f, 0.65f, 0.98f, 1f), 0.55f, 3.2f);
             CreateGlowLichen(lichenC, new Vector3(72.0f, 2.2f, 0f), new Vector3(1.3f, 1.3f, 1f), new Color(0.38f, 0.65f, 0.98f, 1f), 0.60f, 3.5f);
             CreateGlowLichen(lichenA, new Vector3(81.0f, -1.65f, 0f), new Vector3(1.3f, 1.0f, 1f), new Color(0.38f, 0.65f, 0.98f, 1f), 0.55f, 3.2f);
             CreateGlowLichen(lichenB, new Vector3(85.5f, 0.0f, 0f), new Vector3(1.0f, 1.3f, 1f), new Color(0.38f, 0.65f, 0.98f, 1f), 0.55f, 3.2f);
 
-            // Sanctuary Arch of Victory at x = 83.5
             CreateSanctuaryArch(squareSprite, new Vector3(83.5f, -0.4f, 0f));
-
-            // Deep Eclipse Abyss under Wing 4
             CreatePlatform("W4_Eclipse_Abyss", new Vector3(72.0f, -7.5f, 0f), new Vector3(28f, 2f, 1f), squareSprite);
 
-            // 5. Setup Player, Rewind, Audio, HUD (Spawn in Wing 1 Shelter at x = -10.5)
+            // 5. Setup Player, Rewind, Audio, HUD
             SetupPlayer(new Vector3(-10.5f, -1.0f, 0f));
 
             string path = $"{LevelsFolder}/Level_Master.unity";
             EditorSceneManager.SaveScene(scene, path);
             Debug.Log($"[LevelBuilder] Saved Contiguous Master Level to {path}");
 
-            // Configure Build Settings: MainMenu.unity first if it exists, then Level_Master.unity
+            // Configure Build Settings
             string menuPath = "Assets/_Project/Scenes/UI/MainMenu.unity";
             var buildScenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
-            if (File.Exists(menuPath))
-            {
-                buildScenes.Add(new EditorBuildSettingsScene(menuPath, true));
-            }
+            if (File.Exists(menuPath)) buildScenes.Add(new EditorBuildSettingsScene(menuPath, true));
             buildScenes.Add(new EditorBuildSettingsScene(path, true));
             buildScenes.Add(new EditorBuildSettingsScene($"{LevelsFolder}/Level_01.unity", true));
             buildScenes.Add(new EditorBuildSettingsScene($"{LevelsFolder}/Level_02.unity", true));
@@ -257,19 +220,30 @@ namespace UmbraChronos.Editor
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+        }
 
-            if (!Application.isBatchMode)
-            {
-                EditorUtility.DisplayDialog(
-                    "Grand Sanctuary of Chronos Built!",
-                    $"Successfully generated {path} with:\n" +
-                    "- 4 Interconnected Chambers (Courtyard of Dawn -> Echo Vault -> Clockwork Spire -> Eclipse Paradox Climax)\n" +
-                    "- Hollow Knight atmospheric multi-layered backdrop\n" +
-                    "- Smooth 0.35s screen-shift camera paging\n" +
-                    "- Zero collision gaps or softlocks\n\n" +
-                    "Ready for 2-minute uncut trailer recording!",
-                    "Let's Play!");
-            }
+        [MenuItem("Umbra Chronos/Regenerate All Levels and Sandbox")]
+        public static void RegenerateAllLevelsAndSandbox()
+        {
+            BuildMasterLevel();
+            BuildLevel01();
+            BuildLevel02();
+            BuildLevel03();
+            SandboxBuilder.BuildSandboxAndPrefabs();
+
+            string menuPath = "Assets/_Project/Scenes/UI/MainMenu.unity";
+            var buildScenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
+            if (File.Exists(menuPath)) buildScenes.Add(new EditorBuildSettingsScene(menuPath, true));
+            buildScenes.Add(new EditorBuildSettingsScene($"{LevelsFolder}/Level_Master.unity", true));
+            buildScenes.Add(new EditorBuildSettingsScene($"{LevelsFolder}/Level_01.unity", true));
+            buildScenes.Add(new EditorBuildSettingsScene($"{LevelsFolder}/Level_02.unity", true));
+            buildScenes.Add(new EditorBuildSettingsScene($"{LevelsFolder}/Level_03.unity", true));
+            EditorBuildSettings.scenes = buildScenes.ToArray();
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Debug.Log("[LevelBuilder] All levels (Master, 01, 02, 03) and Sandbox_Shaf regenerated successfully with unified Master aesthetics!");
         }
 
         [MenuItem("Umbra Chronos/Build All Showcase Levels (Master, 01, 02, 03)")]
@@ -283,13 +257,7 @@ namespace UmbraChronos.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            if (!Application.isBatchMode)
-            {
-                EditorUtility.DisplayDialog(
-                    "All Levels Generated!",
-                    "Successfully built:\n- Level_Master.unity (The 4-Chamber Grand Sanctuary)\n- Level_01.unity (Dawn of the Sundial)\n- Level_02.unity (Echo of the Vault)\n- Level_03.unity (The Eclipse Paradox)",
-                    "Awesome!");
-            }
+            Debug.Log("[LevelBuilder] Successfully built Master, Level 01, Level 02, Level 03!");
         }
 
         [MenuItem("Umbra Chronos/Build Standalone Player (macOS)")]
@@ -313,16 +281,12 @@ namespace UmbraChronos.Editor
             Debug.Log($"[Build] Building macOS Standalone to {macPath}...");
             var report = BuildPipeline.BuildPlayer(sceneList.ToArray(), macPath, BuildTarget.StandaloneOSX, BuildOptions.None);
             Debug.Log($"[Build] macOS build completed with result: {report.summary.result}");
-
-            if (!Application.isBatchMode)
-            {
-                EditorUtility.DisplayDialog(
-                    "macOS Build Complete!",
-                    $"Successfully created standalone app:\n{macPath}\n\nResult: {report.summary.result}",
-                    "Awesome!");
-            }
         }
 
+        // =========================================================================
+        // LEVEL 01: "Dawn of the Sundial" (The Ancient Portico at First Light)
+        // Aesthetic: Midnight Indigo into Rose Coral Dawn sky, glowing cyan lichens
+        // =========================================================================
         [MenuItem("Umbra Chronos/Build Level 01 (Dawn of the Sundial)")]
         public static void BuildLevel01()
         {
@@ -332,45 +296,93 @@ namespace UmbraChronos.Editor
             Sprite pillarSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Environment/Bg_Gothic_Pillar.png");
             Sprite archSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Environment/Bg_Arch_Silhouette.png");
             Sprite mistSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Environment/Chasm_Mist_Gradient.png");
+            Sprite lichenA = LoadSprite($"{SpriteFolder}/Environment/Glow_Lichen_A.png");
+            Sprite lichenB = LoadSprite($"{SpriteFolder}/Environment/Glow_Lichen_B.png");
+            Sprite lichenC = LoadSprite($"{SpriteFolder}/Environment/Glow_Lichen_C.png");
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-            SetupLevelCamera(new Vector3(0f, 1.0f, -10f), 7.5f, new Color(0.03f, 0.04f, 0.08f), new Vector2(24f, 15f), new Vector2(0f, 1.0f));
-            SetupAtmosphereWithDecor(sprite, gradientSprite, pillarSprite, archSprite, mistSprite, 35f);
+            // 1. Camera with ScreenShift room-paging
+            SetupLevelCamera(new Vector3(0f, 1.0f, -10f), 7.5f, new Color(0.035f, 0.025f, 0.06f), new Vector2(24f, 15f), new Vector2(0f, 1.0f));
 
-            GameObject sunInst = SetupSunDial(sprite, new Vector2(0f, -1f), 15f, 50f);
+            // 2. Multi-Layered Dawn Atmospheric Backdrop
+            SetupAtmosphere(
+                sprite,
+                gradientSprite,
+                pillarSprite,
+                archSprite,
+                mistSprite,
+                -16f, 36f,
+                new Color(0.88f, 0.72f, 0.85f, 1.0f),  // Warm Rose Dawn Sky Tint
+                new Color(0.08f, 0.07f, 0.16f, 0.85f),  // Distant Ruin Silhouette Color
+                new Color(0.32f, 0.28f, 0.38f, 1.0f),  // Golden-Rose Global Ambiance
+                0.45f,
+                new Color(0.95f, 0.88f, 0.92f, 0.75f),  // Morning Dawn Chasm Mist
+                new float[] { -12f, -4f, 4f, 12f, 20f, 28f, 34f }, // Pillars
+                new float[] { -8f, 8f, 24f },                        // Arches
+                new float[] { 2.0f, 20.0f }                          // Mist Chasm Centers
+            );
+
+            // 3. SunDial & Radiation Stack
+            GameObject sunInst = SetupSunDial(sprite, new Vector2(9.0f, 0f), 15f, 40f);
             SetupPostProcessingAndLight(sunInst);
 
-            CreatePlatform("Cliff_Left", new Vector3(-9.0f, -2.5f, 0f), new Vector3(12f, 1.5f, 1f), sprite);
-            CreatePlatform("Boundary_Wall_Left", new Vector3(-15f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
-            GameObject spawnRoof = CreatePlatform("Spawn_Shelter_Roof", new Vector3(-9.0f, 1.2f, 0f), new Vector3(6f, 0.5f, 1f), sprite);
+            // 4. Ground Geometry & Sanctuaries
+            // Left Cliff (x = -14 to -3, surface at y = -1.75)
+            CreatePlatform("Cliff_Left", new Vector3(-8.5f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            CreatePlatform("Boundary_Wall_Left", new Vector3(-14.5f, 2.5f, 0f), new Vector3(1.5f, 9.0f, 1f), sprite);
+            GameObject spawnRoof = CreatePlatform("Spawn_Shelter_Roof", new Vector3(-10.0f, 1.5f, 0f), new Vector3(7.0f, 0.6f, 1f), sprite);
             AddInteriorBackdrop(spawnRoof, -1.75f, 0.5f);
 
-            CreateMonolithObject(sprite, new Vector3(-3.0f, 0.05f, 0f), new Vector2(1.4f, 3.6f), -1.75f, sunInst.transform);
+            // Monolith 1 at edge of left cliff
+            CreateMonolithObject(sprite, new Vector3(-3.0f, 0.25f, 0f), new Vector2(1.6f, 4.0f), -1.75f, sunInst.transform, 1.5f);
 
-            GameObject centerIsland = CreatePlatform("Center_Island", new Vector3(9.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            // Center Island (surface at y = -1.75)
+            GameObject centerIsland = CreatePlatform("Center_Island", new Vector3(8.0f, -2.5f, 0f), new Vector3(8.0f, 1.5f, 1f), sprite);
             AddSunlitSheen(centerIsland, sunInst.transform);
 
-            GameObject centerRoof = CreatePlatform("Center_Shelter_Roof", new Vector3(9.0f, 1.2f, 0f), new Vector3(5f, 0.5f, 1f), sprite);
+            GameObject centerRoof = CreatePlatform("Center_Shelter_Roof", new Vector3(8.0f, 1.5f, 0f), new Vector3(6.0f, 0.6f, 1f), sprite);
             AddInteriorBackdrop(centerRoof, -1.75f, 0.5f);
 
-            CreateMonolithObject(sprite, new Vector3(14.5f, 0.05f, 0f), new Vector2(1.4f, 3.6f), -1.75f, sunInst.transform);
+            // Monolith 2 on Center Island casting forward
+            CreateMonolithObject(sprite, new Vector3(14.5f, 0.25f, 0f), new Vector2(1.6f, 4.0f), -1.75f, sunInst.transform, 1.5f);
 
-            GameObject sanctCliff = CreatePlatform("Sanctuary_Cliff", new Vector3(27.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            // Sanctuary Cliff (surface at y = -1.75)
+            GameObject sanctCliff = CreatePlatform("Sanctuary_Cliff", new Vector3(26.5f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
             AddSunlitSheen(sanctCliff, sunInst.transform);
 
-            CreatePlatform("Boundary_Wall_Right", new Vector3(32.5f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
+            CreatePlatform("Boundary_Wall_Right", new Vector3(32.5f, 2.5f, 0f), new Vector3(1.5f, 9.0f, 1f), sprite);
 
-            CreateSanctuaryArch(sprite, new Vector3(28.0f, -0.5f, 0f));
-            CreatePlatform("Chasm_Floor", new Vector3(10.0f, -7.0f, 0f), new Vector3(45f, 2f, 1f), sprite);
+            // Radiant Sanctuary Arch
+            CreateSanctuaryArch(sprite, new Vector3(28.0f, -0.4f, 0f));
 
-            SetupPlayer(new Vector3(-9.0f, -1.0f, 0f));
+            // Continuous Chasm Receptor Floor (x = -15 to 35 at y = -7.0)
+            CreatePlatform("Chasm_Floor", new Vector3(10.0f, -7.0f, 0f), new Vector3(52f, 2f, 1f), sprite);
+
+            // Bioluminescent Glow Lichens (Dawn Cyan #38BDF8)
+            Color dawnCyan = new Color(0.22f, 0.74f, 0.97f, 1f);
+            CreateGlowLichen(lichenC, new Vector3(-11.5f, 1.15f, 0f), new Vector3(1.2f, 1.2f, 1f), dawnCyan, 0.55f, 3.2f);
+            CreateGlowLichen(lichenB, new Vector3(-7.5f, 0.8f, 0f), new Vector3(1.1f, 1.1f, 1f), dawnCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenA, new Vector3(-3.5f, -1.65f, 0f), new Vector3(1.3f, 1.0f, 1f), dawnCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenA, new Vector3(4.5f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), dawnCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenC, new Vector3(8.0f, 1.15f, 0f), new Vector3(1.2f, 1.2f, 1f), dawnCyan, 0.55f, 3.2f);
+            CreateGlowLichen(lichenA, new Vector3(14.0f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), dawnCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenA, new Vector3(22.0f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), dawnCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenA, new Vector3(26.5f, -1.65f, 0f), new Vector3(1.3f, 1.0f, 1f), dawnCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenB, new Vector3(28.0f, 0.2f, 0f), new Vector3(1.0f, 1.2f, 1f), dawnCyan, 0.55f, 3.2f);
+
+            // 5. Setup Player safely in shelter
+            SetupPlayer(new Vector3(-10.5f, -1.0f, 0f));
 
             string path = $"{LevelsFolder}/Level_01.unity";
             EditorSceneManager.SaveScene(scene, path);
             Debug.Log($"[LevelBuilder] Saved Level 01 to {path}");
         }
 
+        // =========================================================================
+        // LEVEL 02: "Echo of the Vault" (The Subterranean Vault of Echoes)
+        // Aesthetic: Deep Subterranean Azure Crypt, soaring vaulted ceilings, electric cyan moss
+        // =========================================================================
         [MenuItem("Umbra Chronos/Build Level 02 (Echo of the Vault)")]
         public static void BuildLevel02()
         {
@@ -380,33 +392,63 @@ namespace UmbraChronos.Editor
             Sprite pillarSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Environment/Bg_Gothic_Pillar.png");
             Sprite archSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Environment/Bg_Arch_Silhouette.png");
             Sprite mistSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Environment/Chasm_Mist_Gradient.png");
+            Sprite lichenA = LoadSprite($"{SpriteFolder}/Environment/Glow_Lichen_A.png");
+            Sprite lichenB = LoadSprite($"{SpriteFolder}/Environment/Glow_Lichen_B.png");
+            Sprite lichenC = LoadSprite($"{SpriteFolder}/Environment/Glow_Lichen_C.png");
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-            SetupLevelCamera(new Vector3(0f, 1.5f, -10f), 7.5f, new Color(0.03f, 0.04f, 0.08f), new Vector2(24f, 15f), new Vector2(0f, 1.5f));
-            SetupAtmosphereWithDecor(sprite, gradientSprite, pillarSprite, archSprite, mistSprite, 35f);
+            // 1. Camera with ScreenShift room-paging
+            SetupLevelCamera(new Vector3(0f, 1.5f, -10f), 7.5f, new Color(0.015f, 0.025f, 0.05f), new Vector2(24f, 15f), new Vector2(0f, 1.5f));
 
+            // 2. Multi-Layered Subterranean Crypt Backdrop
+            SetupAtmosphere(
+                sprite,
+                gradientSprite,
+                pillarSprite,
+                archSprite,
+                mistSprite,
+                -16f, 40f,
+                new Color(0.60f, 0.75f, 0.95f, 1.0f),  // Subterranean Abyssal Azure Tint
+                new Color(0.05f, 0.07f, 0.14f, 0.90f),  // Deep Crypt Ruin Silhouette Color
+                new Color(0.18f, 0.24f, 0.35f, 1.0f),  // Cool Cyan-Indigo Subterranean Light
+                0.42f,
+                new Color(0.80f, 0.92f, 1.0f, 0.70f),  // Cold Subterranean Cavern Mist
+                new float[] { -10f, -2f, 6f, 14f, 22f, 30f, 36f }, // Pillars
+                new float[] { -6f, 10f, 26f },                       // Arches
+                new float[] { -2.0f, 20.0f }                         // Mist Centers
+            );
+
+            // 3. SunDial & Radiation Stack
             GameObject sunInst = SetupSunDial(sprite, new Vector2(0f, 0f), 14f, 90f);
             SetupPostProcessingAndLight(sunInst);
 
-            CreatePlatform("Vault_Floor_1", new Vector3(-2.0f, -2.5f, 0f), new Vector3(24f, 1.5f, 1f), sprite);
-            CreatePlatform("Wall_Left", new Vector3(-14f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
-            GameObject vaultCeiling = CreatePlatform("Vault_Ceiling", new Vector3(12.0f, 5.0f, 0f), new Vector3(56f, 1f, 1f), sprite);
+            // 4. Ground Geometry & Puzzle Architecture
+            // Soaring Vault Ceiling shielding from celestial sunlight
+            GameObject vaultCeiling = CreatePlatform("Vault_Ceiling", new Vector3(11.0f, 5.0f, 0f), new Vector3(56.0f, 1.0f, 1f), sprite);
             AddInteriorBackdrop(vaultCeiling, -1.75f, 0.8f);
 
-            CreatePlatform("Step_Ledge_1", new Vector3(-7.0f, -0.9f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
-            CreatePlatform("High_Plate_Ledge_1", new Vector3(-3.5f, 0.0f, 0f), new Vector3(4.0f, 0.4f, 1f), sprite);
+            CreatePlatform("Wall_Left", new Vector3(-14.5f, 2.0f, 0f), new Vector3(1.5f, 8f, 1f), sprite);
+
+            // Vault Floor 1 (surface at y = -1.75)
+            CreatePlatform("Vault_Floor_1", new Vector3(-4.5f, -2.5f, 0f), new Vector3(19.0f, 1.5f, 1f), sprite);
+
+            // Stepping ruins climbing to high balcony
+            CreatePlatform("Step_Ledge_1", new Vector3(-7.0f, -0.90f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
+            CreatePlatform("High_Plate_Ledge_1", new Vector3(-3.5f, 0.15f, 0f), new Vector3(4.0f, 0.4f, 1f), sprite);
 
             GameObject gatePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabInteractFolder}/TimedGate.prefab");
             GameObject platePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabInteractFolder}/PressurePlate.prefab");
 
+            // TimedGate 1 blocking threshold to Inner Sanctum
             GameObject gate1 = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
             gate1.name = "TimedGate_1";
-            gate1.transform.position = new Vector3(6.0f, -0.25f, 0f);
+            gate1.transform.position = new Vector3(5.5f, -0.25f, 0f);
 
+            // PressurePlate 1 on High Balcony 1
             GameObject plate1 = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
             plate1.name = "PressurePlate_1";
-            plate1.transform.position = new Vector3(-3.5f, 0.35f, 0f);
+            plate1.transform.position = new Vector3(-3.5f, 0.50f, 0f);
 
             var plateComp1 = plate1.GetComponent<PressurePlate>();
             if (plateComp1 != null)
@@ -416,26 +458,30 @@ namespace UmbraChronos.Editor
                 soPlate1.ApplyModifiedProperties();
             }
 
-            CreatePlatform("Vault_Floor_2", new Vector3(24.0f, -2.5f, 0f), new Vector3(28f, 1.5f, 1f), sprite);
-            CreatePlatform("Wall_Right", new Vector3(36f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
+            // Vault Floor 2 (Inner Sanctum, surface at y = -1.75)
+            CreatePlatform("Vault_Floor_2", new Vector3(19.5f, -2.5f, 0f), new Vector3(27.0f, 1.5f, 1f), sprite);
 
+            // Pushable stone block in Inner Sanctum
             GameObject blockPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabEnvFolder}/PushableBlock.prefab");
             if (blockPrefab != null)
             {
                 GameObject blockInst = (GameObject)PrefabUtility.InstantiatePrefab(blockPrefab);
-                blockInst.transform.position = new Vector3(14.0f, -1.15f, 0f);
+                blockInst.transform.position = new Vector3(13.0f, -1.15f, 0f);
             }
 
-            CreatePlatform("Step_Ledge_2", new Vector3(17.5f, -0.9f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
-            CreatePlatform("High_Plate_Ledge_2", new Vector3(21.0f, 0.0f, 0f), new Vector3(4.0f, 0.4f, 1f), sprite);
+            // Stepping ruins to Balcony 2
+            CreatePlatform("Step_Ledge_2", new Vector3(17.5f, -0.90f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
+            CreatePlatform("High_Plate_Ledge_2", new Vector3(21.0f, 0.15f, 0f), new Vector3(4.0f, 0.4f, 1f), sprite);
 
+            // TimedGate 2 blocking exit corridor
             GameObject gate2 = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
             gate2.name = "TimedGate_2";
             gate2.transform.position = new Vector3(26.5f, -0.25f, 0f);
 
+            // PressurePlate 2 on High Balcony 2
             GameObject plate2 = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
             plate2.name = "PressurePlate_2";
-            plate2.transform.position = new Vector3(21.0f, 0.35f, 0f);
+            plate2.transform.position = new Vector3(21.0f, 0.50f, 0f);
 
             var plateComp2 = plate2.GetComponent<PressurePlate>();
             if (plateComp2 != null)
@@ -445,7 +491,35 @@ namespace UmbraChronos.Editor
                 soPlate2.ApplyModifiedProperties();
             }
 
-            CreateSanctuaryArch(sprite, new Vector3(31.0f, -0.5f, 0f));
+            CreatePlatform("Wall_Right", new Vector3(33.5f, 2.0f, 0f), new Vector3(1.5f, 8f, 1f), sprite);
+
+            // Radiant Sanctuary Arch
+            CreateSanctuaryArch(sprite, new Vector3(30.5f, -0.4f, 0f));
+
+            // Bioluminescent Glow Lichens (Electric Cyan-Azure #22D3EE / #38BDF8)
+            Color vaultCyan = new Color(0.25f, 0.80f, 0.98f, 1f);
+            // Ceilings
+            CreateGlowLichen(lichenC, new Vector3(-6.0f, 4.4f, 0f), new Vector3(1.3f, 1.3f, 1f), vaultCyan, 0.65f, 3.8f);
+            CreateGlowLichen(lichenB, new Vector3(2.0f, 4.4f, 0f), new Vector3(1.1f, 1.2f, 1f), vaultCyan, 0.60f, 3.5f);
+            CreateGlowLichen(lichenC, new Vector3(12.0f, 4.4f, 0f), new Vector3(1.4f, 1.4f, 1f), vaultCyan, 0.65f, 3.8f);
+            CreateGlowLichen(lichenB, new Vector3(20.0f, 4.4f, 0f), new Vector3(1.1f, 1.2f, 1f), vaultCyan, 0.60f, 3.5f);
+            CreateGlowLichen(lichenC, new Vector3(28.0f, 4.4f, 0f), new Vector3(1.3f, 1.3f, 1f), vaultCyan, 0.65f, 3.8f);
+
+            // Room 1 Steps & Plate
+            CreateGlowLichen(lichenA, new Vector3(-7.0f, -0.65f, 0f), new Vector3(1.2f, 1.0f, 1f), vaultCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenC, new Vector3(-3.5f, 0.25f, 0f), new Vector3(1.1f, 1.1f, 1f), vaultCyan, 0.55f, 3.2f);
+            CreateGlowLichen(lichenB, new Vector3(4.5f, 0.8f, 0f), new Vector3(1.0f, 1.2f, 1f), vaultCyan, 0.55f, 3.2f);
+            CreateGlowLichen(lichenA, new Vector3(6.5f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), vaultCyan, 0.50f, 3.0f);
+
+            // Inner Sanctum & Room 2
+            CreateGlowLichen(lichenA, new Vector3(12.5f, -1.65f, 0f), new Vector3(1.3f, 1.0f, 1f), vaultCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenB, new Vector3(16.5f, -0.65f, 0f), new Vector3(1.1f, 1.2f, 1f), vaultCyan, 0.55f, 3.2f);
+            CreateGlowLichen(lichenC, new Vector3(21.0f, 0.25f, 0f), new Vector3(1.1f, 1.1f, 1f), vaultCyan, 0.55f, 3.2f);
+            CreateGlowLichen(lichenB, new Vector3(25.5f, 0.8f, 0f), new Vector3(1.0f, 1.2f, 1f), vaultCyan, 0.55f, 3.2f);
+            CreateGlowLichen(lichenA, new Vector3(29.5f, -1.65f, 0f), new Vector3(1.3f, 1.0f, 1f), vaultCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenC, new Vector3(32.0f, 0.2f, 0f), new Vector3(1.1f, 1.1f, 1f), vaultCyan, 0.55f, 3.2f);
+
+            // 5. Setup Player safely inside vault
             SetupPlayer(new Vector3(-10.5f, -1.0f, 0f));
 
             string path = $"{LevelsFolder}/Level_02.unity";
@@ -453,6 +527,10 @@ namespace UmbraChronos.Editor
             Debug.Log($"[LevelBuilder] Saved Level 02 to {path}");
         }
 
+        // =========================================================================
+        // LEVEL 03: "The Eclipse Paradox" (The Climax of Shadows & Time)
+        // Aesthetic: Cosmic Void into Royal Violet Eclipse sky, mystic violet-cyan runes
+        // =========================================================================
         [MenuItem("Umbra Chronos/Build Level 03 (The Eclipse Paradox)")]
         public static void BuildLevel03()
         {
@@ -462,41 +540,74 @@ namespace UmbraChronos.Editor
             Sprite pillarSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Environment/Bg_Gothic_Pillar.png");
             Sprite archSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Environment/Bg_Arch_Silhouette.png");
             Sprite mistSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Environment/Chasm_Mist_Gradient.png");
+            Sprite lichenA = LoadSprite($"{SpriteFolder}/Environment/Glow_Lichen_A.png");
+            Sprite lichenB = LoadSprite($"{SpriteFolder}/Environment/Glow_Lichen_B.png");
+            Sprite lichenC = LoadSprite($"{SpriteFolder}/Environment/Glow_Lichen_C.png");
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-            SetupLevelCamera(new Vector3(0f, 1.5f, -10f), 7.5f, new Color(0.04f, 0.02f, 0.08f), new Vector2(24f, 15f), new Vector2(0f, 1.5f));
-            SetupAtmosphereWithDecor(sprite, gradientSprite, pillarSprite, archSprite, mistSprite, 60f);
+            // 1. Camera with ScreenShift room-paging
+            SetupLevelCamera(new Vector3(0f, 1.5f, -10f), 7.5f, new Color(0.02f, 0.015f, 0.045f), new Vector2(24f, 15f), new Vector2(0f, 1.5f));
 
+            // 2. Multi-Layered Cosmic Eclipse Backdrop
+            SetupAtmosphere(
+                sprite,
+                gradientSprite,
+                pillarSprite,
+                archSprite,
+                mistSprite,
+                -34f, 36f,
+                new Color(0.85f, 0.55f, 0.98f, 1.0f),  // Cosmic Royal Violet Tint
+                new Color(0.08f, 0.05f, 0.15f, 0.90f),  // Shattered Ruin Silhouette Color
+                new Color(0.28f, 0.20f, 0.38f, 1.0f),  // Celestial Violet Ambiance
+                0.45f,
+                new Color(0.88f, 0.70f, 0.98f, 0.80f),  // Swirling Cosmic Violet Mist
+                new float[] { -26f, -18f, -10f, 0f, 10f, 18f, 26f }, // Spires
+                new float[] { -14f, 0f, 14f },                         // Arches
+                new float[] { -14.0f, 0.0f, 14.0f }                   // Mist Centers
+            );
+
+            // 3. SunDial & Radiation Stack
             GameObject sunInst = SetupSunDial(sprite, new Vector2(0f, 0f), 15f, 90f);
             SetupPostProcessingAndLight(sunInst);
 
-            CreatePlatform("Center_Hub", new Vector3(0f, -2.5f, 0f), new Vector3(9f, 1.5f, 1f), sprite);
-            GameObject centerRoof3 = CreatePlatform("Center_Shelter_Roof", new Vector3(0f, 2.8f, 0f), new Vector3(8f, 0.5f, 1f), sprite);
-            AddInteriorBackdrop(centerRoof3, -1.75f, 0.5f);
+            // 4. Ground Geometry & Dual-Switch Climax Setup
+            // Western Altar (surface at y = -1.75)
+            GameObject westAltar = CreatePlatform("Western_Altar_Floor", new Vector3(-24.0f, -2.5f, 0f), new Vector3(8.0f, 1.5f, 1f), sprite);
+            AddSunlitSheen(westAltar, sunInst.transform);
 
-            CreateMonolithObject(sprite, new Vector3(0f, 0.25f, 0f), new Vector2(1.6f, 4.0f), -1.75f, sunInst.transform, 2.2f);
+            CreatePlatform("Western_Boundary_Wall", new Vector3(-28.5f, 2.0f, 0f), new Vector3(1.5f, 8f, 1f), sprite);
+            GameObject westShelter = CreatePlatform("Western_Shelter", new Vector3(-24.0f, 1.5f, 0f), new Vector3(6.0f, 0.5f, 1f), sprite);
+            AddInteriorBackdrop(westShelter, -1.75f, 0.5f);
 
-            GameObject westAltar3 = CreatePlatform("Western_Altar_Floor", new Vector3(-24.0f, -2.5f, 0f), new Vector3(8f, 1.5f, 1f), sprite);
-            AddSunlitSheen(westAltar3, sunInst.transform);
+            // Central Hub (surface at y = -1.75)
+            CreatePlatform("Center_Hub", new Vector3(0f, -2.5f, 0f), new Vector3(8.0f, 1.5f, 1f), sprite);
+            GameObject centerRoof = CreatePlatform("Center_Shelter_Roof", new Vector3(0f, 2.8f, 0f), new Vector3(8.0f, 0.5f, 1f), sprite);
+            AddInteriorBackdrop(centerRoof, -1.75f, 0.5f);
 
-            CreatePlatform("Western_Boundary_Wall", new Vector3(-28.0f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
-            GameObject westShelter3 = CreatePlatform("Western_Shelter", new Vector3(-24.0f, 1.5f, 0f), new Vector3(5f, 0.5f, 1f), sprite);
-            AddInteriorBackdrop(westShelter3, -1.75f, 0.5f);
+            // Central Monolith (casts dynamic bridges left to Western Altar and right to Eastern Citadel)
+            CreateMonolithObject(sprite, new Vector3(0f, 0.5f, 0f), new Vector2(1.8f, 4.5f), -1.75f, sunInst.transform, 2.2f);
 
-            GameObject eastCitadel3 = CreatePlatform("Eastern_Citadel_Floor", new Vector3(24.0f, -2.5f, 0f), new Vector3(10f, 1.5f, 1f), sprite);
-            AddSunlitSheen(eastCitadel3, sunInst.transform);
+            // Eastern Citadel (surface at y = -1.75)
+            GameObject eastCitadel = CreatePlatform("Eastern_Citadel_Floor", new Vector3(24.0f, -2.5f, 0f), new Vector3(10.0f, 1.5f, 1f), sprite);
+            AddSunlitSheen(eastCitadel, sunInst.transform);
 
-            CreatePlatform("Eastern_Boundary_Wall", new Vector3(29.0f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
+            CreatePlatform("Eastern_Boundary_Wall", new Vector3(29.5f, 2.0f, 0f), new Vector3(1.5f, 8f, 1f), sprite);
+            GameObject eastShelter = CreatePlatform("Eastern_Shelter", new Vector3(24.0f, 1.5f, 0f), new Vector3(6.0f, 0.5f, 1f), sprite);
+            AddInteriorBackdrop(eastShelter, -1.75f, 0.5f);
 
             GameObject gatePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabInteractFolder}/TimedGate.prefab");
             GameObject platePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabInteractFolder}/PressurePlate.prefab");
 
+            // TimedGate sealing the Sanctuary
             GameObject gateInst = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
+            gateInst.name = "TimedGate_Eclipse";
             gateInst.transform.position = new Vector3(22.0f, -0.25f, 0f);
 
+            // PressurePlate 1 on Western Altar
             GameObject plate1 = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
-            plate1.transform.position = new Vector3(-24.0f, -1.65f, 0f);
+            plate1.name = "PressurePlate_Western_Altar";
+            plate1.transform.position = new Vector3(-24.0f, -1.60f, 0f);
 
             var plateComp1 = plate1.GetComponent<PressurePlate>();
             if (plateComp1 != null)
@@ -506,9 +617,35 @@ namespace UmbraChronos.Editor
                 so.ApplyModifiedProperties();
             }
 
-            CreateSanctuaryArch(sprite, new Vector3(26.5f, -0.5f, 0f));
-            CreatePlatform("Eclipse_Abyss", new Vector3(0f, -7.5f, 0f), new Vector3(70f, 2f, 1f), sprite);
+            // Radiant Sanctuary Arch
+            CreateSanctuaryArch(sprite, new Vector3(26.5f, -0.4f, 0f));
 
+            // Bottomless Eclipse Abyss Receptor Floor (surface at y = -7.5)
+            CreatePlatform("Eclipse_Abyss", new Vector3(0f, -7.5f, 0f), new Vector3(74f, 2f, 1f), sprite);
+
+            // Bioluminescent Glow Lichens (Twilight Cyan & Cosmic Violet)
+            Color twilightCyan = new Color(0.35f, 0.65f, 0.98f, 1f);
+            Color cosmicViolet = new Color(0.55f, 0.50f, 0.98f, 1f);
+
+            // Western Altar
+            CreateGlowLichen(lichenC, new Vector3(-25.5f, 1.2f, 0f), new Vector3(1.2f, 1.2f, 1f), cosmicViolet, 0.55f, 3.2f);
+            CreateGlowLichen(lichenA, new Vector3(-24.0f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), twilightCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenB, new Vector3(-21.0f, -1.65f, 0f), new Vector3(1.1f, 1.2f, 1f), twilightCyan, 0.55f, 3.2f);
+
+            // Central Hub
+            CreateGlowLichen(lichenC, new Vector3(-2.8f, 2.5f, 0f), new Vector3(1.3f, 1.3f, 1f), cosmicViolet, 0.60f, 3.5f);
+            CreateGlowLichen(lichenC, new Vector3(2.8f, 2.5f, 0f), new Vector3(1.3f, 1.3f, 1f), cosmicViolet, 0.60f, 3.5f);
+            CreateGlowLichen(lichenA, new Vector3(-3.2f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), twilightCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenA, new Vector3(3.2f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), twilightCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenB, new Vector3(0.0f, 2.2f, 0f), new Vector3(1.0f, 1.2f, 1f), twilightCyan, 0.55f, 3.2f);
+
+            // Eastern Citadel & Sanctuary
+            CreateGlowLichen(lichenA, new Vector3(20.0f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), twilightCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenC, new Vector3(24.0f, 1.2f, 0f), new Vector3(1.2f, 1.2f, 1f), cosmicViolet, 0.55f, 3.2f);
+            CreateGlowLichen(lichenA, new Vector3(26.5f, -1.65f, 0f), new Vector3(1.3f, 1.0f, 1f), twilightCyan, 0.55f, 3.2f);
+            CreateGlowLichen(lichenB, new Vector3(28.5f, 0.2f, 0f), new Vector3(1.0f, 1.2f, 1f), cosmicViolet, 0.55f, 3.2f);
+
+            // 5. Setup Player at Central Hub
             SetupPlayer(new Vector3(0f, -1.0f, 0f));
 
             string path = $"{LevelsFolder}/Level_03.unity";
@@ -516,7 +653,11 @@ namespace UmbraChronos.Editor
             Debug.Log($"[LevelBuilder] Saved Level 03 to {path}");
         }
 
-        private static void SetupLevelCamera(Vector3 pos, float orthoSize, Color bgColor, Vector2 roomDims, Vector2 roomOrigin)
+        // =========================================================================
+        // REUSABLE ATMOSPHERE & GEOMETRY FACTORY METHODS
+        // =========================================================================
+
+        public static void SetupLevelCamera(Vector3 pos, float orthoSize, Color bgColor, Vector2 roomDims, Vector2 roomOrigin)
         {
             GameObject camObj = new GameObject("Main Camera");
             camObj.tag = "MainCamera";
@@ -536,7 +677,7 @@ namespace UmbraChronos.Editor
             camCtrl.ConfigureRoom(roomDims, roomOrigin, 0.35f);
         }
 
-        private static void SetupMasterAtmosphere(Sprite squareSprite, Sprite gradientSprite, Sprite pillarSprite, Sprite archSprite, Sprite mistSprite)
+        public static void SetupMasterAtmosphere(Sprite squareSprite, Sprite gradientSprite, Sprite pillarSprite, Sprite archSprite, Sprite mistSprite)
         {
             // 1. Continuous Multi-Screen Vertical Gradient Canvas
             GameObject bgWall = new GameObject("Background_Canvas");
@@ -546,7 +687,7 @@ namespace UmbraChronos.Editor
             bgSr.sprite = gradientSprite != null ? gradientSprite : squareSprite;
             bgSr.sortingOrder = -20;
 
-            // 2. Distant Ruin Silhouettes (Layer -15)
+            // 2. Distant Ruin Silhouettes (Layer -15 for pillars, -14 for arches)
             Color distantRuinColor = new Color(0.06f, 0.08f, 0.16f, 0.85f);
             if (pillarSprite != null)
             {
@@ -579,39 +720,77 @@ namespace UmbraChronos.Editor
             GameObject lightObj = new GameObject("Global Light 2D");
             var light2D = lightObj.AddComponent<Light2D>();
             light2D.lightType = Light2D.LightType.Global;
-            light2D.color = new Color(0.24f, 0.28f, 0.38f, 1.0f); // Hollow Knight cold slate twilight
-            light2D.intensity = 0.45f;
-        }
-
-        private static void SetupAtmosphereWithDecor(Sprite squareSprite, Sprite gradientSprite, Sprite pillarSprite, Sprite archSprite, Sprite mistSprite, float centerX)
-        {
-            GameObject bgWall = new GameObject("Background_Canvas");
-            bgWall.transform.position = new Vector3(centerX, 3.0f, 0f);
-            bgWall.transform.localScale = new Vector3(80f, 40f, 1f);
-            var bgSr = bgWall.AddComponent<SpriteRenderer>();
-            bgSr.sprite = gradientSprite != null ? gradientSprite : squareSprite;
-            bgSr.sortingOrder = -20;
-
-            Color distantRuinColor = new Color(0.06f, 0.08f, 0.16f, 0.85f);
-            if (pillarSprite != null)
-            {
-                CreateBackgroundDecor(pillarSprite, new Vector3(centerX - 12f, 1.5f, 0f), new Vector3(1.8f, 4.0f, 1f), distantRuinColor, -15);
-                CreateBackgroundDecor(pillarSprite, new Vector3(centerX + 12f, 1.5f, 0f), new Vector3(1.8f, 4.0f, 1f), distantRuinColor, -15);
-            }
-
-            if (mistSprite != null)
-            {
-                CreateBackgroundDecor(mistSprite, new Vector3(centerX, -4.5f, 0f), new Vector3(25f, 4f, 1f), Color.white, -8);
-            }
-
-            GameObject lightObj = new GameObject("Global Light 2D");
-            var light2D = lightObj.AddComponent<Light2D>();
-            light2D.lightType = Light2D.LightType.Global;
             light2D.color = new Color(0.24f, 0.28f, 0.38f, 1.0f);
             light2D.intensity = 0.45f;
         }
 
-        private static GameObject CreateBackgroundDecor(Sprite sprite, Vector3 pos, Vector3 scale, Color color, int sortingOrder)
+        public static void SetupAtmosphere(
+            Sprite squareSprite,
+            Sprite gradientSprite,
+            Sprite pillarSprite,
+            Sprite archSprite,
+            Sprite mistSprite,
+            float minX,
+            float maxX,
+            Color skyTint,
+            Color distantRuinColor,
+            Color globalLightColor,
+            float globalLightIntensity,
+            Color mistTint,
+            float[] pillarPositions = null,
+            float[] archPositions = null,
+            float[] mistCenters = null)
+        {
+            float centerX = (minX + maxX) * 0.5f;
+            float spanWidth = (maxX - minX) + 50f;
+
+            // 1. Continuous Gradient Canvas
+            GameObject bgWall = new GameObject("Background_Canvas");
+            bgWall.transform.position = new Vector3(centerX, 3.0f, 0f);
+            bgWall.transform.localScale = new Vector3(spanWidth, 40f, 1f);
+            var bgSr = bgWall.AddComponent<SpriteRenderer>();
+            bgSr.sprite = gradientSprite != null ? gradientSprite : squareSprite;
+            bgSr.color = skyTint;
+            bgSr.sortingOrder = -20;
+
+            // 2. Distant Ruin Silhouettes
+            if (pillarSprite != null && pillarPositions != null)
+            {
+                for (int i = 0; i < pillarPositions.Length; i++)
+                {
+                    float px = pillarPositions[i];
+                    CreateBackgroundDecor(pillarSprite, new Vector3(px, 1.8f, 0f), new Vector3(1.6f, 3.8f, 1f), distantRuinColor, -15);
+                }
+            }
+
+            if (archSprite != null && archPositions != null)
+            {
+                for (int i = 0; i < archPositions.Length; i++)
+                {
+                    float ax = archPositions[i];
+                    CreateBackgroundDecor(archSprite, new Vector3(ax, 0.8f, 0f), new Vector3(2.4f, 3.4f, 1f), distantRuinColor, -14);
+                }
+            }
+
+            // 3. Volumetric Chasm Mist Bands
+            if (mistSprite != null && mistCenters != null)
+            {
+                for (int i = 0; i < mistCenters.Length; i++)
+                {
+                    float mx = mistCenters[i];
+                    CreateBackgroundDecor(mistSprite, new Vector3(mx, -4.5f, 0f), new Vector3(22f, 4.5f, 1f), mistTint, -8);
+                }
+            }
+
+            // 4. Global Light 2D
+            GameObject lightObj = new GameObject("Global Light 2D");
+            var light2D = lightObj.AddComponent<Light2D>();
+            light2D.lightType = Light2D.LightType.Global;
+            light2D.color = globalLightColor;
+            light2D.intensity = globalLightIntensity;
+        }
+
+        public static GameObject CreateBackgroundDecor(Sprite sprite, Vector3 pos, Vector3 scale, Color color, int sortingOrder)
         {
             GameObject decor = new GameObject("Bg_Decor");
             decor.transform.position = pos;
@@ -623,7 +802,7 @@ namespace UmbraChronos.Editor
             return decor;
         }
 
-        private static GameObject SetupSunDial(Sprite sprite, Vector2 center, float radius, float startAngle)
+        public static GameObject SetupSunDial(Sprite sprite, Vector2 center, float radius, float startAngle)
         {
             GameObject sunPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabEnvFolder}/SunDial.prefab");
             GameObject sunInst = sunPrefab != null ? (GameObject)PrefabUtility.InstantiatePrefab(sunPrefab) : new GameObject("SunDial");
@@ -642,7 +821,7 @@ namespace UmbraChronos.Editor
             return sunInst;
         }
 
-        private static void SetupPostProcessingAndLight(GameObject sunInst)
+        public static void SetupPostProcessingAndLight(GameObject sunInst)
         {
             GameObject postPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabCoreFolder}/PostProcessingVolume.prefab");
             if (postPrefab != null) PrefabUtility.InstantiatePrefab(postPrefab);
@@ -661,7 +840,7 @@ namespace UmbraChronos.Editor
             }
         }
 
-        private static void SetupPlayer(Vector3 spawnPos)
+        public static void SetupPlayer(Vector3 spawnPos)
         {
             GameObject playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabPlayerFolder}/Player.prefab");
             if (playerPrefab != null)
@@ -681,7 +860,7 @@ namespace UmbraChronos.Editor
             if (hudPrefab != null) PrefabUtility.InstantiatePrefab(hudPrefab);
         }
 
-        private static GameObject CreatePlatform(string name, Vector3 pos, Vector3 scale, Sprite sprite)
+        public static GameObject CreatePlatform(string name, Vector3 pos, Vector3 scale, Sprite sprite)
         {
             GameObject plat = new GameObject(name);
             plat.transform.position = pos;
@@ -698,7 +877,7 @@ namespace UmbraChronos.Editor
             return plat;
         }
 
-        private static GameObject CreateMonolithObject(Sprite sprite, Vector3 pos, Vector2 size, float groundY, Transform sunTransform, float lengthMultiplier = 1.0f)
+        public static GameObject CreateMonolithObject(Sprite sprite, Vector3 pos, Vector2 size, float groundY, Transform sunTransform, float lengthMultiplier = 1.0f)
         {
             GameObject monolith = new GameObject("Monolith");
             monolith.transform.position = pos;
@@ -723,7 +902,7 @@ namespace UmbraChronos.Editor
             return monolith;
         }
 
-        private static void CreateSanctuaryArch(Sprite sprite, Vector3 pos)
+        public static void CreateSanctuaryArch(Sprite sprite, Vector3 pos)
         {
             GameObject arch = new GameObject("Sanctuary_Arch");
             arch.transform.position = pos;
@@ -739,7 +918,7 @@ namespace UmbraChronos.Editor
             trigger.isTrigger = true;
         }
 
-        private static GameObject CreateGlowLichen(Sprite sprite, Vector3 pos, Vector3 scale, Color glowColor, float intensity = 0.55f, float radius = 3.2f)
+        public static GameObject CreateGlowLichen(Sprite sprite, Vector3 pos, Vector3 scale, Color glowColor, float intensity = 0.55f, float radius = 3.2f)
         {
             GameObject lichen = new GameObject("Glow_Lichen");
             lichen.transform.position = pos;
@@ -748,7 +927,7 @@ namespace UmbraChronos.Editor
             var sr = lichen.AddComponent<SpriteRenderer>();
             sr.sprite = sprite != null ? sprite : GetOrCreateSquareSprite();
             sr.color = glowColor;
-            sr.sortingOrder = 1;
+            sr.sortingOrder = 11; // Layer 11 in sorting order hierarchy
 
             GameObject lightChild = new GameObject("Lichen_PointLight");
             lightChild.transform.SetParent(lichen.transform, false);
@@ -773,7 +952,7 @@ namespace UmbraChronos.Editor
             return lichen;
         }
 
-        private static void AddSunlitSheen(GameObject platform, Transform sunTransform)
+        public static void AddSunlitSheen(GameObject platform, Transform sunTransform)
         {
             if (platform == null) return;
             var sheen = platform.AddComponent<SunlitGroundSheen>();
@@ -782,7 +961,7 @@ namespace UmbraChronos.Editor
             so.ApplyModifiedProperties();
         }
 
-        private static void AddInteriorBackdrop(GameObject roof, float floorY, float padding = 0.5f)
+        public static void AddInteriorBackdrop(GameObject roof, float floorY, float padding = 0.5f)
         {
             if (roof == null) return;
             var backdrop = roof.AddComponent<InteriorBackdrop>();
@@ -792,12 +971,12 @@ namespace UmbraChronos.Editor
             so.ApplyModifiedProperties();
         }
 
-        private static void EnsureLevelsDirectory()
+        public static void EnsureLevelsDirectory()
         {
             if (!Directory.Exists(LevelsFolder)) Directory.CreateDirectory(LevelsFolder);
         }
 
-        private static Sprite GetOrCreateSquareSprite()
+        public static Sprite GetOrCreateSquareSprite()
         {
             string path = $"{SpriteFolder}/Square_32.png";
             var existing = AssetDatabase.LoadAssetAtPath<Sprite>(path);
@@ -816,7 +995,7 @@ namespace UmbraChronos.Editor
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
 
-        private static Sprite LoadSprite(string path)
+        public static Sprite LoadSprite(string path)
         {
             Sprite s = AssetDatabase.LoadAssetAtPath<Sprite>(path);
             if (s != null) return s;

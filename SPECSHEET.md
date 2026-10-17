@@ -60,10 +60,12 @@ Status: DONE / IN PROGRESS / READY / QUEUED
 | Bioluminescent Glow Lichens (`GlowLichen.cs` ambient contrast) | Shaf | Sat 11:55 PM | DONE |
 | Title Screen Menu & Audio (`MainMenu.unity`, `MainMenuAudioManager.cs`) | Shaf | Sun 12:30 AM | DONE |
 | Sunlit Ground Sheen & Interior Backdrops (`SunlitGroundSheen.cs`, `InteriorBackdrop.cs`) | Shaf | Sun 01:00 AM | DONE |
-| Playtesting + full playthrough verification | Both | Sun 02:00 AM – 03:00 AM | READY |
+| Aesthetic Levels & Sandbox Regeneration (`Level_01`, `02`, `03`, `Sandbox_Shaf`) | Shaf | Sun 02:30 AM | DONE |
+| Tutorial Level & In-World Prompts (`Level_Tutorial.unity`, `TutorialManager.cs`) | Shaf | Sun 03:00 AM | DONE |
+| Playtesting + full playthrough verification | Both | Sun 03:15 AM – 04:00 AM | READY |
 | Trailer + submission | Both | Sun 05:00 – 09:15 AM | QUEUED |
 
-**Already built & merged to `main`:** Unity 6 URP 2D project, `TimeEvents`, snappy `PlayerController` (coyote, jump buffer, variable jump), 5 s circular rewind buffer, `UmbralEcho`, `PressurePlate` + `TimedGate`, `DynamicShadowCollider` horizontal shadow bridges, `LethalLightZone` with Volumetric Godray Hazard System, Bioluminescent Glow Lichens, Sunlit Ground Sheen, Interior Backdrops, diegetic HUD (sundial compass, 3-tier non-overlapping rewind gauge, danger vignette, runic prompts), full Title Screen with dynamic crystal hover and ambient audio.
+**Already built & merged to `main`:** Unity 6 URP 2D project, `TimeEvents`, snappy `PlayerController` (coyote, jump buffer, variable jump), 5 s circular rewind buffer, `UmbralEcho`, `PressurePlate` + `TimedGate`, `DynamicShadowCollider` horizontal shadow bridges, `LethalLightZone` with Volumetric Godray Hazard System, Bioluminescent Glow Lichens, Sunlit Ground Sheen, Interior Backdrops, diegetic HUD (sundial compass, 3-tier non-overlapping rewind gauge, danger vignette, runic prompts), full Title Screen with dynamic crystal hover and ambient audio, multi-layered "Ink & Solar Flare" aesthetic styling on all levels (01, 02, 03, Sandbox, Master), and dedicated 3-room Tutorial Level with in-world animated card prompts.
 
 ---
 

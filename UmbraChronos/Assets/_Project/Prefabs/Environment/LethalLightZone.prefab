@@ -53,8 +53,8 @@ MonoBehaviour:
   lethalGracePeriod: 0.85
   recoveryRate: 3
   renderGodrayHazard: 1
-  godraySprite: {fileID: 21300000, guid: f7dc4530a4db4e399d6f1e1b643b7936, type: 3}
-  moteSprite: {fileID: 21300000, guid: 4a0c7c0941e941109d0294b5ca5ec01c, type: 3}
+  godraySprite: {fileID: 0}
+  moteSprite: {fileID: 0}
   godrayWidth: 2.4
   godraySafeColor: {r: 1, g: 0.94, b: 0.72, a: 0.22}
   godrayThresholdColor: {r: 0.96, g: 0.62, b: 0.04, a: 0.48}
