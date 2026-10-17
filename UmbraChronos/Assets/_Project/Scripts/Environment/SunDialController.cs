@@ -63,6 +63,11 @@ namespace UmbraChronos.Environment
 
             targetAngle = currentAngle;
             UpdateSunPosition(true);
+
+            if (GetComponent<GodraySystem>() == null)
+            {
+                gameObject.AddComponent<GodraySystem>();
+            }
         }
 
         private void OnEnable()

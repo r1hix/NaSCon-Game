@@ -51,13 +51,14 @@ Status: DONE / IN PROGRESS / READY / QUEUED
 | `LethalLightZone` | Shaf | Sat 01:00 PM | DONE |
 | Rewind screen VFX (post-processing) | Shaf | Sat 02:00 PM | DONE |
 | HUD + controls overlay | Shaf | Sat 07:00 PM | DONE |
+| Atmospheric Godrays & Solar Particle VFX | Shaf | Sat 09:30 PM | DONE |
 | Unified Contiguous Master Level (`Level_Master.unity`) | Chendline | Sat 08:00 PM | IN PROGRESS |
-| Audio + `AudioManager` | Shaf | Sat 08:30 PM | READY |
-| Camera shake & particle polish | Shaf | Sat 09:30 PM | QUEUED |
-| Playtesting + full playthrough | Both | Sat 10:00 PM – Sun 02:00 AM | QUEUED |
+| Audio + `AudioManager` | Shaf | Sat 10:00 PM | READY |
+| Camera shake & particle polish | Shaf | Sat 10:30 PM | QUEUED |
+| Playtesting + full playthrough | Both | Sat 11:00 PM – Sun 02:00 AM | QUEUED |
 | Trailer + submission | Both | Sun 05:00 – 09:15 AM | QUEUED |
 
-**Already built & merged to `main`:** Unity 6 URP 2D project, `TimeEvents`, snappy `PlayerController` (coyote, jump buffer, variable jump), 5 s circular rewind buffer, `UmbralEcho`, `PressurePlate` + `TimedGate`, `DynamicShadowCollider` horizontal shadow bridges, `LethalLightZone`, diegetic HUD (sundial compass, 3-tier non-overlapping rewind gauge, danger vignette, runic prompts).
+**Already built & merged to `main`:** Unity 6 URP 2D project, `TimeEvents`, snappy `PlayerController` (coyote, jump buffer, variable jump), 5 s circular rewind buffer, `UmbralEcho`, `PressurePlate` + `TimedGate`, `DynamicShadowCollider` horizontal shadow bridges, `LethalLightZone`, diegetic HUD (sundial compass, 3-tier non-overlapping rewind gauge, danger vignette, runic prompts), `GodraySystem` (roof-occluding light shafts, solar dust particles, player radiation embers, shadow alignment).
 
 ---
 
