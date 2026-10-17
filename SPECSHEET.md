@@ -11,7 +11,7 @@
 * **The Gameplay Loop:**
   1. The player navigates lethal chasms of light by rotating the Sun (`Q`/`E` or Mouse Scroll) to cast solid shadow bridges.
   2. Rewinding time (`R` / Left Shift) pulls player physics and the celestial clock backward along a 5-second tape buffer.
-  3. Snapping back in time leaves behind an **Umbral Echo** (`E` or Space during rewind), a past-self shadow clone that holds pressure plates, triggers gates, or provides an extra stepping stone.
+  3. Snapping back in time leaves behind an **Umbral Echo** (`F` / `C` after rewind), a past-self shadow clone that holds pressure plates, triggers gates, or provides an extra stepping stone.
 * **Evaluation Truth:** Initial evaluation and the **Top 5 finalist shortlisting is judged SOLELY on the 3-minute video trailer**. Gameplay must look punchy, fluid, and visually stunning on video.
 
 ---
@@ -31,7 +31,7 @@ Here is how all systems connect and pass events across the project without tight
 ┌───────────────────────┐   ┌────────────────────────┐   ┌────────────────────────┐
 │  SunDialController    │   │     RewindManager      │   │      GameManager       │
 │  (Chendline)          │   │     (Shaf)             │   │      (Shaf/Chendline)  │
-│  • Listens to Q/E     │   │  • Listens to [R]      │   │  • Respawns Player     │
+│  • Listens to Q/E     │   │  • Listens to [R]/Shift│   │  • Respawns Player     │
 │  • Orbit PointLight2D │   │  • Drives TimeBody.cs  │   │  • Resets Level State  │
 │  • Broadcasts angle   │   │  • Controls VFX/Audio  │   └────────────────────────┘
 └──────────┬────────────┘   └───────────┬────────────┘
@@ -45,7 +45,7 @@ Here is how all systems connect and pass events across the project without tight
 │   shadow to ground    │   │  • Coyote & Buffer     │
 │ • Updates EdgeCollider│   └───────────┬────────────┘
 │   (Solid bridge!)     │               │
-└───────────────────────┘               │ Spawns on [E]
+└───────────────────────┘               │ Spawns on [F]
                                         ▼
 ┌───────────────────────┐   ┌────────────────────────┐
 │   LethalLightZone     │   │      UmbralEcho        │
@@ -199,7 +199,7 @@ Here is how all systems connect and pass events across the project without tight
      - A pressure plate is high up on a platform or behind a temporary barrier.
      - Player climbs to the plate, stands on it for 2 seconds (gate opens across the room).
      - Player holds `[R]` to rewind back to the entrance door.
-     - Player taps `[E]` to spawn the **Umbral Echo**.
+     - Player taps `[F]` to spawn the **Umbral Echo**.
      - The Echo replays climbing and standing on the plate.
      - While the Echo holds the gate open, the player sprints through the gate!
    * **Estimated Build Time:** 1.5 hours.
@@ -229,7 +229,7 @@ Here is how all systems connect and pass events across the project without tight
 2. **Task S4: Polished HUD & UI Overlay**
    * **Sundial Compass (Top-Right):** Circular minimalist dial showing sun orientation and time of day (Dawn / Noon / Dusk / Eclipse).
    * **Rewind Energy Gauge:** Clean glowing stamina bar showing remaining rewind tape duration (0 to 5 seconds).
-   * **Key Prompt Tooltips:** Modern pill-badge prompts (`[A/D] Move`, `[Space] Jump`, `[Q/E] Rotate Sun`, `[Hold R] Rewind`, `[Tap E] Echo`).
+   * **Key Prompt Tooltips:** Modern pill-badge prompts (`[A/D] Move`, `[Space] Jump`, `[Q/E] Rotate Sun`, `[Hold R / Shift] Rewind`, `[Tap F] Echo`).
 
 ---
 
@@ -296,7 +296,7 @@ Hey Chendline! Awesome work on the shadow colliders. Now we move to Phase 3: ass
 
 Since Git can't merge scene files, you have 100% ownership of the level scenes in `Assets/_Project/Scenes/Levels/`:
 1. Level_01 ("Dawn of the Sundial"): Teaches turning the sun with Q/E to stretch a shadow bridge across a lethal light chasm.
-2. Level_02 ("Echo of the Vault"): Teaches running to a pressure plate, rewinding with [R], tapping [E] to leave an Umbral Echo holding the switch, and sprinting through the opened TimedGate.
+2. Level_02 ("Echo of the Vault"): Teaches running to a pressure plate, rewinding with [R], tapping [F] to leave an Umbral Echo holding the switch, and sprinting through the opened TimedGate.
 3. Level_03 ("The Eclipse Paradox"): Climax puzzle requiring both a shadow bridge crossing and an echo holding a switch simultaneously.
 
 All prefabs (Player, PressurePlate, TimedGate, PushableBlock) are ready in `Assets/_Project/Prefabs/`. Let me know if you need any adjustments to the prefabs!
