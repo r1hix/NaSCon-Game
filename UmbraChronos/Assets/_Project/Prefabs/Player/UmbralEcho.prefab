@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5773055384352831428}
   - component: {fileID: 8553632418417971899}
   - component: {fileID: 3437869750791367159}
+  - component: {fileID: 8841001414793136200}
   m_Layer: 0
   m_Name: UmbralEcho
   m_TagString: Untagged
@@ -29,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.8, y: 1.6, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -83,8 +84,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -3477194192079620166, guid: e0e15eda88a3643e89efcb395e374769, type: 3}
-  m_Color: {r: 0.12, g: 0.11, b: 0.29, a: 0.7}
+  m_Sprite: {fileID: 21300000, guid: 2176cb6c144948c791e53c3135643fe2, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -128,7 +129,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0, y: -0.05}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -138,7 +139,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.65, y: 1.48}
   m_EdgeRadius: 0
 --- !u!114 &3437869750791367159
 MonoBehaviour:
@@ -154,5 +155,39 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UmbraChronos.Time.UmbralEcho
   lingerDuration: 2.5
   ignorePlayerCollision: 1
-  spriteRenderer: {fileID: 0}
-  echoColor: {r: 0.12, g: 0.11, b: 0.29, a: 0.75}
+  spriteRenderer: {fileID: 5773055384352831428}
+  echoColor: {r: 1, g: 1, b: 1, a: 1}
+--- !u!114 &8841001414793136200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7506138194213475459}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8841aec3410b4761ad80115cc3f52c66, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UmbraChronos.Player.PlayerAnimator
+  idleSprites:
+  - {fileID: 21300000, guid: 2176cb6c144948c791e53c3135643fe2, type: 3}
+  - {fileID: 21300000, guid: 58e7d46ad5ca4329ab4082f0a8d8b56f, type: 3}
+  - {fileID: 21300000, guid: 76a54a9a44d74cbfabc41ce08ca5a985, type: 3}
+  - {fileID: 21300000, guid: 453a616a6c1f4a0aa6d05fc899473837, type: 3}
+  runSprites:
+  - {fileID: 21300000, guid: 23d3e0f428d0418db0d9a56194c40ad6, type: 3}
+  - {fileID: 21300000, guid: 986f1093942a432997cade06098f1ff9, type: 3}
+  - {fileID: 21300000, guid: affdb8060898432f977a8ac017ee0fcd, type: 3}
+  - {fileID: 21300000, guid: a83c1c1214f0425a974ab4a1ec366b19, type: 3}
+  - {fileID: 21300000, guid: e6e997ad053f4aeeaf30b718a1c194e7, type: 3}
+  - {fileID: 21300000, guid: 20c91ca3d66b47d49cc445462521b4bc, type: 3}
+  jumpSprite: {fileID: 21300000, guid: 7241212d0d31430693ee858b62dc3bbd, type: 3}
+  fallSprite: {fileID: 21300000, guid: 9bd4c2d46bc741499d354d20c3df9eb8, type: 3}
+  idleFps: 6
+  runFps: 12
+  enableSquashStretch: 1
+  jumpStretchFactor: 1.2
+  landSquashFactor: 0.78
+  recoverySpeed: 10
+  isEcho: 1
+

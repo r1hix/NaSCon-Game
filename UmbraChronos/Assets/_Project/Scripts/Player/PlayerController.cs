@@ -69,11 +69,19 @@ namespace UmbraChronos.Player
 
             rb.gravityScale = normalGravityScale;
             rb.freezeRotation = true;
-            rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.color = Color.white;
+            }
 
             if (GetComponent<PlayerRadiationFX>() == null)
             {
                 gameObject.AddComponent<PlayerRadiationFX>();
+            }
+
+            if (GetComponent<PlayerAnimator>() == null)
+            {
+                gameObject.AddComponent<PlayerAnimator>();
             }
         }
 

@@ -104,17 +104,20 @@ namespace UmbraChronos.Editor
             string path = $"{PlayerPrefabFolder}/UmbralEcho.prefab";
 
             GameObject echoObj = new GameObject("UmbralEcho");
-            echoObj.transform.localScale = new Vector3(0.8f, 1.6f, 1f);
+            echoObj.transform.localScale = Vector3.one;
 
             var sr = echoObj.AddComponent<SpriteRenderer>();
             sr.sprite = sprite;
-            sr.color = new Color(0.12f, 0.11f, 0.29f, 0.70f); // Translucent Cyan-Indigo (#1E1B4B)
+            sr.color = Color.white;
             sr.sortingOrder = 5;
 
             var col = echoObj.AddComponent<BoxCollider2D>();
-            col.size = Vector2.one;
+            col.size = new Vector2(0.65f, 1.48f);
+            col.offset = new Vector2(0f, -0.05f);
 
             echoObj.AddComponent<UmbralEcho>();
+            var anim = echoObj.AddComponent<UmbraChronos.Player.PlayerAnimator>();
+            anim.ConfigureAsEcho();
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(echoObj, path);
             Object.DestroyImmediate(echoObj);
@@ -127,11 +130,11 @@ namespace UmbraChronos.Editor
 
             GameObject playerObj = new GameObject("Player");
             playerObj.tag = "Player";
-            playerObj.transform.localScale = new Vector3(0.8f, 1.6f, 1f);
+            playerObj.transform.localScale = Vector3.one;
 
             var sr = playerObj.AddComponent<SpriteRenderer>();
             sr.sprite = sprite;
-            sr.color = new Color(0.05f, 0.05f, 0.08f, 1f); // #0D0D15 Obsidian silhouette
+            sr.color = Color.white;
             sr.sortingOrder = 10;
 
             var rb = playerObj.AddComponent<Rigidbody2D>();
@@ -140,10 +143,12 @@ namespace UmbraChronos.Editor
             rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
             var col = playerObj.AddComponent<BoxCollider2D>();
-            col.size = Vector2.one;
+            col.size = new Vector2(0.65f, 1.48f);
+            col.offset = new Vector2(0f, -0.05f);
 
-            playerObj.AddComponent<PlayerController>();
+            var pc = playerObj.AddComponent<PlayerController>();
             playerObj.AddComponent<TimeBody>();
+            playerObj.AddComponent<UmbraChronos.Player.PlayerAnimator>();
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(playerObj, path);
             Object.DestroyImmediate(playerObj);
