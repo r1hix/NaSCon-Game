@@ -77,11 +77,7 @@ namespace UmbraChronos.Editor
             alertRect.pivot = new Vector2(0.5f, 1f);
             alertRect.anchoredPosition = new Vector2(0f, -80f);
             alertRect.sizeDelta = new Vector2(480f, 44f);
-            Image alertBg = alertBanner.AddComponent<Image>();
-            alertBg.sprite = spritePill;
-            alertBg.color = new Color(0.7f, 0.1f, 0.1f, 0.85f);
-
-            GameObject alertTextObj = CreateText("Alert_Text", alertBanner.transform, "⚠ SEARING LIGHT — SEEK SHADOW!", 20, TextAlignmentOptions.Center, Color.white);
+            GameObject alertTextObj = CreateText("Alert_Text", alertBanner.transform, "[!] SEARING LIGHT — SEEK SHADOW!", 20, TextAlignmentOptions.Center, Color.white);
             RectTransform alertTextRect = alertTextObj.GetComponent<RectTransform>();
             alertTextRect.anchorMin = Vector2.zero;
             alertTextRect.anchorMax = Vector2.one;
@@ -185,20 +181,37 @@ namespace UmbraChronos.Editor
             spoolImg.color = new Color(0.22f, 0.74f, 0.97f, 1f);
             so.FindProperty("rewindTapeSpool").objectReferenceValue = spoolRect;
 
-            // Energy Bar Background Track
+            // Row 1 (Top): Header Label (Left) + Status Badge (Right)
+            GameObject headerObj = CreateText("Header_Label", rewindContainer.transform, "TEMPORAL BUFFER", 11, TextAlignmentOptions.Left, new Color(0.6f, 0.75f, 0.9f, 0.85f));
+            RectTransform headerRect = headerObj.GetComponent<RectTransform>();
+            headerRect.anchorMin = new Vector2(0f, 0.5f);
+            headerRect.anchorMax = new Vector2(0f, 0.5f);
+            headerRect.pivot = new Vector2(0f, 0.5f);
+            headerRect.anchoredPosition = new Vector2(76f, 18f);
+            headerRect.sizeDelta = new Vector2(115f, 18f);
+
+            GameObject statusObj = CreateText("Status_Text", rewindContainer.transform, "BUFFER FULL", 11, TextAlignmentOptions.Right, new Color(0.22f, 0.74f, 0.97f, 1f));
+            RectTransform statusRect = statusObj.GetComponent<RectTransform>();
+            statusRect.anchorMin = new Vector2(1f, 0.5f);
+            statusRect.anchorMax = new Vector2(1f, 0.5f);
+            statusRect.pivot = new Vector2(1f, 0.5f);
+            statusRect.anchoredPosition = new Vector2(-20f, 18f);
+            statusRect.sizeDelta = new Vector2(115f, 18f);
+            so.FindProperty("rewindStatusText").objectReferenceValue = statusObj.GetComponent<TextMeshProUGUI>();
+
+            // Row 2 (Middle): Energy Bar Track & Fill
             GameObject trackObj = new GameObject("Energy_Track");
             trackObj.transform.SetParent(rewindContainer.transform, false);
             RectTransform trackRect = trackObj.AddComponent<RectTransform>();
             trackRect.anchorMin = new Vector2(0f, 0.5f);
             trackRect.anchorMax = new Vector2(1f, 0.5f);
             trackRect.pivot = new Vector2(0f, 0.5f);
-            trackRect.anchoredPosition = new Vector2(76f, -10f);
-            trackRect.sizeDelta = new Vector2(-96f, 14f);
+            trackRect.anchoredPosition = new Vector2(76f, 0f);
+            trackRect.sizeDelta = new Vector2(-96f, 12f);
             Image trackImg = trackObj.AddComponent<Image>();
             trackImg.sprite = spritePill;
             trackImg.color = new Color(0.12f, 0.14f, 0.22f, 0.8f);
 
-            // Filled Energy Bar
             GameObject fillObj = new GameObject("Energy_Fill");
             fillObj.transform.SetParent(trackObj.transform, false);
             RectTransform fillRect = fillObj.AddComponent<RectTransform>();
@@ -214,24 +227,23 @@ namespace UmbraChronos.Editor
             fillImg.color = new Color(0.22f, 0.74f, 0.97f, 1f);
             so.FindProperty("rewindBarFill").objectReferenceValue = fillImg;
 
-            // Rewind Buffer Text
-            GameObject rwTextObj = CreateText("Buffer_Text", rewindContainer.transform, "REWIND: 5.0s / 5.0s", 16, TextAlignmentOptions.Left, Color.white);
+            // Row 3 (Bottom): Seconds Counter (Left) + Key Prompt (Right)
+            GameObject rwTextObj = CreateText("Buffer_Text", rewindContainer.transform, "5.0s / 5.0s", 11, TextAlignmentOptions.Left, Color.white);
             RectTransform rwTextRect = rwTextObj.GetComponent<RectTransform>();
             rwTextRect.anchorMin = new Vector2(0f, 0.5f);
-            rwTextRect.anchorMax = new Vector2(1f, 0.5f);
-            rwTextRect.anchoredPosition = new Vector2(78f, 15f);
-            rwTextRect.sizeDelta = new Vector2(-96f, 24f);
+            rwTextRect.anchorMax = new Vector2(0f, 0.5f);
+            rwTextRect.pivot = new Vector2(0f, 0.5f);
+            rwTextRect.anchoredPosition = new Vector2(76f, -18f);
+            rwTextRect.sizeDelta = new Vector2(115f, 18f);
             so.FindProperty("rewindBufferText").objectReferenceValue = rwTextObj.GetComponent<TextMeshProUGUI>();
 
-            // Rewind Status Badge Text
-            GameObject statusObj = CreateText("Status_Text", rewindContainer.transform, "BUFFER FULL", 12, TextAlignmentOptions.Right, new Color(0.22f, 0.74f, 0.97f, 0.9f));
-            RectTransform statusRect = statusObj.GetComponent<RectTransform>();
-            statusRect.anchorMin = new Vector2(1f, 0.5f);
-            statusRect.anchorMax = new Vector2(1f, 0.5f);
-            statusRect.pivot = new Vector2(1f, 0.5f);
-            statusRect.anchoredPosition = new Vector2(-20f, 15f);
-            statusRect.sizeDelta = new Vector2(120f, 20f);
-            so.FindProperty("rewindStatusText").objectReferenceValue = statusObj.GetComponent<TextMeshProUGUI>();
+            GameObject promptObj = CreateText("Prompt_Text", rewindContainer.transform, "[HOLD R]", 11, TextAlignmentOptions.Right, new Color(0.5f, 0.6f, 0.7f, 0.8f));
+            RectTransform promptRect = promptObj.GetComponent<RectTransform>();
+            promptRect.anchorMin = new Vector2(1f, 0.5f);
+            promptRect.anchorMax = new Vector2(1f, 0.5f);
+            promptRect.pivot = new Vector2(1f, 0.5f);
+            promptRect.anchoredPosition = new Vector2(-20f, -18f);
+            promptRect.sizeDelta = new Vector2(115f, 18f);
 
             // ==========================================
             // 5. RUNIC INPUT PROMPTS (Bottom-Left)

@@ -226,7 +226,7 @@ namespace UmbraChronos.UI
 
             if (rewindBufferText != null)
             {
-                rewindBufferText.text = $"REWIND: {currentEnergy:F1}s / {maxEnergy:F1}s";
+                rewindBufferText.text = $"{currentEnergy:F1}s / {maxEnergy:F1}s";
             }
 
             if (rewindStatusText != null)
