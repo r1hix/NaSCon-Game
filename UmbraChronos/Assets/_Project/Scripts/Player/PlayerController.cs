@@ -176,11 +176,24 @@ namespace UmbraChronos.Player
 
         private void CheckGround()
         {
-            Vector2 checkCenter = (Vector2)transform.position + groundCheckOffset;
-            Collider2D hit = Physics2D.OverlapBox(checkCenter, groundCheckSize, 0f, groundLayer);
+            if (col == null) col = GetComponent<Collider2D>();
+            if (col == null) return;
 
-            // Ensure we aren't colliding with our own collider
-            isGrounded = hit != null && hit != col;
+            Bounds bounds = col.bounds;
+            // Place box check precisely at bottom edge of collider, slightly inset on sides
+            Vector2 checkCenter = new Vector2(bounds.center.x, bounds.min.y);
+            Vector2 checkSize = new Vector2(bounds.size.x * 0.85f, 0.14f);
+
+            Collider2D[] hits = Physics2D.OverlapBoxAll(checkCenter, checkSize, 0f, groundLayer);
+            isGrounded = false;
+            for (int i = 0; i < hits.Length; i++)
+            {
+                if (hits[i] != col && !hits[i].isTrigger)
+                {
+                    isGrounded = true;
+                    break;
+                }
+            }
         }
 
         private void HandleHorizontalMovement()
@@ -267,9 +280,14 @@ namespace UmbraChronos.Player
 
         private void OnDrawGizmosSelected()
         {
+            if (col == null) col = GetComponent<Collider2D>();
+            if (col == null) return;
+
             Gizmos.color = isGrounded ? Color.green : Color.red;
-            Vector2 checkCenter = (Vector2)transform.position + groundCheckOffset;
-            Gizmos.DrawWireCube(checkCenter, groundCheckSize);
+            Bounds bounds = col.bounds;
+            Vector2 checkCenter = new Vector2(bounds.center.x, bounds.min.y);
+            Vector2 checkSize = new Vector2(bounds.size.x * 0.85f, 0.14f);
+            Gizmos.DrawWireCube(checkCenter, checkSize);
         }
     }
 }

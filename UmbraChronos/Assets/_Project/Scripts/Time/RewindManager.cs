@@ -201,10 +201,12 @@ namespace UmbraChronos.Time
         {
             if (playerTimeBody == null || echoPrefab == null) return;
 
-            List<TimeBody.TimeSnapshot> history = playerTimeBody.GetHistoryClone();
+            List<TimeBody.TimeSnapshot> history = playerTimeBody.GetEchoTrajectory();
             if (history == null || history.Count < 5) return;
 
-            GameObject echoObj = Instantiate(echoPrefab, transform.position, Quaternion.identity);
+            // Spawn directly at the starting position of the trajectory
+            Vector3 spawnPos = new Vector3(history[0].position.x, history[0].position.y, 0f);
+            GameObject echoObj = Instantiate(echoPrefab, spawnPos, Quaternion.Euler(0f, 0f, history[0].rotation));
             var echoComponent = echoObj.GetComponent<UmbralEcho>();
             if (echoComponent != null)
             {
