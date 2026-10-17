@@ -353,10 +353,10 @@ namespace UmbraChronos.Editor
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-            // 1. Camera & Audio
+            // 1. Camera with ScreenShift room-paging (moves over when player goes off-screen!)
             GameObject camObj = new GameObject("Main Camera");
             camObj.tag = "MainCamera";
-            camObj.transform.position = new Vector3(0.5f, 1.5f, -10f);
+            camObj.transform.position = new Vector3(0f, 1.0f, -10f);
 
             var cam = camObj.AddComponent<Camera>();
             cam.orthographic = true;
@@ -371,10 +371,13 @@ namespace UmbraChronos.Editor
                 additionalCamData.renderPostProcessing = true;
             }
 
-            // 2. Large Background Canvas - High contrast vivid Dusk sky
+            var camCtrl = camObj.AddComponent<CameraController>();
+            camCtrl.ConfigureRoom(new Vector2(24f, 15f), new Vector2(0f, 1.0f), 0.35f);
+
+            // 2. Large Background Canvas - High contrast vivid Dusk sky spanning multiple screens
             GameObject bgWall = new GameObject("Background_Canvas");
             bgWall.transform.position = new Vector3(0f, 3f, 0f);
-            bgWall.transform.localScale = new Vector3(50f, 30f, 1f);
+            bgWall.transform.localScale = new Vector3(120f, 40f, 1f);
             var bgSr = bgWall.AddComponent<SpriteRenderer>();
             bgSr.sprite = sprite;
             bgSr.color = new Color(0.78f, 0.35f, 0.22f, 1f); // Vivid Dusk Sky (#C75938) - High Contrast!
@@ -390,68 +393,89 @@ namespace UmbraChronos.Editor
             // 4. Interactive Celestial SunDial (starts in the sky at noon!)
             GameObject sunInst = (GameObject)PrefabUtility.InstantiatePrefab(sunDialPrefab);
             sunInst.transform.position = new Vector3(1f, 14f, 0f);
+            var dialComp = sunInst.GetComponent<SunDialController>();
+            if (dialComp != null)
+            {
+                SerializedObject soDial = new SerializedObject(dialComp);
+                soDial.FindProperty("followCameraX").boolValue = true;
+                soDial.ApplyModifiedProperties();
+            }
 
-            // 5. Level Geometry with Real Chasm & Comfortable Step Heights:
-            // Left Cliff (extends from -15 to -3.2, surface at y = -1.75)
+            // 5. SCREEN 1: Left Cliff, Shelter, Monolith 1, Chasm 1, Plate 1, Gate 1
             CreatePlatform("Cliff_Left", new Vector3(-9.0f, -2.5f, 0f), new Vector3(12f, 1.5f, 1f), sprite);
             CreatePlatform("Boundary_Wall_Left", new Vector3(-15.0f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
-
-            // Left Shelter (Overhead roof protecting spawn point)
             CreatePlatform("Spawn_Shelter_Roof", new Vector3(-10.5f, 1.2f, 0f), new Vector3(6f, 0.5f, 1f), sprite);
 
-            // Stepping Stone Ledge (effortless 0.95 unit hop from floor at y = -1.75 to y = -0.8)
-            CreatePlatform("Step_Ledge", new Vector3(-5.0f, -1.0f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
+            // Stepping Stone Ledge 1 (hop 0.95 from floor at y = -1.75 to y = -0.8)
+            CreatePlatform("Step_Ledge_1", new Vector3(-5.0f, -1.0f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
 
-            // Pushable Physics Box (at x = -8f on floor)
+            // Pushable Physics Box in Screen 1
             GameObject blockInst = (GameObject)PrefabUtility.InstantiatePrefab(blockPrefab);
             blockInst.transform.position = new Vector3(-8f, -1.15f, 0f);
 
-            // Monolith standing at edge of left cliff (x = -3.2, y = -0.95, scale 1.4 x 1.6)
-            // Base sits at y = -1.75, top is at y = -0.15 (effortless 0.65 unit hop from step ledge!)
-            GameObject monolithInst = (GameObject)PrefabUtility.InstantiatePrefab(monolithPrefab);
-            monolithInst.transform.position = new Vector3(-3.2f, -0.95f, 0f);
-            var shadowComp = monolithInst.GetComponent<DynamicShadowCollider>();
-            if (shadowComp != null)
+            // Monolith 1 standing at edge of left cliff (x = -3.2, y = -0.95, scale 1.4 x 1.6)
+            GameObject monolithInst1 = (GameObject)PrefabUtility.InstantiatePrefab(monolithPrefab);
+            monolithInst1.name = "Monolith_1";
+            monolithInst1.transform.position = new Vector3(-3.2f, -0.95f, 0f);
+            var shadowComp1 = monolithInst1.GetComponent<DynamicShadowCollider>();
+            if (shadowComp1 != null)
             {
-                SerializedObject soMonolith = new SerializedObject(shadowComp);
-                soMonolith.FindProperty("sunTransform").objectReferenceValue = sunInst.transform;
-                soMonolith.FindProperty("fallbackGroundY").floatValue = -1.75f;
-                soMonolith.ApplyModifiedProperties();
+                SerializedObject soMonolith1 = new SerializedObject(shadowComp1);
+                soMonolith1.FindProperty("sunTransform").objectReferenceValue = sunInst.transform;
+                soMonolith1.FindProperty("fallbackGroundY").floatValue = -1.75f;
+                soMonolith1.ApplyModifiedProperties();
             }
 
-            // Lethal Chasm Floor (deep abyss at y = -6.5f)
-            CreatePlatform("Chasm_Floor", new Vector3(0.5f, -6.5f, 0f), new Vector3(14f, 1.5f, 1f), sprite);
+            // Mid Plateau connecting Screen 1 and Screen 2 (x = 3.5 to 14.5)
+            CreatePlatform("Mid_Plateau", new Vector3(9.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
 
-            // Right Cliff (extends from 3.5 to 15, surface at y = -1.75)
-            CreatePlatform("Cliff_Right", new Vector3(9.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            // Puzzle 1: PressurePlate 1 & TimedGate 1 (opens passageway to Screen 2!)
+            GameObject gateInst1 = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
+            gateInst1.name = "TimedGate_1";
+            gateInst1.transform.position = new Vector3(8.5f, -0.25f, 0f);
 
-            // 6. Interactive Puzzle: PressurePlate & TimedGate on Right Cliff
-            GameObject gateInst = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
-            gateInst.transform.position = new Vector3(8.5f, -0.25f, 0f);
-
-            GameObject plateInst = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
-            plateInst.transform.position = new Vector3(5.5f, -1.65f, 0f);
-            var plateComp = plateInst.GetComponent<PressurePlate>();
-            if (plateComp != null)
+            GameObject plateInst1 = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
+            plateInst1.name = "PressurePlate_1";
+            plateInst1.transform.position = new Vector3(5.5f, -1.65f, 0f);
+            var plateComp1 = plateInst1.GetComponent<PressurePlate>();
+            if (plateComp1 != null)
             {
-                SerializedObject soPlate = new SerializedObject(plateComp);
-                SerializedProperty propGate = soPlate.FindProperty("targetGate");
-                if (propGate != null)
-                {
-                    propGate.objectReferenceValue = gateInst.GetComponent<TimedGate>();
-                    soPlate.ApplyModifiedProperties();
-                }
+                SerializedObject soPlate1 = new SerializedObject(plateComp1);
+                soPlate1.FindProperty("targetGate").objectReferenceValue = gateInst1.GetComponent<TimedGate>();
+                soPlate1.ApplyModifiedProperties();
             }
 
-            // 7. Goal Sanctuary Arch behind the gate
-            GameObject goalMarker = CreatePlatform("Goal_Sanctuary", new Vector3(11.5f, -1.25f, 0f), new Vector3(3.2f, 1.2f, 1f), sprite);
+            // 6. SCREEN 2: Step Ledge 2, Monolith 2, Chasm 2, and Grand Sanctuary Citadel!
+            CreatePlatform("Step_Ledge_2", new Vector3(12.5f, -1.0f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
+
+            GameObject monolithInst2 = (GameObject)PrefabUtility.InstantiatePrefab(monolithPrefab);
+            monolithInst2.name = "Monolith_2";
+            monolithInst2.transform.position = new Vector3(14.5f, -0.95f, 0f);
+            var shadowComp2 = monolithInst2.GetComponent<DynamicShadowCollider>();
+            if (shadowComp2 != null)
+            {
+                SerializedObject soMonolith2 = new SerializedObject(shadowComp2);
+                soMonolith2.FindProperty("sunTransform").objectReferenceValue = sunInst.transform;
+                soMonolith2.FindProperty("fallbackGroundY").floatValue = -1.75f;
+                soMonolith2.ApplyModifiedProperties();
+            }
+
+            // Sanctuary Citadel (x = 21.5 to 33.0)
+            CreatePlatform("Sanctuary_Citadel", new Vector3(27.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            CreatePlatform("Boundary_Wall_Right", new Vector3(32.5f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
+
+            // Lethal Chasm Floor (deep abyss spanning under both rooms)
+            CreatePlatform("Chasm_Floor", new Vector3(10.0f, -6.5f, 0f), new Vector3(50f, 1.5f, 1f), sprite);
+
+            // Goal Sanctuary Arch on the Citadel
+            GameObject goalMarker = CreatePlatform("Goal_Sanctuary", new Vector3(29.5f, -1.25f, 0f), new Vector3(3.2f, 1.2f, 1f), sprite);
             var goalSr = goalMarker.GetComponent<SpriteRenderer>();
             if (goalSr != null)
             {
                 goalSr.color = new Color(0.98f, 0.82f, 0.4f, 1f); // Radiant Gold (#FFD166)
             }
 
-            // 8. Post Processing & Lethal Light Zone
+            // 7. Post Processing & Lethal Light Zone
             PrefabUtility.InstantiatePrefab(postProcessingPrefab);
             GameObject lightZoneInst = (GameObject)PrefabUtility.InstantiatePrefab(lethalLightPrefab);
             var lightZoneComp = lightZoneInst.GetComponent<LethalLightZone>();
@@ -466,7 +490,7 @@ namespace UmbraChronos.Editor
                 }
             }
 
-            // 9. Player & RewindManager (Spawned safely inside the spawn shelter)
+            // 8. Player & RewindManager (Spawned safely inside the Screen 1 shelter)
             GameObject playerInst = (GameObject)PrefabUtility.InstantiatePrefab(playerPrefab);
             playerInst.transform.position = new Vector3(-10.5f, -1.0f, 0f);
 

@@ -271,8 +271,9 @@ EdgeCollider2D:
   m_Offset: {x: 0, y: 0}
   m_EdgeRadius: 0
   m_Points:
-  - {x: -0.5, y: 0}
-  - {x: 0.5, y: 0}
+  - {x: -0.5, y: 0.5}
+  - {x: 0.5, y: 0.5}
+  - {x: 13.357129, y: 0.48291588}
   m_AdjacentStartPoint: {x: 0, y: 0}
   m_AdjacentEndPoint: {x: 0, y: 0}
   m_UseAdjacentStartPoint: 0
@@ -350,8 +351,9 @@ LineRenderer:
   m_SortingOrder: 5
   m_MaskInteraction: 0
   m_Positions:
-  - {x: 0, y: 0, z: 0}
-  - {x: 0, y: 0, z: 1}
+  - {x: -0.7, y: 0.8, z: -0.05}
+  - {x: 0.7, y: 0.8, z: -0.05}
+  - {x: 18.69998, y: 0.7726654, z: -0.05}
   m_Parameters:
     serializedVersion: 3
     widthMultiplier: 1
@@ -449,10 +451,10 @@ MonoBehaviour:
   m_InstanceId: 0
   m_ShadowShape2DComponent: {fileID: 4829103847291827364}
   m_ShadowShape2DProvider:
-    rid: 5310643757134381058
+    rid: 5310643757580812300
   m_ShadowCastingSource: 2
   m_ShadowMesh:
-    rid: 5310643757134381059
+    rid: 5310643757580812301
   m_CastingOption: 1
   m_PreviousTrimEdge: 0
   m_PreviousEdgeProcessing: -1
@@ -460,16 +462,16 @@ MonoBehaviour:
   m_PreviousShadowShape2DSource: {fileID: 0}
   m_PreviousShadowShape2DProviderHash: 0
   m_SelectionSources:
-    rid: 5310643757134381060
+    rid: 5310643757580812302
   references:
     version: 2
     RefIds:
     - rid: -2
       type: {class: , ns: , asm: }
-    - rid: 5310643757134381058
+    - rid: 5310643757580812300
       type: {class: ShadowShape2DProvider_SpriteRenderer, ns: UnityEngine.Rendering.Universal, asm: Unity.RenderPipelines.Universal.2D.Runtime}
       data: 
-    - rid: 5310643757134381059
+    - rid: 5310643757580812301
       type: {class: ShadowMesh2D, ns: UnityEngine.Rendering.Universal, asm: Unity.RenderPipelines.Universal.2D.Runtime}
       data:
         m_Vertices:
@@ -523,7 +525,7 @@ MonoBehaviour:
         m_FlipX: 0
         m_FlipY: 0
         m_InitialTrim: 0.07
-    - rid: 5310643757134381060
+    - rid: 5310643757580812302
       type: {class: Shadow2DProviderSources, ns: UnityEngine.Rendering.Universal, asm: Unity.RenderPipelines.Universal.2D.Runtime}
       data:
         m_SelectedHashCode: 0

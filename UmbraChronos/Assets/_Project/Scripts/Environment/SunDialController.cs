@@ -39,6 +39,10 @@ namespace UmbraChronos.Environment
         [Tooltip("Maximum allowable sun angle (dusk / low horizon).")]
         [SerializeField] private float maxAngle = 160f;
 
+        [Header("Camera Tracking")]
+        [Tooltip("If true, the orbit center tracks the active camera's X position to illuminate multi-screen levels.")]
+        [SerializeField] private bool followCameraX = true;
+
         [Header("Visuals & Juice")]
         [Tooltip("Optional visual sprite for the sun orb in the sky.")]
         [SerializeField] private Transform sunVisualOrb;
@@ -75,8 +79,22 @@ namespace UmbraChronos.Environment
         {
             if (isRewinding) return;
 
+            TrackCamera();
             ReadInput();
             SmoothRotate();
+        }
+
+        private void TrackCamera()
+        {
+            if (followCameraX && Camera.main != null)
+            {
+                float camX = Camera.main.transform.position.x;
+                if (Mathf.Abs(orbitCenter.x - camX) > 0.05f)
+                {
+                    orbitCenter.x = Mathf.MoveTowards(orbitCenter.x, camX, 35f * UnityEngine.Time.deltaTime);
+                    UpdateSunPosition(false);
+                }
+            }
         }
 
         private void ReadInput()
