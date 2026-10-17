@@ -54,10 +54,10 @@ namespace UmbraChronos.Editor
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
             // 1. Camera & Audio
-            SetupLevelCamera(new Vector3(0f, 1.0f, -10f), 7.0f);
+            SetupLevelCamera(new Vector3(0f, 1.0f, -10f), 7.5f, new Color(0.85f, 0.40f, 0.35f));
 
-            // 2. Visual Sky & Lighting
-            SetupAtmosphere(sprite, new Color(0.25f, 0.20f, 0.40f, 1f));
+            // 2. High Contrast Dawn Sky Atmosphere
+            SetupAtmosphere(sprite, new Color(0.88f, 0.42f, 0.32f, 1f), new Color(1.0f, 0.85f, 0.70f, 1f));
 
             // 3. SunDial
             GameObject sunInst = SetupSunDial(sprite, new Vector2(0f, -1f), 15f, 50f);
@@ -65,26 +65,32 @@ namespace UmbraChronos.Editor
             // 4. Lethal Light Zone & Post Processing
             SetupPostProcessingAndLight(sunInst);
 
-            // 5. Level Geometry: Starting Cliff, Lethal Void, Monolith, and Landing Cliff
-            // Left Cliff (Player starts here)
-            CreatePlatform("Cliff_Left", new Vector3(-8.5f, -2.5f, 0f), new Vector3(9f, 2f, 1f), sprite);
-            CreatePlatform("Cliff_Left_Backdrop", new Vector3(-13.5f, 1.5f, 0f), new Vector3(1f, 8f, 1f), sprite); // Wall
+            // 5. Level Geometry: Left Cliff with Spawn Shelter, Step Ledge, Monolith, Void, and Right Cliff
+            // Left Cliff (Player starts here, surface at y = -1.75)
+            CreatePlatform("Cliff_Left", new Vector3(-9.0f, -2.5f, 0f), new Vector3(12f, 1.5f, 1f), sprite);
+            CreatePlatform("Boundary_Wall_Left", new Vector3(-15f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
 
-            // Right Cliff (Sanctuary Landing)
-            CreatePlatform("Cliff_Right", new Vector3(8.5f, -2.5f, 0f), new Vector3(9f, 2f, 1f), sprite);
+            // Spawn Shelter Roof: Protects player from lethal light at spawn!
+            CreatePlatform("Spawn_Shelter_Roof", new Vector3(-9.0f, 1.2f, 0f), new Vector3(6f, 0.5f, 1f), sprite);
 
-            // Lethal Chasm Floor (Deep deadly pit at y = -7f)
-            CreatePlatform("Chasm_Floor", new Vector3(0f, -7.5f, 0f), new Vector3(30f, 2f, 1f), sprite);
+            // Stepping Stone Ledge (effortless 0.95 unit hop from floor at y = -1.75 to y = -0.8)
+            CreatePlatform("Step_Ledge", new Vector3(-5.0f, -1.0f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
 
-            // Center Monolith: Standing in the chasm, reaching up to y = 2.5f!
-            // When sun is rotated with [E], casts an ink-black solid shadow bridge from x = -3.5 to x = 4.5!
-            GameObject monolith = CreateMonolithObject(sprite, new Vector3(-3.5f, -0.5f, 0f), new Vector2(1.8f, 7.0f), -1.5f, sunInst.transform);
+            // Monolith: Base at y = -1.75, top at y = -0.15 (effortless 0.65 unit hop from step ledge!)
+            // When sun is rotated with [E], casts an ink-black shadow bridge with cyan rim bridging the chasm!
+            CreateMonolithObject(sprite, new Vector3(-3.0f, -0.95f, 0f), new Vector2(1.4f, 1.6f), -1.75f, sunInst.transform);
+
+            // Lethal Chasm Abyss Floor (deep deadly pit at y = -7f)
+            CreatePlatform("Chasm_Floor", new Vector3(1.0f, -7.0f, 0f), new Vector3(24f, 2f, 1f), sprite);
+
+            // Right Cliff (Sanctuary Landing, surface at y = -1.75)
+            CreatePlatform("Cliff_Right", new Vector3(9.5f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
 
             // Sanctuary Goal Arch on the right cliff
             CreateSanctuaryArch(sprite, new Vector3(10f, -0.5f, 0f));
 
-            // 6. Player & Rewind Manager
-            SetupPlayer(new Vector3(-8.5f, -0.5f, 0f));
+            // 6. Player & Rewind Manager (Spawns safely inside the shelter)
+            SetupPlayer(new Vector3(-9.0f, -1.0f, 0f));
 
             string path = $"{LevelsFolder}/Level_01.unity";
             EditorSceneManager.SaveScene(scene, path);
@@ -100,10 +106,10 @@ namespace UmbraChronos.Editor
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
             // 1. Camera & Audio
-            SetupLevelCamera(new Vector3(0.5f, 1.5f, -10f), 7.5f);
+            SetupLevelCamera(new Vector3(0.5f, 1.5f, -10f), 7.5f, new Color(0.12f, 0.15f, 0.25f));
 
-            // 2. Atmosphere & Indoor Vault Light
-            SetupAtmosphere(sprite, new Color(0.20f, 0.18f, 0.32f, 1f));
+            // 2. Atmosphere & Indoor Vault Light (Ancient moody teal-azure)
+            SetupAtmosphere(sprite, new Color(0.20f, 0.35f, 0.48f, 1f), new Color(0.5f, 0.8f, 0.95f, 1f));
 
             // 3. Sun & Light
             GameObject sunInst = SetupSunDial(sprite, new Vector2(0f, 0f), 14f, 90f);
@@ -115,21 +121,24 @@ namespace UmbraChronos.Editor
             CreatePlatform("Wall_Left", new Vector3(-14f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
             CreatePlatform("Wall_Right", new Vector3(14f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
 
-            // High Platform with Pressure Plate
-            CreatePlatform("High_Plate_Ledge", new Vector3(-4f, 0.8f, 0f), new Vector3(4.5f, 0.6f, 1f), sprite);
+            // Vault Ceiling (Shelters the vault from lethal light)
+            CreatePlatform("Vault_Ceiling", new Vector3(0f, 5.0f, 0f), new Vector3(32f, 1f, 1f), sprite);
 
-            // Stepping platform to reach high ledge
-            CreatePlatform("Step_Ledge", new Vector3(-8.5f, -0.5f, 0f), new Vector3(2.5f, 0.5f, 1f), sprite);
+            // Stepping platform to reach high ledge (surface at y = -0.7, effortless 1.05 unit hop!)
+            CreatePlatform("Step_Ledge", new Vector3(-7.0f, -0.9f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
+
+            // High Platform with Pressure Plate (surface at y = 0.2, effortless 0.9 unit hop!)
+            CreatePlatform("High_Plate_Ledge", new Vector3(-3.5f, 0.0f, 0f), new Vector3(4.0f, 0.4f, 1f), sprite);
 
             // TimedGate sealing the Vault Exit
             GameObject gatePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabInteractFolder}/TimedGate.prefab");
             GameObject platePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabInteractFolder}/PressurePlate.prefab");
 
             GameObject gateInst = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
-            gateInst.transform.position = new Vector3(6.5f, -0.25f, 0f);
+            gateInst.transform.position = new Vector3(6.0f, -0.25f, 0f);
 
             GameObject plateInst = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
-            plateInst.transform.position = new Vector3(-4.0f, 1.35f, 0f);
+            plateInst.transform.position = new Vector3(-3.5f, 0.35f, 0f);
 
             var plateComp = plateInst.GetComponent<PressurePlate>();
             if (plateComp != null)
@@ -139,19 +148,19 @@ namespace UmbraChronos.Editor
                 soPlate.ApplyModifiedProperties();
             }
 
-            // Pushable block for versatile solving
+            // Pushable block for versatile solving or umbrella shielding
             GameObject blockPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabEnvFolder}/PushableBlock.prefab");
             if (blockPrefab != null)
             {
                 GameObject blockInst = (GameObject)PrefabUtility.InstantiatePrefab(blockPrefab);
-                blockInst.transform.position = new Vector3(-1.0f, -1.0f, 0f);
+                blockInst.transform.position = new Vector3(0f, -1.15f, 0f);
             }
 
             // Sanctuary Arch inside vault
-            CreateSanctuaryArch(sprite, new Vector3(10.5f, -1.25f, 0f));
+            CreateSanctuaryArch(sprite, new Vector3(10.5f, -0.5f, 0f));
 
             // Player spawn
-            SetupPlayer(new Vector3(-11f, -1.0f, 0f));
+            SetupPlayer(new Vector3(-10.5f, -1.0f, 0f));
 
             string path = $"{LevelsFolder}/Level_02.unity";
             EditorSceneManager.SaveScene(scene, path);
@@ -167,45 +176,50 @@ namespace UmbraChronos.Editor
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
             // 1. Camera & Audio
-            SetupLevelCamera(new Vector3(0f, 2.0f, -10f), 8.5f);
+            SetupLevelCamera(new Vector3(0f, 1.5f, -10f), 8.5f, new Color(0.40f, 0.12f, 0.55f));
 
-            // 2. Climax Atmosphere: Eclipse Purple Sky
-            SetupAtmosphere(sprite, new Color(0.12f, 0.08f, 0.25f, 1f));
+            // 2. Climax Atmosphere: Cosmic Eclipse Violet Sky - High Contrast!
+            SetupAtmosphere(sprite, new Color(0.48f, 0.16f, 0.62f, 1f), new Color(0.85f, 0.70f, 1.0f, 1f));
 
             // 3. SunDial
-            GameObject sunInst = SetupSunDial(sprite, new Vector2(0f, 0f), 16f, 90f);
+            GameObject sunInst = SetupSunDial(sprite, new Vector2(0f, 0f), 15f, 90f);
             SetupPostProcessingAndLight(sunInst);
 
-            // 4. Geometry: Central Hub Island, Left Pedestal (Switch 1), Right Pedestal (Switch 2), Final Sanctuary
-            // Center Island (Where player starts)
-            CreatePlatform("Center_Hub", new Vector3(0f, -2.5f, 0f), new Vector3(8f, 1.5f, 1f), sprite);
+            // 4. Geometry: Central Hub Island, Left Pedestal (Switch 1), Right Pedestal (TimedGate & Sanctuary)
+            // Center Island (Where player starts, surface at y = -1.75)
+            CreatePlatform("Center_Hub", new Vector3(0f, -2.5f, 0f), new Vector3(7f, 1.5f, 1f), sprite);
 
-            // Left Pedestal across Chasm 1 (Switch 1)
-            CreatePlatform("Left_Pedestal", new Vector3(-9.5f, -1.0f, 0f), new Vector3(4f, 1.0f, 1f), sprite);
+            // Central Shelter Roof: Protects player from lethal light at spawn!
+            CreatePlatform("Center_Shelter_Roof", new Vector3(0f, 2.8f, 0f), new Vector3(8f, 0.5f, 1f), sprite);
 
-            // Right Pedestal across Chasm 2 (Switch 2)
-            CreatePlatform("Right_Pedestal", new Vector3(9.5f, -1.0f, 0f), new Vector3(4f, 1.0f, 1f), sprite);
+            // Left & Right Stepping Ledges on Center Hub (effortless 0.95 unit hop from floor to y = -0.8)
+            CreatePlatform("Step_Ledge_Left", new Vector3(-2.0f, -1.0f, 0f), new Vector3(1.8f, 0.4f, 1f), sprite);
+            CreatePlatform("Step_Ledge_Right", new Vector3(2.0f, -1.0f, 0f), new Vector3(1.8f, 0.4f, 1f), sprite);
 
-            // Deep Lethal Void
-            CreatePlatform("Eclipse_Abyss", new Vector3(0f, -8.0f, 0f), new Vector3(40f, 2f, 1f), sprite);
+            // Center Monolith: Base at y = -1.75, top at y = -0.15 (effortless 0.65 unit hop from step ledges!)
+            // When sun is turned with [E] -> casts shadow bridge across Left Chasm to Left Pedestal
+            // When sun is turned with [Q] -> casts shadow bridge across Right Chasm to Right Pedestal
+            CreateMonolithObject(sprite, new Vector3(0f, -0.95f, 0f), new Vector2(1.4f, 1.6f), -1.75f, sunInst.transform);
 
-            // Center Tall Monolith that can cast bridges to BOTH sides depending on Q/E rotation!
-            CreateMonolithObject(sprite, new Vector3(0f, 1.0f, 0f), new Vector2(1.8f, 7.5f), -1.5f, sunInst.transform);
+            // Deep Lethal Abyss
+            CreatePlatform("Eclipse_Abyss", new Vector3(0f, -7.5f, 0f), new Vector3(40f, 2f, 1f), sprite);
 
-            // TimedGate sealing the Sanctuary
+            // Left Pedestal across Chasm 1 (surface at y = -1.75)
+            CreatePlatform("Left_Pedestal", new Vector3(-11.5f, -2.5f, 0f), new Vector3(5f, 1.5f, 1f), sprite);
+
+            // Right Pedestal across Chasm 2 (surface at y = -1.75)
+            CreatePlatform("Right_Pedestal", new Vector3(12.0f, -2.5f, 0f), new Vector3(6f, 1.5f, 1f), sprite);
+
+            // TimedGate sealing the Sanctuary on Right Pedestal
             GameObject gatePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabInteractFolder}/TimedGate.prefab");
             GameObject platePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabInteractFolder}/PressurePlate.prefab");
 
             GameObject gateInst = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
-            gateInst.transform.position = new Vector3(0f, 3.5f, 0f); // Overhead gate to sanctuary arch
+            gateInst.transform.position = new Vector3(11.0f, -0.25f, 0f);
 
-            // Plate on Left Pedestal
+            // Plate 1 on Left Pedestal (Holding this opens the gate on Right Pedestal!)
             GameObject plate1 = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
-            plate1.transform.position = new Vector3(-9.5f, -0.25f, 0f);
-
-            // Plate on Right Pedestal
-            GameObject plate2 = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
-            plate2.transform.position = new Vector3(9.5f, -0.25f, 0f);
+            plate1.transform.position = new Vector3(-11.5f, -1.65f, 0f);
 
             var plateComp1 = plate1.GetComponent<PressurePlate>();
             if (plateComp1 != null)
@@ -215,11 +229,10 @@ namespace UmbraChronos.Editor
                 so.ApplyModifiedProperties();
             }
 
-            // High Sanctuary Arch
-            CreatePlatform("Sanctuary_Roof", new Vector3(0f, 2.5f, 0f), new Vector3(5f, 0.5f, 1f), sprite);
-            CreateSanctuaryArch(sprite, new Vector3(0f, 4.0f, 0f));
+            // Sanctuary Arch behind the gate on Right Pedestal
+            CreateSanctuaryArch(sprite, new Vector3(13.5f, -0.5f, 0f));
 
-            // Player starts on Central Hub
+            // Player starts on Central Hub inside the shelter
             SetupPlayer(new Vector3(0f, -1.0f, 0f));
 
             string path = $"{LevelsFolder}/Level_03.unity";
@@ -227,7 +240,7 @@ namespace UmbraChronos.Editor
             Debug.Log($"[LevelBuilder] Saved Level 03 to {path}");
         }
 
-        private static void SetupLevelCamera(Vector3 pos, float orthoSize)
+        private static void SetupLevelCamera(Vector3 pos, float orthoSize, Color bgColor)
         {
             GameObject camObj = new GameObject("Main Camera");
             camObj.tag = "MainCamera";
@@ -236,7 +249,7 @@ namespace UmbraChronos.Editor
             var cam = camObj.AddComponent<Camera>();
             cam.orthographic = true;
             cam.orthographicSize = orthoSize;
-            cam.backgroundColor = new Color(0.06f, 0.05f, 0.12f); // Deep Void
+            cam.backgroundColor = bgColor;
             cam.clearFlags = CameraClearFlags.SolidColor;
             camObj.AddComponent<AudioListener>();
 
@@ -244,11 +257,11 @@ namespace UmbraChronos.Editor
             if (addData != null) addData.renderPostProcessing = true;
         }
 
-        private static void SetupAtmosphere(Sprite sprite, Color ambientColor)
+        private static void SetupAtmosphere(Sprite sprite, Color ambientColor, Color lightColor)
         {
             GameObject bgWall = new GameObject("Background_Canvas");
-            bgWall.transform.position = new Vector3(0f, 2f, 0f);
-            bgWall.transform.localScale = new Vector3(50f, 30f, 1f);
+            bgWall.transform.position = new Vector3(0f, 3f, 0f);
+            bgWall.transform.localScale = new Vector3(55f, 35f, 1f);
             var bgSr = bgWall.AddComponent<SpriteRenderer>();
             bgSr.sprite = sprite;
             bgSr.color = ambientColor;
@@ -257,8 +270,8 @@ namespace UmbraChronos.Editor
             GameObject lightObj = new GameObject("Global Light 2D");
             var light2D = lightObj.AddComponent<Light2D>();
             light2D.lightType = Light2D.LightType.Global;
-            light2D.color = ambientColor;
-            light2D.intensity = 0.45f;
+            light2D.color = lightColor;
+            light2D.intensity = 0.5f;
         }
 
         private static GameObject SetupSunDial(Sprite sprite, Vector2 center, float radius, float startAngle)
@@ -342,11 +355,9 @@ namespace UmbraChronos.Editor
             var box = monolith.AddComponent<BoxCollider2D>();
             box.size = Vector2.one;
 
+            monolith.AddComponent<EdgeCollider2D>();
             var shadowCollider = monolith.AddComponent<DynamicShadowCollider>();
             SerializedObject so = new SerializedObject(shadowCollider);
-            so.FindProperty("customDimensions").vector2Value = size;
-            so.FindProperty("renderShadowMesh").boolValue = true;
-            so.FindProperty("generatePolygonCollider").boolValue = true;
             so.FindProperty("fallbackGroundY").floatValue = groundY;
             if (sunTransform != null) so.FindProperty("sunTransform").objectReferenceValue = sunTransform;
             so.ApplyModifiedProperties();

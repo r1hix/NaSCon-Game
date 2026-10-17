@@ -1,18 +1,21 @@
 using System;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using UmbraChronos.Core;
 
 namespace UmbraChronos.Environment
 {
     /// <summary>
-    /// Projects a geometric shadow collider from a monolith pillar based on the celestial sun position.
+    /// Projects an EdgeCollider2D and visible bridge graphics along the top surface of a monolith's cast shadow.
     /// In Umbra Chronos, shadows are solid physical matter:
-    /// - When the sun rotates ([Q] / [E] / mouse scroll), monoliths cast dynamic shadows.
-    /// - This component calculates the geometric shadow boundary and dynamically updates
-    ///   a PolygonCollider2D and/or EdgeCollider2D so players can walk across cast shadows as solid bridges.
-    /// - Generates an ink-black visual silhouette mesh for the shadow volume matching the collider.
+    /// - When the celestial sun rotates ([Q] / [E] / scroll), monoliths cast dynamic shadows.
+    /// - Renders a solid obsidian shadow bridge (#0D0D15) with double-sided geometry (never backface-culled).
+    /// - Renders a luminous cyan walkable rim (#38BDF8) along the top surface.
+    /// - Updates an EdgeCollider2D so the top edge acts as a solid bridge the player can walk across.
+    /// - Works in both Edit Mode ([ExecuteAlways]) and Play Mode.
     /// </summary>
-    [SelectionBase]
+    [ExecuteAlways]
+    [RequireComponent(typeof(EdgeCollider2D))]
     [DisallowMultipleComponent]
     public class DynamicShadowCollider : MonoBehaviour
     {
@@ -24,79 +27,48 @@ namespace UmbraChronos.Environment
         [Tooltip("Layer mask for ground/platforms that stop the shadow projection.")]
         [SerializeField] private LayerMask groundLayerMask = ~0;
 
-        [Tooltip("Fallback Y plane level if the shadow ray does not hit ground geometry (e.g. over a chasm).")]
-        [SerializeField] private float fallbackGroundY = -2.5f;
+        [Tooltip("Fallback ground Y level if raycast does not hit geometry (e.g. over a chasm).")]
+        [SerializeField] private float fallbackGroundY = 0f;
 
-        [Tooltip("Maximum length the shadow can stretch.")]
-        [SerializeField] private float maxShadowDistance = 35f;
+        [Tooltip("Maximum length the shadow bridge can extend.")]
+        [SerializeField] private float maxShadowDistance = 18f;
 
-        [Tooltip("Whether to use raycasting against ground colliders before falling back to fallbackGroundY.")]
-        [SerializeField] private bool useGroundRaycasting = true;
+        [Header("Visual Styling ('Ink & Solar Flare')")]
+        [Tooltip("Render a luminous cyan rim along the walkable top edge of the shadow.")]
+        [SerializeField] private bool renderWalkableRim = true;
 
-        [Header("Monolith Dimensions")]
-        [Tooltip("Custom dimensions for this monolith. If (0,0), auto-detects from BoxCollider2D or SpriteRenderer.")]
-        [SerializeField] private Vector2 customDimensions = Vector2.zero;
+        [SerializeField] private Color rimColor = new Color(0.22f, 0.74f, 0.97f, 1.0f); // Radiant Cyan #38BDF8
 
-        [Tooltip("Offset relative to monolith center.")]
-        [SerializeField] private Vector2 dimensionOffset = Vector2.zero;
+        [SerializeField] private float rimWidth = 0.12f;
 
-        [Header("Collider & Visual Settings")]
-        [Tooltip("Generate a solid PolygonCollider2D covering the full cast shadow volume.")]
-        [SerializeField] private bool generatePolygonCollider = true;
+        [Tooltip("Render a solid obsidian shadow fill under the bridge.")]
+        [SerializeField] private bool renderShadowFill = true;
 
-        [Tooltip("Generate an EdgeCollider2D along the top walkable bridge surface.")]
-        [SerializeField] private bool generateEdgeCollider = false;
+        [SerializeField] private Color shadowFillColor = new Color(0.05f, 0.05f, 0.08f, 0.95f); // #0D0D15 Solid Obsidian
 
-        [Tooltip("Generate an ink-black visual mesh matching the shadow polygon in real time.")]
-        [SerializeField] private bool renderShadowMesh = true;
-
-        [Tooltip("Visual color for the solid shadow matter.")]
-        [SerializeField] private Color shadowColor = new Color(0.05f, 0.05f, 0.08f, 0.95f); // #0D0D15 ink silhouette
-
-        [Header("Physics Tuning")]
-        [Tooltip("Minimum movement distance of sun before updating collider points (prevents micro-reallocations).")]
-        [SerializeField] private float sunMovementThreshold = 0.005f;
-
-        // Child components
-        private GameObject shadowChildObject;
-        private PolygonCollider2D polygonCollider;
+        // Components
         private EdgeCollider2D edgeCollider;
-        private MeshFilter meshFilter;
-        private MeshRenderer meshRenderer;
-        private Mesh shadowMesh;
-
-        // Cached State
+        private BoxCollider2D boxCollider;
+        private LineRenderer rimRenderer;
+        private MeshFilter fillMeshFilter;
+        private MeshRenderer fillMeshRenderer;
+        private Mesh fillMesh;
         private Vector2 lastSunPosition;
-        private bool hasInitialized;
-        private Material shadowMaterial;
-
-        // Monolith Corners in local space
-        private Vector2 localTopLeft;
-        private Vector2 localTopRight;
-        private Vector2 localBottomLeft;
-        private Vector2 localBottomRight;
-
-        public Transform SunTransform
-        {
-            get => sunTransform;
-            set { sunTransform = value; ForceUpdateShadow(); }
-        }
-
-        public float FallbackGroundY
-        {
-            get => fallbackGroundY;
-            set { fallbackGroundY = value; ForceUpdateShadow(); }
-        }
 
         private void Awake()
         {
-            InitializeComponents();
-            CalculateMonolithBounds();
+            edgeCollider = GetComponent<EdgeCollider2D>();
+            boxCollider = GetComponent<BoxCollider2D>();
+
+            SetupVisuals();
+            SetupShadowCaster();
         }
 
         private void OnEnable()
         {
             TimeEvents.OnSunAngleChanged += OnSunAngleChanged;
+            SetupVisuals();
+            UpdateShadowBridge();
         }
 
         private void OnDisable()
@@ -107,7 +79,7 @@ namespace UmbraChronos.Environment
         private void Start()
         {
             LocateSun();
-            ForceUpdateShadow();
+            UpdateShadowBridge();
         }
 
         private void Update()
@@ -119,149 +91,22 @@ namespace UmbraChronos.Environment
             }
 
             Vector2 currentSunPos = sunTransform.position;
-            if (Vector2.SqrMagnitude(currentSunPos - lastSunPosition) > (sunMovementThreshold * sunMovementThreshold))
+            if (Vector2.SqrMagnitude(currentSunPos - lastSunPosition) > 0.002f)
             {
-                UpdateShadowGeometry(currentSunPos);
+                UpdateShadowBridge();
                 lastSunPosition = currentSunPos;
             }
         }
 
         private void OnSunAngleChanged(float angle)
         {
-            if (sunTransform != null)
-            {
-                UpdateShadowGeometry(sunTransform.position);
-                lastSunPosition = sunTransform.position;
-            }
-        }
-
-        private void InitializeComponents()
-        {
-            if (hasInitialized && shadowChildObject != null) return;
-
-            // Find or create dedicated child object for shadow physical presence
-            Transform existingChild = transform.Find("Shadow_Solid_Presence");
-            if (existingChild != null)
-            {
-                shadowChildObject = existingChild.gameObject;
-            }
-            else
-            {
-                shadowChildObject = new GameObject("Shadow_Solid_Presence");
-                shadowChildObject.transform.SetParent(transform, false);
-                shadowChildObject.transform.localPosition = Vector3.zero;
-                shadowChildObject.transform.localRotation = Quaternion.identity;
-                shadowChildObject.transform.localScale = Vector3.one;
-            }
-
-            // Layer setup: inherit from parent or set to Default so player can stand on it
-            shadowChildObject.layer = gameObject.layer;
-
-            // Setup PolygonCollider2D
-            if (generatePolygonCollider)
-            {
-                polygonCollider = shadowChildObject.GetComponent<PolygonCollider2D>();
-                if (polygonCollider == null)
-                {
-                    polygonCollider = shadowChildObject.AddComponent<PolygonCollider2D>();
-                }
-            }
-
-            // Setup EdgeCollider2D
-            if (generateEdgeCollider)
-            {
-                edgeCollider = shadowChildObject.GetComponent<EdgeCollider2D>();
-                if (edgeCollider == null)
-                {
-                    edgeCollider = shadowChildObject.AddComponent<EdgeCollider2D>();
-                }
-            }
-
-            // Setup Visual Mesh
-            if (renderShadowMesh)
-            {
-                meshFilter = shadowChildObject.GetComponent<MeshFilter>();
-                if (meshFilter == null)
-                {
-                    meshFilter = shadowChildObject.AddComponent<MeshFilter>();
-                }
-
-                meshRenderer = shadowChildObject.GetComponent<MeshRenderer>();
-                if (meshRenderer == null)
-                {
-                    meshRenderer = shadowChildObject.AddComponent<MeshRenderer>();
-                }
-
-                if (shadowMesh == null)
-                {
-                    shadowMesh = new Mesh { name = "DynamicShadowMesh" };
-                    shadowMesh.MarkDynamic();
-                    meshFilter.sharedMesh = shadowMesh;
-                }
-
-                // Create clean unlit silhouette material
-                Shader unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
-                if (unlitShader == null) unlitShader = Shader.Find("Sprites/Default");
-                if (unlitShader == null) unlitShader = Shader.Find("UI/Default");
-
-                shadowMaterial = new Material(unlitShader)
-                {
-                    color = shadowColor
-                };
-                meshRenderer.sharedMaterial = shadowMaterial;
-                meshRenderer.sortingOrder = -1; // Render just under or with silhouettes
-            }
-
-            hasInitialized = true;
-        }
-
-        private void CalculateMonolithBounds()
-        {
-            float width = customDimensions.x;
-            float height = customDimensions.y;
-            Vector2 offset = dimensionOffset;
-
-            // If not provided in customDimensions, try to read from BoxCollider2D or SpriteRenderer
-            if (width <= 0f || height <= 0f)
-            {
-                var box = GetComponent<BoxCollider2D>();
-                if (box != null)
-                {
-                    width = box.size.x;
-                    height = box.size.y;
-                    offset = box.offset;
-                }
-                else
-                {
-                    var sr = GetComponent<SpriteRenderer>();
-                    if (sr != null && sr.sprite != null)
-                    {
-                        width = sr.sprite.rect.width / sr.sprite.pixelsPerUnit;
-                        height = sr.sprite.rect.height / sr.sprite.pixelsPerUnit;
-                    }
-                    else
-                    {
-                        // Default pillar proportions
-                        width = 1.5f;
-                        height = 6.0f;
-                    }
-                }
-            }
-
-            float halfW = width * 0.5f;
-            float halfH = height * 0.5f;
-
-            localTopLeft = offset + new Vector2(-halfW, halfH);
-            localTopRight = offset + new Vector2(halfW, halfH);
-            localBottomLeft = offset + new Vector2(-halfW, -halfH);
-            localBottomRight = offset + new Vector2(halfW, -halfH);
+            UpdateShadowBridge();
         }
 
         private void LocateSun()
         {
             if (sunTransform != null) return;
 
-            // 1. Try finding SunDialController
             var sunDial = UnityEngine.Object.FindAnyObjectByType<SunDialController>();
             if (sunDial != null)
             {
@@ -269,218 +114,263 @@ namespace UmbraChronos.Environment
                 return;
             }
 
-            // 2. Try finding tagged "Sun"
-            GameObject sunObj = GameObject.FindWithTag("Sun");
-            if (sunObj != null)
+            try
             {
-                sunTransform = sunObj.transform;
+                GameObject sunObj = GameObject.FindWithTag("Sun");
+                if (sunObj != null)
+                {
+                    sunTransform = sunObj.transform;
+                    return;
+                }
+            }
+            catch (UnityException) { }
+
+            var anyLight = UnityEngine.Object.FindAnyObjectByType<Light2D>();
+            if (anyLight != null)
+            {
+                sunTransform = anyLight.transform;
             }
         }
 
-        public void ForceUpdateShadow()
+        public void UpdateShadowBridge()
         {
+            if (edgeCollider == null) edgeCollider = GetComponent<EdgeCollider2D>();
+            if (edgeCollider == null) return;
+
             if (sunTransform == null) LocateSun();
-            if (sunTransform != null)
+            if (sunTransform == null) return;
+
+            Vector2 sunPos = sunTransform.position;
+
+            // Compute world corners of the monolith pillar
+            Vector2 worldTopLeft, worldTopRight, worldBottomLeft, worldBottomRight;
+            if (boxCollider != null)
             {
-                UpdateShadowGeometry(sunTransform.position);
-                lastSunPosition = sunTransform.position;
+                Bounds b = boxCollider.bounds;
+                worldTopLeft = new Vector2(b.min.x, b.max.y);
+                worldTopRight = new Vector2(b.max.x, b.max.y);
+                worldBottomLeft = new Vector2(b.min.x, b.min.y);
+                worldBottomRight = new Vector2(b.max.x, b.min.y);
             }
-        }
+            else
+            {
+                Vector2 half = transform.lossyScale * 0.5f;
+                Vector2 center = transform.position;
+                worldTopLeft = new Vector2(center.x - half.x, center.y + half.y);
+                worldTopRight = new Vector2(center.x + half.x, center.y + half.y);
+                worldBottomLeft = new Vector2(center.x - half.x, center.y - half.y);
+                worldBottomRight = new Vector2(center.x + half.x, center.y - half.y);
+            }
 
-        private void UpdateShadowGeometry(Vector2 sunPos)
-        {
-            if (!hasInitialized) InitializeComponents();
-
-            // Transform local corners to world space
-            Vector2 worldTopLeft = transform.TransformPoint(localTopLeft);
-            Vector2 worldTopRight = transform.TransformPoint(localTopRight);
-            Vector2 worldBottomLeft = transform.TransformPoint(localBottomLeft);
-            Vector2 worldBottomRight = transform.TransformPoint(localBottomRight);
-
-            // Center of the monolith top
             float monolithCenterX = (worldTopLeft.x + worldTopRight.x) * 0.5f;
-
-            // Project rays from Sun through the monolith top corners
-            Vector2 dirLeft = (worldTopLeft - sunPos).normalized;
-            Vector2 dirRight = (worldTopRight - sunPos).normalized;
-
-            // Find where these rays hit the ground/chasm plane
-            Vector2 groundHitLeft = ProjectRayToGround(worldTopLeft, dirLeft);
-            Vector2 groundHitRight = ProjectRayToGround(worldTopRight, dirRight);
-
-            // Construct the solid shadow boundary polygon depending on sun angle
-            // When sun is to the LEFT (sunPos.x < monolithCenterX):
-            // The shadow is cast towards the RIGHT.
-            // Walkable top edge goes from worldTopRight down to groundHitRight.
-            //
-            // When sun is to the RIGHT (sunPos.x > monolithCenterX):
-            // The shadow is cast towards the LEFT.
-            // Walkable top edge goes from worldTopLeft down to groundHitLeft.
-
-            Vector2[] worldPolygonPoints;
-            Vector2[] worldWalkableEdgePoints;
+            Vector2[] walkableBridgeWorld;
+            Vector3[] fillVertices;
 
             if (sunPos.x <= monolithCenterX)
             {
-                // Shadow cast to RIGHT
-                worldPolygonPoints = new Vector2[]
+                // Sun on LEFT -> Light projects shadow to the RIGHT (+X)
+                Vector2 dirRight = (worldTopRight - sunPos).normalized;
+                Vector2 groundHit = ProjectRayToGround(worldTopRight, dirRight);
+
+                // Walkable top surface: from TopLeft across TopRight down to ground landing
+                walkableBridgeWorld = new Vector2[]
                 {
-                    worldBottomLeft,
                     worldTopLeft,
                     worldTopRight,
-                    groundHitRight,
-                    groundHitLeft.y < worldBottomRight.y ? groundHitLeft : worldBottomRight
+                    groundHit
                 };
 
-                worldWalkableEdgePoints = new Vector2[]
+                // Quad shadow fill under the bridge
+                fillVertices = new Vector3[]
                 {
-                    worldTopLeft,
-                    worldTopRight,
-                    groundHitRight
+                    new Vector3(worldTopLeft.x, worldTopLeft.y, 0f),
+                    new Vector3(worldTopRight.x, worldTopRight.y, 0f),
+                    new Vector3(groundHit.x, groundHit.y, 0f),
+                    new Vector3(worldBottomRight.x, worldBottomRight.y, 0f)
                 };
             }
             else
             {
-                // Shadow cast to LEFT
-                worldPolygonPoints = new Vector2[]
+                // Sun on RIGHT -> Light projects shadow to the LEFT (-X)
+                Vector2 dirLeft = (worldTopLeft - sunPos).normalized;
+                Vector2 groundHit = ProjectRayToGround(worldTopLeft, dirLeft);
+
+                // Walkable top surface: from ground landing up to TopLeft and across TopRight
+                walkableBridgeWorld = new Vector2[]
                 {
-                    worldBottomRight,
-                    worldTopRight,
+                    groundHit,
                     worldTopLeft,
-                    groundHitLeft,
-                    groundHitRight.y < worldBottomLeft.y ? groundHitRight : worldBottomLeft
+                    worldTopRight
                 };
 
-                worldWalkableEdgePoints = new Vector2[]
+                fillVertices = new Vector3[]
                 {
-                    worldTopRight,
-                    worldTopLeft,
-                    groundHitLeft
+                    new Vector3(worldTopRight.x, worldTopRight.y, 0f),
+                    new Vector3(worldTopLeft.x, worldTopLeft.y, 0f),
+                    new Vector3(groundHit.x, groundHit.y, 0f),
+                    new Vector3(worldBottomLeft.x, worldBottomLeft.y, 0f)
                 };
             }
 
-            // Convert points to local space of child collider
-            Vector2[] localPolygonPoints = new Vector2[worldPolygonPoints.Length];
-            for (int i = 0; i < worldPolygonPoints.Length; i++)
+            // 1. Update EdgeCollider2D (Local Space)
+            Vector2[] localColliderPoints = new Vector2[walkableBridgeWorld.Length];
+            for (int i = 0; i < walkableBridgeWorld.Length; i++)
             {
-                localPolygonPoints[i] = shadowChildObject.transform.InverseTransformPoint(worldPolygonPoints[i]);
+                localColliderPoints[i] = transform.InverseTransformPoint(walkableBridgeWorld[i]);
             }
+            edgeCollider.points = localColliderPoints;
 
-            // Update PolygonCollider2D
-            if (polygonCollider != null && generatePolygonCollider)
+            // 2. Update Luminous Cyan Rim LineRenderer
+            if (renderWalkableRim)
             {
-                polygonCollider.pathCount = 1;
-                polygonCollider.SetPath(0, localPolygonPoints);
-            }
-
-            // Update EdgeCollider2D
-            if (edgeCollider != null && generateEdgeCollider)
-            {
-                Vector2[] localEdgePoints = new Vector2[worldWalkableEdgePoints.Length];
-                for (int i = 0; i < worldWalkableEdgePoints.Length; i++)
+                if (rimRenderer == null) SetupVisuals();
+                if (rimRenderer != null)
                 {
-                    localEdgePoints[i] = shadowChildObject.transform.InverseTransformPoint(worldWalkableEdgePoints[i]);
+                    rimRenderer.positionCount = walkableBridgeWorld.Length;
+                    for (int i = 0; i < walkableBridgeWorld.Length; i++)
+                    {
+                        rimRenderer.SetPosition(i, new Vector3(walkableBridgeWorld[i].x, walkableBridgeWorld[i].y, -0.05f));
+                    }
                 }
-                edgeCollider.points = localEdgePoints;
             }
 
-            // Rebuild visual shadow mesh
-            if (renderShadowMesh && shadowMesh != null)
+            // 3. Update Solid Obsidian Shadow Fill Mesh
+            if (renderShadowFill)
             {
-                UpdateMesh(localPolygonPoints);
+                if (fillMesh == null) SetupVisuals();
+                if (fillMesh != null)
+                {
+                    UpdateFillMesh(fillVertices);
+                }
             }
         }
 
         private Vector2 ProjectRayToGround(Vector2 corner, Vector2 dir)
         {
-            // Safety check against nearly horizontal or upwards rays
             if (dir.y >= -0.001f)
             {
                 dir.y = -0.001f;
                 dir.Normalize();
             }
 
-            // 1. Raycast against ground geometry if enabled
-            if (useGroundRaycasting)
-            {
-                // Cast ray slightly offset from corner to avoid self-collision
-                Vector2 rayOrigin = corner + dir * 0.05f;
-                RaycastHit2D hit = Physics2D.Raycast(rayOrigin, dir, maxShadowDistance, groundLayerMask);
+            // Raycast towards ground layer
+            Vector2 rayOrigin = corner + dir * 0.05f;
+            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, dir, maxShadowDistance, groundLayerMask);
 
-                if (hit.collider != null && hit.collider.gameObject != gameObject && hit.collider.gameObject != shadowChildObject)
+            if (hit.collider != null && hit.collider.gameObject != gameObject)
+            {
+                if (!hit.collider.isTrigger && !hit.collider.CompareTag("Player"))
                 {
-                    // Do not hit player or triggers
-                    if (!hit.collider.isTrigger && !hit.collider.CompareTag("Player"))
-                    {
-                        return hit.point;
-                    }
+                    return hit.point;
                 }
             }
 
-            // 2. Intersect with fallbackGroundY plane
-            float targetY = fallbackGroundY;
-            if (corner.y > targetY)
+            // Intersect with fallback ground plane
+            if (corner.y > fallbackGroundY)
             {
-                float t = (targetY - corner.y) / dir.y;
+                float t = (fallbackGroundY - corner.y) / dir.y;
                 if (t > 0f)
                 {
-                    float clampedDist = Mathf.Min(t, maxShadowDistance);
-                    return corner + dir * clampedDist;
+                    float clampedT = Mathf.Min(t, maxShadowDistance);
+                    return corner + dir * clampedT;
                 }
             }
 
             return corner + dir * maxShadowDistance;
         }
 
-        private void UpdateMesh(Vector2[] points)
+        private void SetupVisuals()
         {
-            if (points == null || points.Length < 3) return;
+            Shader uShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+            if (uShader == null) uShader = Shader.Find("Sprites/Default");
 
-            shadowMesh.Clear();
-
-            Vector3[] vertices = new Vector3[points.Length];
-            for (int i = 0; i < points.Length; i++)
+            // 1. Setup Walkable Cyan Rim LineRenderer
+            if (renderWalkableRim)
             {
-                vertices[i] = new Vector3(points[i].x, points[i].y, 0f);
+                rimRenderer = GetComponent<LineRenderer>();
+                if (rimRenderer == null) rimRenderer = gameObject.AddComponent<LineRenderer>();
+
+                if (uShader != null)
+                {
+                    rimRenderer.material = new Material(uShader) { color = rimColor };
+                }
+                rimRenderer.startWidth = rimWidth;
+                rimRenderer.endWidth = rimWidth;
+                rimRenderer.useWorldSpace = true;
+                rimRenderer.sortingOrder = 5; // Crisp top rim above shadow
+                rimRenderer.alignment = LineAlignment.View;
             }
 
-            // Convex polygon triangulation (triangle fan from vertex 0)
-            int triangleCount = (points.Length - 2) * 3;
-            int[] triangles = new int[triangleCount];
-            int triIndex = 0;
-
-            for (int i = 1; i < points.Length - 1; i++)
+            // 2. Setup Solid Obsidian Shadow Fill (Dedicated child object)
+            if (renderShadowFill)
             {
-                triangles[triIndex++] = 0;
-                triangles[triIndex++] = i;
-                triangles[triIndex++] = i + 1;
-            }
+                Transform existingFill = transform.Find("Shadow_Solid_Fill");
+                GameObject fillObj = existingFill != null ? existingFill.gameObject : new GameObject("Shadow_Solid_Fill");
+                fillObj.transform.SetParent(transform, false);
+                fillObj.transform.localPosition = Vector3.zero;
+                fillObj.transform.localRotation = Quaternion.identity;
+                fillObj.transform.localScale = Vector3.one;
 
-            shadowMesh.vertices = vertices;
-            shadowMesh.triangles = triangles;
-            shadowMesh.RecalculateBounds();
+                fillMeshFilter = fillObj.GetComponent<MeshFilter>();
+                if (fillMeshFilter == null) fillMeshFilter = fillObj.AddComponent<MeshFilter>();
+
+                fillMeshRenderer = fillObj.GetComponent<MeshRenderer>();
+                if (fillMeshRenderer == null) fillMeshRenderer = fillObj.AddComponent<MeshRenderer>();
+
+                if (fillMesh == null)
+                {
+                    fillMesh = new Mesh { name = "ShadowFillMesh" };
+                    fillMesh.MarkDynamic();
+                    fillMeshFilter.sharedMesh = fillMesh;
+                }
+
+                if (uShader != null)
+                {
+                    fillMeshRenderer.sharedMaterial = new Material(uShader) { color = shadowFillColor };
+                }
+                fillMeshRenderer.sortingOrder = -2; // Directly behind platforms (0) but well ahead of sky canvas (-20)
+            }
         }
 
-#if UNITY_EDITOR
-        private void OnDrawGizmosSelected()
+        private void UpdateFillMesh(Vector3[] worldVerts)
         {
-            Gizmos.color = new Color(0.2f, 0.8f, 1f, 0.4f);
-            Vector3 center = transform.position + (Vector3)dimensionOffset;
-            Vector2 size = customDimensions != Vector2.zero ? customDimensions : new Vector2(1.5f, 6f);
-            Gizmos.DrawWireCube(center, new Vector3(size.x, size.y, 0.1f));
+            if (worldVerts == null || worldVerts.Length < 4 || fillMesh == null || fillMeshFilter == null) return;
 
-            if (sunTransform != null)
+            // Convert world vertices into fill object's local space
+            Vector3[] localVerts = new Vector3[worldVerts.Length];
+            for (int i = 0; i < worldVerts.Length; i++)
             {
-                Gizmos.color = Color.yellow;
-                Gizmos.DrawLine(sunTransform.position, transform.position);
+                localVerts[i] = fillMeshFilter.transform.InverseTransformPoint(worldVerts[i]);
             }
 
-            // Draw fallback ground plane
-            Gizmos.color = new Color(0.9f, 0.3f, 0.3f, 0.5f);
-            Vector3 groundStart = new Vector3(transform.position.x - 20f, fallbackGroundY, 0f);
-            Vector3 groundEnd = new Vector3(transform.position.x + 20f, fallbackGroundY, 0f);
-            Gizmos.DrawLine(groundStart, groundEnd);
+            fillMesh.Clear();
+            fillMesh.vertices = localVerts;
+
+            // DOUBLE-SIDED Triangles (Both clockwise and counter-clockwise)
+            // Ensures it is ALWAYS rendered and NEVER culled regardless of camera angle or light direction!
+            int[] triangles = new int[]
+            {
+                // Triangle 1 (Double-sided)
+                0, 1, 2,
+                0, 2, 1,
+                // Triangle 2 (Double-sided)
+                0, 2, 3,
+                0, 3, 2
+            };
+            fillMesh.triangles = triangles;
+            fillMesh.RecalculateBounds();
         }
-#endif
+
+        private void SetupShadowCaster()
+        {
+            var caster = GetComponent<ShadowCaster2D>();
+            if (caster == null)
+            {
+                caster = gameObject.AddComponent<ShadowCaster2D>();
+            }
+
+            caster.castsShadows = true;
+            caster.useRendererSilhouette = true;
+        }
     }
 }
