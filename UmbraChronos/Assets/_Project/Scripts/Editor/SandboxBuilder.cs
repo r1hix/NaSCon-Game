@@ -7,6 +7,7 @@ using UnityEngine.Rendering.Universal;
 using UmbraChronos.Player;
 using UmbraChronos.Time;
 using UmbraChronos.Environment;
+using UmbraChronos.Core;
 
 namespace UmbraChronos.Editor
 {

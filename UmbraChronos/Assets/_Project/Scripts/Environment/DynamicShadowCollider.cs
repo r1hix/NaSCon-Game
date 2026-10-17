@@ -370,7 +370,6 @@ namespace UmbraChronos.Environment
             }
 
             caster.castsShadows = true;
-            caster.useRendererSilhouette = true;
         }
     }
 }
