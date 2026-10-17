@@ -52,7 +52,7 @@ Git cannot merge `.unity` files safely. Never edit a scene someone else is editi
 - Feature work happens only in your sandbox:
   - `Assets/_Project/Scenes/Sandboxes/Sandbox_Shaf.unity`
   - `Assets/_Project/Scenes/Sandboxes/Sandbox_Chendline.unity`
-- Level scenes (`Level_01`, `Level_02`, `Level_03`) have one author at a time. Currently Chendline.
+- **Master Level Scene:** `Assets/_Project/Scenes/Levels/Level_Master.unity` (single unified contiguous level containing all interconnected puzzle chambers). Only one developer edits the scene file directly at a time (currently Chendline). All reusable puzzle modules are authored as prefabs in `Assets/_Project/Prefabs/` to eliminate scene merge conflicts.
 
 ### Rule 2: Prefab-first
 Every reusable object is a prefab in `Assets/_Project/Prefabs/`.
@@ -186,7 +186,7 @@ Rules:
 
 ## 9. Ownership (summary)
 
-- **Shaf (Mac):** player, rewind, echo, plates/gates, lethal light, rewind VFX, HUD, audio.
-- **Chendline (Win):** sundial, shadow colliders, levels 01–03, Windows build.
+- **Shaf (Mac):** player, rewind, echo, plates/gates, lethal light, rewind VFX, HUD, audio, camera polish.
+- **Chendline (Win):** sundial, shadow colliders, master level layout (`Level_Master.unity`), Windows build.
 
 Detailed tasks, times, and status are in `SPECSHEET.md`.

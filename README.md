@@ -117,28 +117,34 @@ Assets/
     ├── Materials/          # Lit / Unlit 2D materials and post-processing volumes
     ├── Prefabs/            # Modular prefabs (Player, SunDial, ShadowPillars, Gates)
     ├── Scenes/
-    │   ├── Levels/         # Production levels (Level_01, Level_02, Level_03)
+    │   ├── Levels/         # Master level scene (Level_Master.unity) with interconnected chambers
     │   └── Sandboxes/      # Isolated developer testing grounds
     ├── Scripts/
-    │   ├── Core/           # TimeEvents.cs, GameManager.cs
-    │   ├── Environment/    # SunDial.cs, DynamicShadowCollider.cs, PressurePlate.cs
-    │   ├── Player/         # PlayerController.cs, PlayerVisuals.cs
-    │   └── Time/           # TimeBody.cs, RewindManager.cs, UmbralEcho.cs
-    └── Sprites/            # 2D Silhouette environment and character assets
+    │   ├── Core/           # TimeEvents.cs, GameManager.cs, CameraController.cs, AudioManager.cs
+    │   ├── Environment/    # SunDialController.cs, DynamicShadowCollider.cs, PressurePlate.cs, LethalLightZone.cs
+    │   ├── Player/         # PlayerController.cs, PlayerAnimation.cs
+    │   ├── Time/           # TimeBody.cs, RewindManager.cs, UmbralEcho.cs
+    │   └── UI/             # HUDController.cs
+    └── Sprites/            # 2D Silhouette environment, character, and UI assets
 ```
 
 ---
 
 ## 📋 Competition Checklist (NaSCon '26)
 
-- [ ] Core movement & jumping with polished feel (coyote time, jump buffer)
-- [ ] Celestial Sundial 2D light rotation system
-- [ ] Dynamic physical shadow collider generation
-- [ ] 5-second circular buffer Rewind system
-- [ ] Umbral Echo (Shadow clone) recording & playback
-- [ ] 3 escalating puzzle levels (`Level_01`, `Level_02`, `Level_03`)
-- [ ] Audio design (ambient music, clock ticks, rewind whooshes, landing thuds)
-- [ ] Visual polish & post-processing (Vignette, bloom, chromatic aberration)
+- [x] Core movement & jumping with polished feel (coyote time, jump buffer, variable jump)
+- [x] Celestial Sundial 2D light rotation system (`Q`/`E` orbit)
+- [x] Dynamic physical shadow collider generation (monolith shadow bridges)
+- [x] 5-second circular buffer Rewind system
+- [x] Umbral Echo (Shadow clone) recording & playback
+- [x] Diegetic HUD (Sundial compass, 3-tier rewind gauge, danger vignette, runic prompts)
+- [ ] Unified Contiguous Master Level (`Level_Master.unity`) with 4 seamless puzzle chambers:
+  - *Chamber 1 (Dawn of the Sundial):* Solar chasm & dynamic shadow bridge introduction
+  - *Chamber 2 (Echo of the Vault):* Lethal light, tape rewind, and Umbral Echo plate holding
+  - *Chamber 3 (The Clockwork Spire):* Vertical traversal with real-time shadow pivoting & Echo coordination
+  - *Chamber 4 (The Eclipse Paradox Climax):* Grand dual-switch puzzle requiring simultaneous Echo and sundial manipulation
+- [ ] Audio design (ambient music, clock ticks, rewind whooshes, landing thuds, dynamic rewind pitch-down)
+- [ ] Visual polish & camera shake (URP Bloom, vignette, chromatic aberration, radiation screen shake)
 - [ ] **3-Minute Trailer Video** (2 min screen-recorded gameplay + 1 min thematic explanation)
 - [ ] Public GitHub repository submitted before **Sunday 09:30 AM**
 
