@@ -216,6 +216,13 @@ MonoBehaviour:
   renderUmbraSilhouette: 1
   umbraSilhouetteAlpha: 0.3
   umbraColor: {r: 0.05, g: 0.05, b: 0.08, a: 0.3}
+  renderShadowBoundary: 1
+  boundaryColor: {r: 0.96, g: 0.62, b: 0.04, a: 0.95}
+  boundaryWidth: 0.09
+  boundaryHeight: 1.35
+  renderSunlitGlowStrip: 1
+  sunlitGlowColor: {r: 1, g: 0.92, b: 0.65, a: 0.45}
+  sunlitGlowWidth: 0.9
 --- !u!120 &2015271884944014623
 LineRenderer:
   serializedVersion: 3
