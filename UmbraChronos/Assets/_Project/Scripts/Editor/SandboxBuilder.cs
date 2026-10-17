@@ -410,7 +410,11 @@ namespace UmbraChronos.Editor
             // 5. SCREEN 1: Left Cliff, Shelter, Monolith 1, Chasm 1, Plate 1, Gate 1
             CreatePlatform("Cliff_Left", new Vector3(-9.0f, -2.5f, 0f), new Vector3(12f, 1.5f, 1f), sprite);
             CreatePlatform("Boundary_Wall_Left", new Vector3(-15.0f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
-            CreatePlatform("Spawn_Shelter_Roof", new Vector3(-10.5f, 1.2f, 0f), new Vector3(6f, 0.5f, 1f), sprite);
+            GameObject shelterRoof = CreatePlatform("Spawn_Shelter_Roof", new Vector3(-10.5f, 1.2f, 0f), new Vector3(6f, 0.5f, 1f), sprite);
+            var backdrop = shelterRoof.AddComponent<InteriorBackdrop>();
+            var soBackdrop = new SerializedObject(backdrop);
+            soBackdrop.FindProperty("floorY").floatValue = -1.75f;
+            soBackdrop.ApplyModifiedProperties();
 
             // Stepping Stone Ledge 1 (hop 0.95 from floor at y = -1.75 to y = -0.8)
             CreatePlatform("Step_Ledge_1", new Vector3(-5.0f, -1.0f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
@@ -434,7 +438,11 @@ namespace UmbraChronos.Editor
             }
 
             // Mid Plateau connecting Screen 1 and Screen 2 (x = 3.5 to 14.5)
-            CreatePlatform("Mid_Plateau", new Vector3(9.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            GameObject midPlat = CreatePlatform("Mid_Plateau", new Vector3(9.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            var sheen1 = midPlat.AddComponent<SunlitGroundSheen>();
+            var soSheen1 = new SerializedObject(sheen1);
+            soSheen1.FindProperty("sunTransform").objectReferenceValue = sunInst.transform;
+            soSheen1.ApplyModifiedProperties();
 
             // Puzzle 1: PressurePlate 1 & TimedGate 1 (opens passageway to Screen 2!)
             GameObject gateInst1 = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
@@ -467,7 +475,12 @@ namespace UmbraChronos.Editor
             }
 
             // Sanctuary Citadel (x = 21.5 to 33.0)
-            CreatePlatform("Sanctuary_Citadel", new Vector3(27.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            GameObject sanctPlat = CreatePlatform("Sanctuary_Citadel", new Vector3(27.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            var sheen2 = sanctPlat.AddComponent<SunlitGroundSheen>();
+            var soSheen2 = new SerializedObject(sheen2);
+            soSheen2.FindProperty("sunTransform").objectReferenceValue = sunInst.transform;
+            soSheen2.ApplyModifiedProperties();
+
             CreatePlatform("Boundary_Wall_Right", new Vector3(32.5f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
 
             // Lethal Chasm Floor (deep abyss spanning under both rooms)

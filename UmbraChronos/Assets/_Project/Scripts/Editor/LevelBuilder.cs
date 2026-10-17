@@ -70,14 +70,18 @@ namespace UmbraChronos.Editor
             // Left Cliff (x = -14 to -3, surface at y = -1.75)
             CreatePlatform("W1_Cliff_Left", new Vector3(-8.5f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), squareSprite);
             CreatePlatform("W1_Wall_Left", new Vector3(-14.5f, 2.5f, 0f), new Vector3(1.5f, 9.0f, 1f), squareSprite);
-            CreatePlatform("W1_Spawn_Shelter", new Vector3(-10.0f, 1.5f, 0f), new Vector3(7.0f, 0.6f, 1f), squareSprite);
+            GameObject w1SpawnShelter = CreatePlatform("W1_Spawn_Shelter", new Vector3(-10.0f, 1.5f, 0f), new Vector3(7.0f, 0.6f, 1f), squareSprite);
+            AddInteriorBackdrop(w1SpawnShelter, -1.75f, 0.5f);
 
             // Monolith 1 at edge of cliff: Base embedded at y = -1.75, height = 4.0
             CreateMonolithObject(squareSprite, new Vector3(-3.0f, 0.25f, 0f), new Vector2(1.6f, 4.0f), -1.75f, sunInst.transform, 1.5f);
 
             // Center Island / Receiving Plateau (x = 4 to 12, surface at y = -1.75)
-            CreatePlatform("W1_Plateau_Right", new Vector3(8.0f, -2.5f, 0f), new Vector3(8.0f, 1.5f, 1f), squareSprite);
-            CreatePlatform("W1_Threshold_Shelter", new Vector3(8.0f, 1.5f, 0f), new Vector3(6.0f, 0.6f, 1f), squareSprite);
+            GameObject w1PlateauRight = CreatePlatform("W1_Plateau_Right", new Vector3(8.0f, -2.5f, 0f), new Vector3(8.0f, 1.5f, 1f), squareSprite);
+            AddSunlitSheen(w1PlateauRight, sunInst.transform);
+
+            GameObject w1ThresholdShelter = CreatePlatform("W1_Threshold_Shelter", new Vector3(8.0f, 1.5f, 0f), new Vector3(6.0f, 0.6f, 1f), squareSprite);
+            AddInteriorBackdrop(w1ThresholdShelter, -1.75f, 0.5f);
 
             // Bioluminescent Glow Lichens (Safe ambient lighting)
             CreateGlowLichen(lichenC, new Vector3(-11.5f, 1.15f, 0f), new Vector3(1.2f, 1.2f, 1f), new Color(0.22f, 0.74f, 0.97f, 1f), 0.55f, 3.2f);
@@ -91,7 +95,8 @@ namespace UmbraChronos.Editor
             // WING 2: The Echo Vault (Room 1, x = 12 to 36, Center 24)
             // -------------------------------------------------------------
             // Vault Ceiling sealing from lethal sunlight
-            CreatePlatform("W2_Vault_Ceiling", new Vector3(24.0f, 5.0f, 0f), new Vector3(26.0f, 1.0f, 1f), squareSprite);
+            GameObject w2VaultCeiling = CreatePlatform("W2_Vault_Ceiling", new Vector3(24.0f, 5.0f, 0f), new Vector3(26.0f, 1.0f, 1f), squareSprite);
+            AddInteriorBackdrop(w2VaultCeiling, -1.75f, 0.8f);
 
             // Vault Floor 1 (x = 12 to 24, surface at y = -1.75)
             CreatePlatform("W2_Floor_1", new Vector3(18.0f, -2.5f, 0f), new Vector3(12.0f, 1.5f, 1f), squareSprite);
@@ -142,7 +147,8 @@ namespace UmbraChronos.Editor
             CreatePlatform("W3_Left_Balcony", new Vector3(38.5f, 0.8f, 0f), new Vector3(3.5f, 0.4f, 1f), squareSprite);
 
             // Upper Exit Ledge (x = 53 to 60, surface at y = 0.25)
-            CreatePlatform("W3_Upper_Ledge", new Vector3(56.5f, -0.5f, 0f), new Vector3(7.0f, 1.5f, 1f), squareSprite);
+            GameObject w3UpperLedge = CreatePlatform("W3_Upper_Ledge", new Vector3(56.5f, -0.5f, 0f), new Vector3(7.0f, 1.5f, 1f), squareSprite);
+            AddSunlitSheen(w3UpperLedge, sunInst.transform);
 
             // TimedGate 2 blocking the upper exit ledge
             GameObject gate2 = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
@@ -175,17 +181,25 @@ namespace UmbraChronos.Editor
             // WING 4: The Eclipse Paradox Sanctuary (Room 3, x = 60 to 86, Center 72)
             // -------------------------------------------------------------
             // Western Altar (x = 61 to 67, surface at y = -1.75)
-            CreatePlatform("W4_Western_Altar", new Vector3(64.0f, -2.5f, 0f), new Vector3(6.0f, 1.5f, 1f), squareSprite);
-            CreatePlatform("W4_Western_Shelter", new Vector3(64.0f, 1.5f, 0f), new Vector3(5.0f, 0.5f, 1f), squareSprite);
+            GameObject w4WesternAltar = CreatePlatform("W4_Western_Altar", new Vector3(64.0f, -2.5f, 0f), new Vector3(6.0f, 1.5f, 1f), squareSprite);
+            AddSunlitSheen(w4WesternAltar, sunInst.transform);
+
+            GameObject w4WesternShelter = CreatePlatform("W4_Western_Shelter", new Vector3(64.0f, 1.5f, 0f), new Vector3(5.0f, 0.5f, 1f), squareSprite);
+            AddInteriorBackdrop(w4WesternShelter, -1.75f, 0.5f);
 
             // Central Hub & Monolith (x = 70 to 74, surface at y = -1.75)
             CreatePlatform("W4_Center_Hub", new Vector3(72.0f, -2.5f, 0f), new Vector3(6.0f, 1.5f, 1f), squareSprite);
-            CreatePlatform("W4_Center_Roof", new Vector3(72.0f, 2.5f, 0f), new Vector3(6.0f, 0.5f, 1f), squareSprite);
+            GameObject w4CenterRoof = CreatePlatform("W4_Center_Roof", new Vector3(72.0f, 2.5f, 0f), new Vector3(6.0f, 0.5f, 1f), squareSprite);
+            AddInteriorBackdrop(w4CenterRoof, -1.75f, 0.5f);
+
             CreateMonolithObject(squareSprite, new Vector3(72.0f, 0.5f, 0f), new Vector2(1.8f, 4.5f), -1.75f, sunInst.transform, 2.2f);
 
             // Eastern Citadel (x = 77 to 86, surface at y = -1.75)
-            CreatePlatform("W4_Eastern_Citadel", new Vector3(81.5f, -2.5f, 0f), new Vector3(9.0f, 1.5f, 1f), squareSprite);
-            CreatePlatform("W4_Citadel_Ceiling", new Vector3(81.5f, 3.5f, 0f), new Vector3(9.0f, 1.0f, 1f), squareSprite);
+            GameObject w4EasternCitadel = CreatePlatform("W4_Eastern_Citadel", new Vector3(81.5f, -2.5f, 0f), new Vector3(9.0f, 1.5f, 1f), squareSprite);
+            AddSunlitSheen(w4EasternCitadel, sunInst.transform);
+
+            GameObject w4CitadelCeiling = CreatePlatform("W4_Citadel_Ceiling", new Vector3(81.5f, 3.5f, 0f), new Vector3(9.0f, 1.0f, 1f), squareSprite);
+            AddInteriorBackdrop(w4CitadelCeiling, -1.75f, 0.5f);
 
             // Right World Boundary Wall
             CreatePlatform("W4_Wall_Right", new Vector3(86.5f, 1.5f, 0f), new Vector3(1.5f, 9.0f, 1f), squareSprite);
@@ -329,16 +343,22 @@ namespace UmbraChronos.Editor
 
             CreatePlatform("Cliff_Left", new Vector3(-9.0f, -2.5f, 0f), new Vector3(12f, 1.5f, 1f), sprite);
             CreatePlatform("Boundary_Wall_Left", new Vector3(-15f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
-            CreatePlatform("Spawn_Shelter_Roof", new Vector3(-9.0f, 1.2f, 0f), new Vector3(6f, 0.5f, 1f), sprite);
+            GameObject spawnRoof = CreatePlatform("Spawn_Shelter_Roof", new Vector3(-9.0f, 1.2f, 0f), new Vector3(6f, 0.5f, 1f), sprite);
+            AddInteriorBackdrop(spawnRoof, -1.75f, 0.5f);
 
             CreateMonolithObject(sprite, new Vector3(-3.0f, 0.05f, 0f), new Vector2(1.4f, 3.6f), -1.75f, sunInst.transform);
 
-            CreatePlatform("Center_Island", new Vector3(9.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
-            CreatePlatform("Center_Shelter_Roof", new Vector3(9.0f, 1.2f, 0f), new Vector3(5f, 0.5f, 1f), sprite);
+            GameObject centerIsland = CreatePlatform("Center_Island", new Vector3(9.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            AddSunlitSheen(centerIsland, sunInst.transform);
+
+            GameObject centerRoof = CreatePlatform("Center_Shelter_Roof", new Vector3(9.0f, 1.2f, 0f), new Vector3(5f, 0.5f, 1f), sprite);
+            AddInteriorBackdrop(centerRoof, -1.75f, 0.5f);
 
             CreateMonolithObject(sprite, new Vector3(14.5f, 0.05f, 0f), new Vector2(1.4f, 3.6f), -1.75f, sunInst.transform);
 
-            CreatePlatform("Sanctuary_Cliff", new Vector3(27.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            GameObject sanctCliff = CreatePlatform("Sanctuary_Cliff", new Vector3(27.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            AddSunlitSheen(sanctCliff, sunInst.transform);
+
             CreatePlatform("Boundary_Wall_Right", new Vector3(32.5f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
 
             CreateSanctuaryArch(sprite, new Vector3(28.0f, -0.5f, 0f));
@@ -371,7 +391,8 @@ namespace UmbraChronos.Editor
 
             CreatePlatform("Vault_Floor_1", new Vector3(-2.0f, -2.5f, 0f), new Vector3(24f, 1.5f, 1f), sprite);
             CreatePlatform("Wall_Left", new Vector3(-14f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
-            CreatePlatform("Vault_Ceiling", new Vector3(12.0f, 5.0f, 0f), new Vector3(56f, 1f, 1f), sprite);
+            GameObject vaultCeiling = CreatePlatform("Vault_Ceiling", new Vector3(12.0f, 5.0f, 0f), new Vector3(56f, 1f, 1f), sprite);
+            AddInteriorBackdrop(vaultCeiling, -1.75f, 0.8f);
 
             CreatePlatform("Step_Ledge_1", new Vector3(-7.0f, -0.9f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
             CreatePlatform("High_Plate_Ledge_1", new Vector3(-3.5f, 0.0f, 0f), new Vector3(4.0f, 0.4f, 1f), sprite);
@@ -451,14 +472,21 @@ namespace UmbraChronos.Editor
             SetupPostProcessingAndLight(sunInst);
 
             CreatePlatform("Center_Hub", new Vector3(0f, -2.5f, 0f), new Vector3(9f, 1.5f, 1f), sprite);
-            CreatePlatform("Center_Shelter_Roof", new Vector3(0f, 2.8f, 0f), new Vector3(8f, 0.5f, 1f), sprite);
+            GameObject centerRoof3 = CreatePlatform("Center_Shelter_Roof", new Vector3(0f, 2.8f, 0f), new Vector3(8f, 0.5f, 1f), sprite);
+            AddInteriorBackdrop(centerRoof3, -1.75f, 0.5f);
+
             CreateMonolithObject(sprite, new Vector3(0f, 0.25f, 0f), new Vector2(1.6f, 4.0f), -1.75f, sunInst.transform, 2.2f);
 
-            CreatePlatform("Western_Altar_Floor", new Vector3(-24.0f, -2.5f, 0f), new Vector3(8f, 1.5f, 1f), sprite);
-            CreatePlatform("Western_Boundary_Wall", new Vector3(-28.0f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
-            CreatePlatform("Western_Shelter", new Vector3(-24.0f, 1.5f, 0f), new Vector3(5f, 0.5f, 1f), sprite);
+            GameObject westAltar3 = CreatePlatform("Western_Altar_Floor", new Vector3(-24.0f, -2.5f, 0f), new Vector3(8f, 1.5f, 1f), sprite);
+            AddSunlitSheen(westAltar3, sunInst.transform);
 
-            CreatePlatform("Eastern_Citadel_Floor", new Vector3(24.0f, -2.5f, 0f), new Vector3(10f, 1.5f, 1f), sprite);
+            CreatePlatform("Western_Boundary_Wall", new Vector3(-28.0f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
+            GameObject westShelter3 = CreatePlatform("Western_Shelter", new Vector3(-24.0f, 1.5f, 0f), new Vector3(5f, 0.5f, 1f), sprite);
+            AddInteriorBackdrop(westShelter3, -1.75f, 0.5f);
+
+            GameObject eastCitadel3 = CreatePlatform("Eastern_Citadel_Floor", new Vector3(24.0f, -2.5f, 0f), new Vector3(10f, 1.5f, 1f), sprite);
+            AddSunlitSheen(eastCitadel3, sunInst.transform);
+
             CreatePlatform("Eastern_Boundary_Wall", new Vector3(29.0f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
 
             GameObject gatePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabInteractFolder}/TimedGate.prefab");
@@ -743,6 +771,25 @@ namespace UmbraChronos.Editor
             so.ApplyModifiedProperties();
 
             return lichen;
+        }
+
+        private static void AddSunlitSheen(GameObject platform, Transform sunTransform)
+        {
+            if (platform == null) return;
+            var sheen = platform.AddComponent<SunlitGroundSheen>();
+            SerializedObject so = new SerializedObject(sheen);
+            if (sunTransform != null) so.FindProperty("sunTransform").objectReferenceValue = sunTransform;
+            so.ApplyModifiedProperties();
+        }
+
+        private static void AddInteriorBackdrop(GameObject roof, float floorY, float padding = 0.5f)
+        {
+            if (roof == null) return;
+            var backdrop = roof.AddComponent<InteriorBackdrop>();
+            SerializedObject so = new SerializedObject(backdrop);
+            so.FindProperty("floorY").floatValue = floorY;
+            so.FindProperty("horizontalPadding").floatValue = padding;
+            so.ApplyModifiedProperties();
         }
 
         private static void EnsureLevelsDirectory()
