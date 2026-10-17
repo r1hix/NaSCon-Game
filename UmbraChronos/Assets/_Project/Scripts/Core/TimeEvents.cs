@@ -84,5 +84,11 @@ namespace UmbraChronos.Core
         /// Parameter: Vector2Int new room index.
         /// </summary>
         public static Action<Vector2Int> OnRoomChanged;
+
+        /// <summary>
+        /// Invoked to trigger screen shake / camera trauma.
+        /// Parameters: float intensity, float duration.
+        /// </summary>
+        public static Action<float, float> OnCameraShake;
     }
 }

@@ -59,14 +59,46 @@ namespace UmbraChronos.Core
         [Header("Camera Depth")]
         [SerializeField] private float cameraZ = -10f;
 
+        [Header("Screen Shake / Camera Trauma")]
+        [Tooltip("Master multiplier for screen shake intensity.")]
+        [SerializeField] private float shakeMultiplier = 1.0f;
+
         // Components & State
         private Camera cam;
         private Vector3 currentVelocity;
         private Vector2Int currentRoomIndex = Vector2Int.zero;
         private Vector3 targetCameraPos;
 
+        // Shake state
+        private float currentShakeIntensity = 0f;
+        private float shakeDurationTotal = 0f;
+        private float shakeTimeRemaining = 0f;
+        private float continuousThermalShake = 0f;
+
         public Vector2Int CurrentRoomIndex => currentRoomIndex;
         public Camera Camera => cam;
+
+        private void OnEnable()
+        {
+            TimeEvents.OnCameraShake += TriggerShake;
+            TimeEvents.OnPlayerDied += HandlePlayerDiedShake;
+            TimeEvents.OnPlayerLanded += HandlePlayerLandedShake;
+            TimeEvents.OnEchoCreated += HandleEchoCreatedShake;
+            TimeEvents.OnPressurePlateChanged += HandlePlateShake;
+            TimeEvents.OnGateStateChanged += HandleGateShake;
+            TimeEvents.OnSunlightExposureChanged += HandleSunlightExposureChanged;
+        }
+
+        private void OnDisable()
+        {
+            TimeEvents.OnCameraShake -= TriggerShake;
+            TimeEvents.OnPlayerDied -= HandlePlayerDiedShake;
+            TimeEvents.OnPlayerLanded -= HandlePlayerLandedShake;
+            TimeEvents.OnEchoCreated -= HandleEchoCreatedShake;
+            TimeEvents.OnPressurePlateChanged -= HandlePlateShake;
+            TimeEvents.OnGateStateChanged -= HandleGateShake;
+            TimeEvents.OnSunlightExposureChanged -= HandleSunlightExposureChanged;
+        }
 
         private void Awake()
         {
@@ -117,12 +149,99 @@ namespace UmbraChronos.Core
                     break;
             }
 
+            ApplyScreenShake();
+
             // Keep background canvas behind camera
             if (backgroundCanvas != null)
             {
                 backgroundCanvas.position = new Vector3(transform.position.x, transform.position.y, backgroundCanvas.position.z);
             }
         }
+
+        #region Screen Shake
+
+        /// <summary>
+        /// Triggers high-impact organic camera trauma.
+        /// </summary>
+        public void TriggerShake(float intensity, float duration)
+        {
+            intensity *= shakeMultiplier;
+            if (intensity <= 0.001f || duration <= 0.001f) return;
+
+            if (intensity > currentShakeIntensity || shakeTimeRemaining <= 0f)
+            {
+                currentShakeIntensity = intensity;
+                shakeDurationTotal = duration;
+                shakeTimeRemaining = duration;
+            }
+            else
+            {
+                currentShakeIntensity = Mathf.Max(currentShakeIntensity, intensity);
+                shakeTimeRemaining = Mathf.Max(shakeTimeRemaining, duration);
+            }
+        }
+
+        private void ApplyScreenShake()
+        {
+            float totalIntensity = 0f;
+
+            if (shakeTimeRemaining > 0f)
+            {
+                shakeTimeRemaining -= UnityEngine.Time.deltaTime;
+                float progress = Mathf.Clamp01(shakeTimeRemaining / Mathf.Max(0.01f, shakeDurationTotal));
+                // Quadratic easing: hard initial impact decaying smoothly
+                totalIntensity += currentShakeIntensity * (progress * progress);
+            }
+
+            totalIntensity += continuousThermalShake;
+
+            if (totalIntensity > 0.001f)
+            {
+                float seed = UnityEngine.Time.time * 26f;
+                float offsetX = (Mathf.PerlinNoise(seed, 0f) * 2f - 1f) * totalIntensity;
+                float offsetY = (Mathf.PerlinNoise(0f, seed) * 2f - 1f) * totalIntensity;
+                transform.position += new Vector3(offsetX, offsetY, 0f);
+            }
+        }
+
+        private void HandlePlayerDiedShake()
+        {
+            TriggerShake(0.55f, 0.45f);
+        }
+
+        private void HandlePlayerLandedShake(float fallSpeed)
+        {
+            if (fallSpeed > 6.5f)
+            {
+                float intensity = Mathf.Clamp((fallSpeed - 6f) * 0.04f, 0.08f, 0.32f);
+                TriggerShake(intensity, 0.18f);
+            }
+        }
+
+        private void HandleEchoCreatedShake()
+        {
+            TriggerShake(0.20f, 0.15f);
+        }
+
+        private void HandlePlateShake(bool pressed)
+        {
+            if (pressed)
+            {
+                TriggerShake(0.10f, 0.12f);
+            }
+        }
+
+        private void HandleGateShake(bool opened)
+        {
+            TriggerShake(0.16f, 0.22f);
+        }
+
+        private void HandleSunlightExposureChanged(float exposure)
+        {
+            continuousThermalShake = exposure > 0.4f ? (exposure - 0.4f) * 0.15f : 0f;
+        }
+
+        #endregion
 
         private void LocateTarget()
         {
