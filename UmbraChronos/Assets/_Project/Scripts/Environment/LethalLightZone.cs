@@ -197,12 +197,9 @@ namespace UmbraChronos.Environment
 
         private void EvaluateSunlightExposure()
         {
+            if (sunTransform == null) return;
+            Vector2 sunPos = sunTransform.position;
             Bounds bounds = playerCollider != null ? playerCollider.bounds : new Bounds(playerTransform.position, Vector3.one * 0.8f);
-
-            // Celestial direction: sun angle theta determines direction of light rays globally
-            float rad = Mathf.Clamp(currentSunAngle, 15f, 165f) * Mathf.Deg2Rad;
-            Vector2 lightDir = new Vector2(Mathf.Cos(rad), -Mathf.Sin(rad));
-            Vector2 toSunDir = -lightDir; // Direction upwards towards celestial sun
 
             int samples = Mathf.Max(1, verticalSamplePoints);
             if (lastSamplePoints == null || lastSamplePoints.Length != samples)
@@ -222,8 +219,12 @@ namespace UmbraChronos.Environment
                 Vector2 samplePoint = new Vector2(bounds.center.x, yPos);
                 lastSamplePoints[i] = samplePoint;
 
-                // Raycast upwards towards the celestial light source
-                RaycastHit2D hit = Physics2D.Raycast(samplePoint + toSunDir * 0.05f, toSunDir, 40f, shadowBlockerMask);
+                Vector2 toPlayer = samplePoint - sunPos;
+                float distance = toPlayer.magnitude;
+                Vector2 dir = toPlayer / distance;
+
+                // Raycast from the Sun directly towards this player sample point
+                RaycastHit2D hit = Physics2D.Raycast(sunPos, dir, distance, shadowBlockerMask);
 
                 bool occluded = false;
                 if (hit.collider != null)
@@ -289,33 +290,29 @@ namespace UmbraChronos.Environment
 
         private void UpdateVisibleBeams(bool hideAll)
         {
-            if (!renderVisibleBeams || beamRenderers == null) return;
+            if (!renderVisibleBeams || beamRenderers == null || sunTransform == null) return;
 
-            float rad = Mathf.Clamp(currentSunAngle, 15f, 165f) * Mathf.Deg2Rad;
-            Vector2 toSunDir = new Vector2(-Mathf.Cos(rad), Mathf.Sin(rad));
+            Vector3 sunPos = sunTransform.position;
 
             for (int i = 0; i < beamRenderers.Length; i++)
             {
                 LineRenderer lr = beamRenderers[i];
                 if (lr == null) continue;
 
-                if (hideAll || lastRayEndPoints == null || i >= lastRayEndPoints.Length || lastSamplePoints == null || i >= lastSamplePoints.Length)
+                if (hideAll || lastRayEndPoints == null || i >= lastRayEndPoints.Length)
                 {
                     lr.enabled = false;
                     continue;
                 }
 
-                Vector3 skyStart = (Vector3)(lastSamplePoints[i] + toSunDir * 20f);
-                Vector3 endPoint = new Vector3(lastRayEndPoints[i].x, lastRayEndPoints[i].y, 0f);
-
                 lr.enabled = true;
-                lr.SetPosition(0, skyStart);
-                lr.SetPosition(1, endPoint);
+                lr.SetPosition(0, sunPos);
+                lr.SetPosition(1, new Vector3(lastRayEndPoints[i].x, lastRayEndPoints[i].y, 0f));
 
                 bool occluded = lastSampleOccluded != null && lastSampleOccluded[i];
                 if (occluded)
                 {
-                    // Blocked beam stopping safely on shelter or monolith
+                    // Blocked beam stopping safely on shelter, monolith, or wall
                     lr.startColor = new Color(beamSafeColor.r, beamSafeColor.g, beamSafeColor.b, 0.4f);
                     lr.endColor = new Color(beamSafeColor.r, beamSafeColor.g, beamSafeColor.b, 0.1f);
                     lr.startWidth = 0.05f;
