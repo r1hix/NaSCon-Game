@@ -70,6 +70,11 @@ namespace UmbraChronos.Player
             rb.gravityScale = normalGravityScale;
             rb.freezeRotation = true;
             rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+
+            if (GetComponent<PlayerRadiationFX>() == null)
+            {
+                gameObject.AddComponent<PlayerRadiationFX>();
+            }
         }
 
         private void OnEnable()

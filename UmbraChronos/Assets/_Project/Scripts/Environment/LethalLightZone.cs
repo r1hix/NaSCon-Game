@@ -38,9 +38,9 @@ namespace UmbraChronos.Environment
         [Tooltip("Speed (multiplier) at which exposure dissipates when ducking back into shadow.")]
         [SerializeField] private float recoveryRate = 3.0f;
 
-        [Header("In-Game Visible Celestial Rays")]
+        [Header("In-Game Visible Celestial Rays (Deprecated - Replaced by GodraySystem)")]
         [Tooltip("Render visible celestial light beams in Game view.")]
-        [SerializeField] private bool renderVisibleBeams = true;
+        [SerializeField] private bool renderVisibleBeams = false;
 
         [SerializeField] private Color beamLethalColor = new Color(1f, 0.94f, 0.5f, 0.85f); // Searing solar flare
         [SerializeField] private Color beamSafeColor = new Color(0.9f, 0.65f, 0.25f, 0.22f); // Muted beam blocked on roof
