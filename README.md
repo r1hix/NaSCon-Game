@@ -30,26 +30,30 @@ By turning the **Celestial Sundial**, the player rotates the light source across
 
 | Mechanic | Input | Gameplay Description |
 | :--- | :--- | :--- |
-| **Move & Jump** | `A` / `D` or `Arrow Keys` + `Space` | Snappy, responsive 2D platforming with coyote time and jump buffering. |
-| **Celestial Sundial** | `Q` / `E` or `Mouse Wheel` | Rotates the celestial light source around the sky. Monoliths dynamically cast physical shadow bridges across deadly chasms of sunlight. |
-| **Tape-Reel Rewind** | `R` or `Left Shift` (Hold) | Rewinds the state of the player, platforms, and world along a 5-second circular timeline buffer with retro tape-stop audio and chromatic aberration. |
-| **Umbral Echo** | `E` or `Space` (During Rewind) | Rewinds your player while anchoring an **Umbral Echo** (shadow clone) that replays your last 5 seconds of actions (holding pressure plates, opening gates). |
+| **Move & Jump** | `A` / `D` or `Arrow Keys` + `Space` | Snappy, responsive 2D platforming with coyote time (0.15s), jump buffering (0.12s), variable jump height, and procedural landing squash/stretch. |
+| **Celestial Sundial** | `Q` / `E` or `Mouse Wheel` | Rotates the celestial light source around an orbit. Monoliths dynamically cast physical shadow bridges with `#38BDF8` cyan rims across deadly chasms of sunlight. |
+| **Tape-Reel Rewind** | `R` or `Left Shift` (Hold) | Rewinds player, platforms, and world along a 5-second circular timeline buffer with retro tape-stop audio pitch-shift down to 0.5x, tape wobble, and chromatic aberration. |
+| **Umbral Echo** | `F` or `C` (After Rewind) | Deploys a tangible **Umbral Echo** (shadow clone) that replays your recorded movements forward, holding pressure plates, depressing switches, and opening gates. |
 
 ---
 
-## 🎨 Visual Direction & Art Style
+## 🎨 Visual Direction & Art Style ("Ink & Solar Flare")
 
-* **Aesthetic:** *"Ink & Solar Flare"* — High-contrast silhouette art style set against rich, shifting celestial gradients (inspired by *Limbo*, *Braid*, and *Gris*).
+* **Aesthetic:** High-contrast silhouette art style set against rich, shifting celestial gradients (inspired by *Limbo*, *Braid*, and *Gris*).
 * **Color Palette & Design Tokens:**
-  * **Obsidian Foreground (`#0D0D15`):** Character, monoliths, architectural ruins, and solid shadow bridges.
-  * **Searing Sunlight (`#FFF8E7` &rarr; `#FFD166`):** Celestial radiance with high-intensity bloom (`Threshold: 0.85`, `Intensity: 1.4`).
-  * **Umbral Echo (`#1E1B4B` with `#38BDF8` rim):** Translucent ghost silhouette of your past self.
+  * **Obsidian Foreground (`#0D0D15`):** Walkable ground, monoliths, architectural ruins, and player body silhouette.
+  * **Interior Backdrop (`#07070C`):** Vaulted crypt backdrops at sorting order `-12` eliminating celestial sky bleed.
+  * **Searing Sunlight (`#FFF8E7` &rarr; `#FFD166`):** Lethal celestial radiance with high-intensity URP bloom (`Threshold: 0.85`, `Intensity: 1.4`).
+  * **Warning Threshold Godray (`#F59E0B`):** Feathered volumetric light shafts framing the danger line beneath roof shelter edges.
+  * **Umbral Echo Ghost (`#1E1B4B` with `#38BDF8` rim):** Translucent midnight indigo clone silhouette replaying recorded history.
+  * **Bioluminescent Glow Lichen (`#38BDF8`):** Safe organic moss patches emitting soft cyan Point Light 2D ($0.55$ intensity, $3.5\text{ m}$ radius) with sine breathing pulses to illuminate dark caverns and chasms.
+  * **Sunlit Ground Sheen (`#FFEAA7`):** Event-driven golden surface sheen across sun-exposed floor slabs.
   * **Celestial Sky Arc:**
-    * *Dawn (0° - 90°):* Midnight Indigo (`#1E1B4B`) to Rose Coral (`#F43F5E`)
-    * *Noon (90° - 180°):* Azure Sky (`#0284C7`) to Solar Flare White (`#FFFFFF`)
-    * *Dusk (180° - 270°):* Burnt Amber (`#D97706`) to Deep Maroon (`#4C0519`)
-    * *Eclipse (270° - 360°):* Cosmic Void (`#030712`) to Royal Violet (`#581C87`)
-* **Visual Effects:** Dynamic Chromatic Aberration and Vignette during Tape-Reel Rewind.
+    * *Dawn (15° - 50°):* Midnight Indigo (`#1E1B4B`) to Rose Coral (`#F43F5E`)
+    * *Noon (50° - 130°):* Azure Sky (`#0284C7`) to Solar Flare White (`#FFFFFF`)
+    * *Dusk (130° - 165°):* Burnt Amber (`#D97706`) to Deep Crimson Maroon (`#4C0519`)
+    * *Eclipse (Climax):* Cosmic Void (`#030712`) to Royal Violet (`#581C87`)
+* **Visual Effects:** Dynamic Chromatic Aberration (0.9), Vignette (0.45), radiation screen shake, floating contact dust motes, and scanlines during Tape-Reel Rewind.
 
 ---
 
@@ -57,16 +61,27 @@ By turning the **Celestial Sundial**, the player rotates the light source across
 
 | Script | Namespace & Path | Responsibility |
 | :--- | :--- | :--- |
-| **`TimeEvents.cs`** | `UmbraChronos.Core`<br>`Scripts/Core/` | Global event bus (`OnSunAngleChanged`, `OnRewindStateChanged`, `OnEchoCreated`, `OnPlayerDied`). |
+| **`TimeEvents.cs`** | `UmbraChronos.Core`<br>`Scripts/Core/` | Global static event bus (`OnSunAngleChanged`, `OnRewindStateChanged`, `OnEchoCreated`, `OnPlayerDied`, `OnPuzzleSolved`). |
 | **`IRewindable.cs`** | `UmbraChronos.Time`<br>`Scripts/Time/` | Interface implemented by all objects that record and reverse state across time. |
-| **`PlayerController.cs`** | `UmbraChronos.Player`<br>`Scripts/Player/` | 2D physics movement, coyote time (0.15s), jump buffering (0.1s), and ground checks. |
-| **`TimeBody.cs`** | `UmbraChronos.Time`<br>`Scripts/Time/` | Circular state buffer (300 frames) tracking position, velocity, and rotation history. |
-| **`RewindManager.cs`** | `UmbraChronos.Time`<br>`Scripts/Time/` | Central rewind coordinator; drives rewind state, audio pitch drop, and screen distortion. |
-| **`UmbralEcho.cs`** | `UmbraChronos.Time`<br>`Scripts/Time/` | Shadow clone controller; replays recorded movements in forward time to hold plates and doors. |
-| **`SunDialController.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Controls celestial light orbit via user input and updates the day/night sky cycle. |
-| **`DynamicShadowCollider.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Generates real-time solid 2D colliders from 2D shadow caster boundaries. |
-| **`PressurePlate.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Pressure sensor triggered by either the player or their shadow echo clone. |
-| **`LethalLightZone.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Detects direct solar exposure and triggers player vaporization outside of shadows. |
+| **`PlayerController.cs`** | `UmbraChronos.Player`<br>`Scripts/Player/` | 2D physics movement, coyote time (0.15s), jump buffering (0.12s), ground raycasting, and rewind registration. |
+| **`PlayerAnimation.cs`** | `UmbraChronos.Player`<br>`Scripts/Player/` | Procedural squash/stretch, run cycle bob, airborne lean, landing impact dust, runic glyph pulse. |
+| **`TimeBody.cs`** | `UmbraChronos.Time`<br>`Scripts/Time/` | 300-frame (5.0s) circular state buffer tracking position, velocity, rotation, and grounded history. |
+| **`RewindManager.cs`** | `UmbraChronos.Time`<br>`Scripts/Time/` | Central rewind coordinator; steps `IRewindable` instances backward, drives audio pitch drop, and manages screen distortion. |
+| **`UmbralEcho.cs`** | `UmbraChronos.Time`<br>`Scripts/Time/` | Shadow clone controller; replays recorded movements forward to hold pressure plates and trigger switches. |
+| **`SunDialController.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Controls celestial light orbit via `Q`/`E`/scroll and drives the dynamic celestial sky cycle. |
+| **`DynamicShadowCollider.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Generates real-time solid 2D colliders with cyan edge rims (`#38BDF8`) from monolith shadow projections. |
+| **`LethalLightZone.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Volumetric Godray Hazard System: projects feathered threshold framing shafts with floating motes and direct hazard rays, triggering vaporization after 0.4s. |
+| **`GlowLichen.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Safe ambient moss patches emitting soft cyan 2D point light with breathing pulses for cave navigation. |
+| **`SunlitGroundSheen.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Renders golden sunlit ground sheen (`#FFEAA7`) on exposed floor slabs via zero-alloc raycasting. |
+| **`InteriorBackdrop.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Obsidian interior geometry (`#07070C` at order -12) preventing celestial sky bleed in crypts. |
+| **`PressurePlate.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Pressure sensor triggered by either the player or their shadow echo clone with debounced actuation. |
+| **`TimedGate.cs`** | `UmbraChronos.Environment`<br>`Scripts/Environment/` | Smooth vertical sliding stone door opened by pressure plates with anti-softlock mechanics. |
+| **`ScreenShiftCamera.cs`** | `UmbraChronos.Core`<br>`Scripts/Core/` | Smooth grid-based 2D screen-shift camera controller that transitions rooms without camera jumps. |
+| **`RoomDetector.cs`** | `UmbraChronos.Core`<br>`Scripts/Core/` | Detects player chamber crossings and coordinates transitions with `ScreenShiftCamera`. |
+| **`HUDController.cs`** | `UmbraChronos.UI`<br>`Scripts/UI/` | Diegetic HUD: Sundial compass needle, 3-tier non-overlapping rewind gauge, solar danger vignette, runic prompts. |
+| **`MainMenuManager.cs`** | `UmbraChronos.UI`<br>`Scripts/UI/` | Title screen controller handling Play, Options (Volume slider), Credits, and Quit with seamless scene switching. |
+| **`MainMenuAudioManager.cs`** | `UmbraChronos.UI`<br>`Scripts/UI/` | Dynamic title screen audio manager with ambient drone loop, crystal hover chimes, and stone click SFX. |
+| **`AudioManager.cs`** | `UmbraChronos.Core`<br>`Scripts/Core/` | Global sound manager handling dynamic rewind pitch-down (0.5x), tape wobble, gate grinding, and solar death sizzle. |
 
 ---
 
@@ -113,18 +128,19 @@ cd GameDev
 ```
 Assets/
 └── _Project/
-    ├── Audio/              # Background soundtrack and SFX
+    ├── Audio/              # Background soundtrack, ambient drones, and SFX
     ├── Materials/          # Lit / Unlit 2D materials and post-processing volumes
-    ├── Prefabs/            # Modular prefabs (Player, SunDial, ShadowPillars, Gates)
+    ├── Prefabs/            # Modular prefabs (Player, SunDial, ShadowPillars, Gates, Lichens)
     ├── Scenes/
-    │   ├── Levels/         # Master level scene (Level_Master.unity) with interconnected chambers
-    │   └── Sandboxes/      # Isolated developer testing grounds
+    │   ├── Levels/         # Master level scene (Level_Master.unity) with 4 interconnected chambers
+    │   │                   # Main title screen (MainMenu.unity)
+    │   └── Sandboxes/      # Isolated developer testing grounds (Sandbox_Shaf, Sandbox_Chendline)
     ├── Scripts/
-    │   ├── Core/           # TimeEvents.cs, GameManager.cs, CameraController.cs, AudioManager.cs
-    │   ├── Environment/    # SunDialController.cs, DynamicShadowCollider.cs, PressurePlate.cs, LethalLightZone.cs
+    │   ├── Core/           # TimeEvents.cs, GameManager.cs, CameraController.cs, AudioManager.cs, ScreenShiftCamera.cs
+    │   ├── Environment/    # SunDialController.cs, DynamicShadowCollider.cs, PressurePlate.cs, LethalLightZone.cs, GlowLichen.cs, SunlitGroundSheen.cs, InteriorBackdrop.cs
     │   ├── Player/         # PlayerController.cs, PlayerAnimation.cs
     │   ├── Time/           # TimeBody.cs, RewindManager.cs, UmbralEcho.cs
-    │   └── UI/             # HUDController.cs
+    │   └── UI/             # HUDController.cs, MainMenuManager.cs, MainMenuAudioManager.cs
     └── Sprites/            # 2D Silhouette environment, character, and UI assets
 ```
 
@@ -134,18 +150,22 @@ Assets/
 
 - [x] Core movement & jumping with polished feel (coyote time, jump buffer, variable jump)
 - [x] Celestial Sundial 2D light rotation system (`Q`/`E` orbit)
-- [x] Dynamic physical shadow collider generation (monolith shadow bridges)
+- [x] Dynamic physical shadow collider generation (monolith shadow bridges with cyan rims)
 - [x] 5-second circular buffer Rewind system
 - [x] Umbral Echo (Shadow clone) recording & playback
 - [x] Diegetic HUD (Sundial compass, 3-tier rewind gauge, danger vignette, runic prompts)
-- [ ] Unified Contiguous Master Level (`Level_Master.unity`) with 4 seamless puzzle chambers:
-  - *Chamber 1 (Dawn of the Sundial):* Solar chasm & dynamic shadow bridge introduction
-  - *Chamber 2 (Echo of the Vault):* Lethal light, tape rewind, and Umbral Echo plate holding
-  - *Chamber 3 (The Clockwork Spire):* Vertical traversal with real-time shadow pivoting & Echo coordination
-  - *Chamber 4 (The Eclipse Paradox Climax):* Grand dual-switch puzzle requiring simultaneous Echo and sundial manipulation
-- [ ] Audio design (ambient music, clock ticks, rewind whooshes, landing thuds, dynamic rewind pitch-down)
-- [ ] Visual polish & camera shake (URP Bloom, vignette, chromatic aberration, radiation screen shake)
+- [x] Unified Contiguous Master Level (`Level_Master.unity`) with 4 seamless puzzle chambers:
+  - [x] *Chamber 1 (Dawn of the Sundial):* Solar chasm & dynamic shadow bridge introduction
+  - [x] *Chamber 2 (Echo of the Vault):* Lethal light, tape rewind, and Umbral Echo plate holding
+  - [x] *Chamber 3 (The Clockwork Spire):* Vertical traversal with real-time shadow pivoting & Echo coordination
+  - [x] *Chamber 4 (The Eclipse Paradox Climax):* Grand dual-switch puzzle requiring simultaneous Echo and sundial manipulation
+- [x] Volumetric Godray Hazard System (`LethalLightZone.cs` threshold framing & direct beams)
+- [x] Bioluminescent Glow Lichens & Ambient Contrast (`GlowLichen.cs`, `InteriorBackdrop.cs`)
+- [x] Full Title Screen Menu & Audio (`MainMenu.unity`, `MainMenuAudioManager.cs`)
+- [x] Audio design (ambient music, clock ticks, rewind whooshes, landing thuds, dynamic rewind pitch-down)
+- [x] Visual polish & camera shake (URP Bloom, vignette, chromatic aberration, radiation screen shake)
 - [ ] **3-Minute Trailer Video** (2 min screen-recorded gameplay + 1 min thematic explanation)
+- [ ] Standalone build generation (macOS `StandaloneOSX` and Windows `StandaloneWindows64`)
 - [ ] Public GitHub repository submitted before **Sunday 09:30 AM**
 
 ---

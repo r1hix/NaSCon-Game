@@ -56,10 +56,14 @@ Status: DONE / IN PROGRESS / READY / QUEUED
 | Unified Master Level & Environment Contrast (`Level_Master.unity`) | Both | Sat 10:30 PM | DONE |
 | Audio + `AudioManager` | Shaf | Sat 11:00 PM | DONE |
 | Camera shake & particle polish | Shaf | Sat 11:30 PM | DONE |
-| Playtesting + full playthrough | Both | Sun 12:00 AM – 02:00 AM | IN PROGRESS |
+| Volumetric Godray Hazard System (`LethalLightZone.cs` threshold framing) | Shaf | Sat 11:45 PM | DONE |
+| Bioluminescent Glow Lichens (`GlowLichen.cs` ambient contrast) | Shaf | Sat 11:55 PM | DONE |
+| Title Screen Menu & Audio (`MainMenu.unity`, `MainMenuAudioManager.cs`) | Shaf | Sun 12:30 AM | DONE |
+| Sunlit Ground Sheen & Interior Backdrops (`SunlitGroundSheen.cs`, `InteriorBackdrop.cs`) | Shaf | Sun 01:00 AM | DONE |
+| Playtesting + full playthrough verification | Both | Sun 02:00 AM – 03:00 AM | READY |
 | Trailer + submission | Both | Sun 05:00 – 09:15 AM | QUEUED |
 
-**Already built & merged to `main`:** Unity 6 URP 2D project, `TimeEvents`, snappy `PlayerController` (coyote, jump buffer, variable jump), 5 s circular rewind buffer, `UmbralEcho`, `PressurePlate` + `TimedGate`, `DynamicShadowCollider` horizontal shadow bridges, `LethalLightZone`, diegetic HUD (sundial compass, 3-tier non-overlapping rewind gauge, danger vignette, runic prompts), `GodraySystem` (roof-occluding light shafts, solar dust particles, player radiation embers, shadow alignment).
+**Already built & merged to `main`:** Unity 6 URP 2D project, `TimeEvents`, snappy `PlayerController` (coyote, jump buffer, variable jump), 5 s circular rewind buffer, `UmbralEcho`, `PressurePlate` + `TimedGate`, `DynamicShadowCollider` horizontal shadow bridges, `LethalLightZone` with Volumetric Godray Hazard System, Bioluminescent Glow Lichens, Sunlit Ground Sheen, Interior Backdrops, diegetic HUD (sundial compass, 3-tier non-overlapping rewind gauge, danger vignette, runic prompts), full Title Screen with dynamic crystal hover and ambient audio.
 
 ---
 
@@ -67,10 +71,13 @@ Status: DONE / IN PROGRESS / READY / QUEUED
 
 All foundational mechanics are verified, decoupled via `TimeEvents`, and merged into `main`:
 1. **`SunDialController.cs`**: `Q`/`E`/scroll orbits celestial light, triggers `OnSunAngleChanged`.
-2. **`DynamicShadowCollider.cs`**: Rebuilds real-time solid `EdgeCollider2D` shadow bridges from monolith corners to ground.
-3. **`LethalLightZone.cs`**: Raycasts sun to player with a strict 0.4s grace period, triggers `OnPlayerDied`.
-4. **`RewindManager.cs` & `TimeBody.cs`**: 300-frame (5.0s) circular history buffer, dynamic chromatic aberration/vignette post-processing.
-5. **`HUDController.cs` & `HUD.prefab`**: 3-tier non-overlapping rewind gauge, sundial compass needle, runic input overlay.
+2. **`DynamicShadowCollider.cs`**: Rebuilds real-time solid `EdgeCollider2D` shadow bridges from monolith corners to ground with `#38BDF8` cyan rims.
+3. **`LethalLightZone.cs`**: Volumetric Godray Hazard System. Raycasts sun to player with a strict 0.4s grace period, triggers `OnPlayerDied`. Projects real-time feathered threshold shafts (`Sprite_Godray_Shaft.png`) from roof shelter edges down to floor level with floating solar motes (`Sprite_Solar_Mote.png`), warning player within 4m with pulsing amber (`#F59E0B`). Direct player beam flares white-hot on lethal exposure, safe cyan on solid shadow bridges.
+4. **`GlowLichen.cs`**: Safe ambient organic moss patches emitting soft cyan Point Light 2D (`#38BDF8`, intensity 0.55, radius 3.5m) with sine breathing pulses for cave and chasm readability.
+5. **`SunlitGroundSheen.cs` & `InteriorBackdrop.cs`**: Event-driven golden floor sheen (`#FFEAA7`) on sun-exposed terrain, and obsidian backdrops (`#07070C` at order -12) preventing celestial sky bleed in crypts.
+6. **`RewindManager.cs` & `TimeBody.cs`**: 300-frame (5.0s) circular history buffer, dynamic chromatic aberration/vignette post-processing.
+7. **`HUDController.cs` & `HUD.prefab`**: 3-tier non-overlapping rewind gauge, sundial compass needle, runic input overlay.
+8. **`MainMenuManager.cs` & `MainMenuAudioManager.cs`**: Animated interactive menu with ambient drone loop, crystal hover chimes, stone click actuation, and volume control.
 
 ---
 
@@ -80,22 +87,22 @@ Instead of multiple fragmented level scenes with loading screens, the entire com
 
 The player journeys through **The Grand Sanctuary of Chronos**, split into 4 interconnected puzzle wings via grid-based screen-shift camera transitions:
 
-### Wing 1: The Courtyard of Dawn (`Room_0_0`)
+### Wing 1: The Courtyard of Dawn (`Room_0_0`, Origin `(0, 0)`)
 - **Theme & Mechanics:** Introduction to SunDial rotation (`Q`/`E`) and physical shadow bridging.
 - **Layout:** Player starts on a cliff under an obsidian portico. Ahead lies an 8-unit lethal sunlit chasm with a tall monolith.
 - **Solution:** Rotating the celestial sun from Zenith ($90^\circ$) to Dawn ($35^\circ$) casts an elongated shadow bridge across the void. The player walks across the solid shadow to reach the interior temple gate.
 
-### Wing 2: The Echo Vault (`Room_1_0`)
+### Wing 2: The Echo Vault (`Room_1_0`, Origin `(26, 0)`)
 - **Theme & Mechanics:** Introduction to Tape-Reel Rewind (`Hold R`) and Umbral Echo (`Tap F`).
 - **Layout:** A sealed vertical stone portcullis blocks the exit corridor. A glowing runic pressure plate sits atop a high stone balcony requiring climbing ruins.
 - **Solution:** Player climbs to the balcony, stands on the plate for 2 seconds (opening the gate below), holds `R` to rewind back down to the ground, and taps `F`. The Umbral Echo replays the climb and holds the plate while the player sprints through the open gate.
 
-### Wing 3: The Clockwork Spire (`Room_2_0`)
+### Wing 3: The Clockwork Spire (`Room_2_0`, Origin `(52, 0)`)
 - **Theme & Mechanics:** Real-time shadow pivoting + Echo coordination.
 - **Layout:** A two-tier vertical chamber. An elevated switch on the left wall lowers an overhead barrier, but reaching the upper exit requires a shadow bridge angled to the right.
 - **Solution:** Player rotates the sun to Dawn to cast a bridge to the left switch, steps on it, rewinds back, and spawns the Echo to hold it. While the Echo keeps the barrier lowered, the player rapidly pivots the sun to Dusk ($145^\circ$) to cast a rightward bridge and climbs up to the upper sanctuary.
 
-### Wing 4: The Eclipse Paradox Sanctuary (`Room_3_0` — Climax)
+### Wing 4: The Eclipse Paradox Sanctuary (`Room_3_0`, Origin `(78, 0)` — Climax)
 - **Theme & Mechanics:** The grand dual-switch climax combining all mechanics under an ominous violet Eclipse sky.
 - **Layout:** Two ancient glyph switches on opposing ledges flanking a massive central solar void. The final Sanctuary Archway requires both switches to be held concurrently.
 - **Solution:** 
@@ -107,9 +114,18 @@ The player journeys through **The Grand Sanctuary of Chronos**, split into 4 int
 
 ---
 
-## 6. Strict Bulletproof Level Design Guidelines
+## 6. Comprehensive Level-Creation Guide & Architectural Standards
 
-Every chamber, puzzle, and platform in `Level_Master.unity` MUST adhere strictly to the following mathematical rules. Any level design violating these rules will break game feel, cause player softlocks, or ruin the 3-minute video presentation.
+Every chamber, puzzle, and platform in `Level_Master.unity` or sandbox scenes MUST adhere strictly to the following mathematical rules. Any level design violating these rules will break game feel, cause player softlocks, or ruin the 3-minute video presentation.
+
+### Chamber Coordinate & Grid Layout Reference
+
+| Wing / Room | Grid Coordinate | World Center `(X, Y)` | Viewport Bounds `[X_min, X_max]` | Entrance `(X, Y)` | Exit `(X, Y)` |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Wing 1: Courtyard of Dawn** | `Room_0_0` | `(0, 0)` | `[-13.0, +13.0]` | `(-10.0, -4.0)` | `(+11.5, -4.0)` |
+| **Wing 2: The Echo Vault** | `Room_1_0` | `(26, 0)` | `[+13.0, +39.0]` | `(+14.5, -4.0)` | `(+37.5, -4.0)` |
+| **Wing 3: Clockwork Spire** | `Room_2_0` | `(52, 0)` | `[+39.0, +65.0]` | `(+40.5, -4.0)` | `(+63.5, +3.0)` |
+| **Wing 4: Eclipse Paradox** | `Room_3_0` | `(78, 0)` | `[+65.0, +91.0]` | `(+66.5, +3.0)` | `(+89.0, -1.0)` |
 
 ### Rule 1: Movement & Jump Metrics (Ground Truths)
 - **Horizontal Run Speed:** Exactly `8.0` units/sec.
@@ -150,6 +166,18 @@ Every chamber, puzzle, and platform in `Level_Master.unity` MUST adhere strictly
 - **Bioluminescent Glow Lichen (Ambient Illumination):** Safe, non-lethal organic moss patches (`GlowLichen.cs`) emitting soft cyan Point Light 2D (`#38BDF8`, intensity $0.50 - 0.65$, radius $3.0 - 3.8\text{ m}$) with subtle sine breathing pulses. Strategically scattered along deep chasm recesses, crypt ceiling arches, and obsidian cave walls to guarantee chamber readability and navigation without relying on celestial sunlight.
 - **Volumetric Godray Hazard System (LethalLightZone.cs):** Atmospheric feathered godray light shafts (`Sprite_Godray_Shaft.png`) that dynamically project from the celestial sun along the exact solar vector into the chamber. When the player is shaded under a roof, a threshold shaft pours down from the roof lip to the floor, clearly framing the danger boundary with floating solar motes (`Sprite_Solar_Mote.png`). Direct exposure pulses in white-hot radiant solar flare, while standing on solid shadow bridges grounds the shaft to safe cyan (`#38BDF8`). Zero debug wireframes.
 - **Sunlit Ground Sheen & Interior Backdrops:** Event-driven golden ground surface sheen (`SunlitGroundSheen.cs`, `#FFEAA7`) rendered via `Physics2D.RaycastNonAlloc` on sun-exposed floor slabs, strictly updating on `TimeEvents.OnSunAngleChanged` with zero garbage collection stutter. Vaulted ceilings and shelters feature obsidian interior backdrops (`InteriorBackdrop.cs`, `#07070C` at sorting order `-12`) to eliminate celestial sky bleed behind enclosed chambers.
+
+### Chamber Verification & Quality Checklist
+
+Before committing or pushing any level changes, run through this mandatory verification checklist:
+- [ ] **Camera Framing:** All interactive mechanisms (SunDial, monolith, plates, gates) fit in the $26.0\text{ u} \times 15.0\text{ u}$ viewport.
+- [ ] **Jump Reach Check:** No gap exceeds $4.2\text{ u}$ horizontally; no vertical ledge exceeds $2.8\text{ u}$.
+- [ ] **Headroom Check:** All passageways offer at least $2.4\text{ u}$ clearance.
+- [ ] **Shadow Receptor:** Chasm has a collider receiver floor at constant Y; shadow bridge forms cleanly at both Dawn ($35^\circ$) and Dusk ($145^\circ$).
+- [ ] **Sanctuary Check:** Player can safely spawn at the room entrance and stand without dying.
+- [ ] **Echo Timing:** Puzzle can be solved with an Echo recording duration $\le 3.5\text{ s}$, leaving $\ge 1.5\text{ s}$ of rewind buffer.
+- [ ] **Visual Readability:** Deep chasms and dark interiors have at least 1-2 Glow Lichens; roof overhangs cleanly project amber godray warning beams onto the floor.
+- [ ] **Zero Sky Bleed:** Enclosed ceilings have `InteriorBackdrop` instances assigned.
 
 ---
 
