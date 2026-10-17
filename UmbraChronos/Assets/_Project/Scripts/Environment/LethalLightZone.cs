@@ -38,12 +38,18 @@ namespace UmbraChronos.Environment
         [Tooltip("Speed (multiplier) at which exposure dissipates when ducking back into shadow.")]
         [SerializeField] private float recoveryRate = 3.0f;
 
-        [Header("In-Game Visible Celestial Rays (Deprecated - Replaced by GodraySystem)")]
+        [Header("In-Game Visible Celestial Rays")]
         [Tooltip("Render visible celestial light beams in Game view.")]
-        [SerializeField] private bool renderVisibleBeams = false;
+        [SerializeField] private bool renderVisibleBeams = true;
 
         [SerializeField] private Color beamLethalColor = new Color(1f, 0.94f, 0.5f, 0.85f); // Searing solar flare
-        [SerializeField] private Color beamSafeColor = new Color(0.9f, 0.65f, 0.25f, 0.22f); // Muted beam blocked on roof
+        [SerializeField] private Color beamSafeColor = new Color(0.9f, 0.65f, 0.25f, 0.30f); // Muted beam blocked on roof
+
+        [Header("Hazard Feeler (Danger Anticipation)")]
+        [Tooltip("Casts a leading feeler ray ahead of the player at floor level to warn before stepping into lethal light.")]
+        [SerializeField] private bool enableHazardFeeler = true;
+        [SerializeField] private float feelerDistance = 0.50f;
+        [SerializeField] private Color feelerWarningColor = new Color(0.96f, 0.62f, 0.04f, 0.90f); // #F59E0B Warning Solar Amber
 
         [Header("Trigger Volume Mode (Optional)")]
         [Tooltip("If true, only monitors exposure when player is inside this object's Collider2D trigger.")]
@@ -51,8 +57,11 @@ namespace UmbraChronos.Environment
 
         // Internal State
         private Collider2D playerCollider;
+        private PlayerController playerCtrl;
         private float currentExposureTimer;
         private bool isExposedToLight;
+        private bool isFeelerExposed;
+        private bool isOnShadowBridge;
         private bool hasTriggeredDeath;
         private bool isPlayerInTriggerZone = true;
         private bool isRewinding;
@@ -63,10 +72,15 @@ namespace UmbraChronos.Environment
         private Vector2[] lastRayEndPoints;
         private bool[] lastSampleOccluded;
 
+        // Preallocated raycast hit buffer (zero GC allocations)
+        private static readonly RaycastHit2D[] s_HitBuffer = new RaycastHit2D[16];
+
         // Public Accessors
         public float ExposureTimer => currentExposureTimer;
         public float ExposureFraction => Mathf.Clamp01(currentExposureTimer / lethalGracePeriod);
         public bool IsExposedToLight => isExposedToLight;
+        public bool IsFeelerExposed => isFeelerExposed;
+        public bool IsOnShadowBridge => isOnShadowBridge;
         public bool HasTriggeredDeath => hasTriggeredDeath;
 
         private void Awake()
@@ -138,11 +152,13 @@ namespace UmbraChronos.Environment
                 {
                     playerTransform = player.transform;
                     playerCollider = player.GetComponent<Collider2D>();
+                    playerCtrl = player;
                 }
             }
-            else if (playerCollider == null)
+            else
             {
-                playerCollider = playerTransform.GetComponent<Collider2D>();
+                if (playerCollider == null) playerCollider = playerTransform.GetComponent<Collider2D>();
+                if (playerCtrl == null) playerCtrl = playerTransform.GetComponent<PlayerController>();
             }
         }
 
@@ -150,17 +166,42 @@ namespace UmbraChronos.Environment
         {
             if (!renderVisibleBeams) return;
 
-            int count = Mathf.Max(1, verticalSamplePoints);
-            beamRenderers = new LineRenderer[count];
+            int bodyCount = Mathf.Max(1, verticalSamplePoints);
+            int totalCount = enableHazardFeeler ? bodyCount + 1 : bodyCount;
+
+            // Check if beamRenderers already exist and match count
+            if (beamRenderers != null && beamRenderers.Length == totalCount)
+            {
+                bool allValid = true;
+                for (int i = 0; i < beamRenderers.Length; i++)
+                {
+                    if (beamRenderers[i] == null) { allValid = false; break; }
+                }
+                if (allValid) return;
+            }
+
+            // Clean up any stale child beams
+            for (int c = transform.childCount - 1; c >= 0; c--)
+            {
+                Transform child = transform.GetChild(c);
+                if (child.name.StartsWith("SunBeam_"))
+                {
+                    if (Application.isPlaying) Destroy(child.gameObject);
+                    else DestroyImmediate(child.gameObject);
+                }
+            }
+
+            beamRenderers = new LineRenderer[totalCount];
 
             // Prefer URP 2D Unlit shader for crisp beams
             Shader unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
             if (unlitShader == null) unlitShader = Shader.Find("Sprites/Default");
-            Material lineMat = unlitShader != null ? new Material(unlitShader) : null;
+            Material lineMat = unlitShader != null ? new Material(unlitShader) { color = Color.white } : null;
 
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < totalCount; i++)
             {
-                GameObject beamObj = new GameObject($"SunBeam_{i}");
+                string beamName = (i == bodyCount) ? "SunBeam_HazardFeeler" : $"SunBeam_Body_{i}";
+                GameObject beamObj = new GameObject(beamName);
                 beamObj.transform.SetParent(this.transform);
 
                 LineRenderer lr = beamObj.AddComponent<LineRenderer>();
@@ -169,7 +210,8 @@ namespace UmbraChronos.Environment
                 lr.positionCount = 2;
                 lr.startWidth = 0.08f;
                 lr.endWidth = 0.16f;
-                lr.sortingOrder = 5;
+                lr.sortingOrder = 9; // In front of background and terrain, behind player sprite (order 10)
+                lr.alignment = LineAlignment.View;
                 beamRenderers[i] = lr;
             }
         }
@@ -201,20 +243,21 @@ namespace UmbraChronos.Environment
             Vector2 sunPos = sunTransform.position;
             Bounds bounds = playerCollider != null ? playerCollider.bounds : new Bounds(playerTransform.position, Vector3.one * 0.8f);
 
-            int samples = Mathf.Max(1, verticalSamplePoints);
-            if (lastSamplePoints == null || lastSamplePoints.Length != samples)
+            int bodyCount = Mathf.Max(1, verticalSamplePoints);
+            int totalCount = enableHazardFeeler ? bodyCount + 1 : bodyCount;
+
+            if (lastSamplePoints == null || lastSamplePoints.Length != totalCount)
             {
-                lastSamplePoints = new Vector2[samples];
-                lastRayEndPoints = new Vector2[samples];
-                lastSampleOccluded = new bool[samples];
+                lastSamplePoints = new Vector2[totalCount];
+                lastRayEndPoints = new Vector2[totalCount];
+                lastSampleOccluded = new bool[totalCount];
             }
 
+            // 1. Raycast Body Sample Points (Feet -> Chest -> Head)
             int exposedSampleCount = 0;
-
-            for (int i = 0; i < samples; i++)
+            for (int i = 0; i < bodyCount; i++)
             {
-                float t = samples == 1 ? 0.5f : (float)i / (samples - 1);
-                // Sample from bottom to top of player body
+                float t = bodyCount == 1 ? 0.5f : (float)i / (bodyCount - 1);
                 float yPos = Mathf.Lerp(bounds.min.y + 0.1f, bounds.max.y - 0.1f, t);
                 Vector2 samplePoint = new Vector2(bounds.center.x, yPos);
                 lastSamplePoints[i] = samplePoint;
@@ -223,19 +266,17 @@ namespace UmbraChronos.Environment
                 float distance = toPlayer.magnitude;
                 Vector2 dir = toPlayer / distance;
 
-                // Raycast from the Sun directly towards this player sample point (filtering out triggers)
-                RaycastHit2D[] hits = Physics2D.RaycastAll(sunPos, dir, distance, shadowBlockerMask);
-
+                int hitCount = Physics2D.RaycastNonAlloc(sunPos, dir, s_HitBuffer, distance, shadowBlockerMask);
                 bool occluded = false;
-                for (int h = 0; h < hits.Length; h++)
+                for (int h = 0; h < hitCount; h++)
                 {
-                    var col = hits[h].collider;
+                    var col = s_HitBuffer[h].collider;
                     if (col == null || col.isTrigger) continue;
                     if (col == playerCollider || col.transform.IsChildOf(playerTransform)) continue;
                     if (col.transform.IsChildOf(sunTransform)) continue;
 
                     occluded = true;
-                    lastRayEndPoints[i] = hits[h].point;
+                    lastRayEndPoints[i] = s_HitBuffer[h].point;
                     break;
                 }
 
@@ -248,12 +289,58 @@ namespace UmbraChronos.Environment
                 lastSampleOccluded[i] = occluded;
             }
 
-            // Check if player is safely standing on a solid shadow bridge
+            // 2. Raycast Hazard Feeler (Leading Edge Ground Detector)
+            isFeelerExposed = false;
+            if (enableHazardFeeler && totalCount > bodyCount)
+            {
+                int feelerIdx = bodyCount;
+                float facingDir = 1f;
+                if (playerCtrl != null)
+                {
+                    facingDir = playerCtrl.IsFacingRight ? 1f : -1f;
+                }
+                else if (playerTransform != null)
+                {
+                    facingDir = playerTransform.localScale.x >= 0 ? 1f : -1f;
+                }
+
+                Vector2 feelerPoint = new Vector2(bounds.center.x + (facingDir * feelerDistance), bounds.min.y + 0.1f);
+                lastSamplePoints[feelerIdx] = feelerPoint;
+
+                Vector2 toFeeler = feelerPoint - sunPos;
+                float distance = toFeeler.magnitude;
+                Vector2 dir = toFeeler / distance;
+
+                int hitCount = Physics2D.RaycastNonAlloc(sunPos, dir, s_HitBuffer, distance, shadowBlockerMask);
+                bool occluded = false;
+                for (int h = 0; h < hitCount; h++)
+                {
+                    var col = s_HitBuffer[h].collider;
+                    if (col == null || col.isTrigger) continue;
+                    if (col == playerCollider || col.transform.IsChildOf(playerTransform)) continue;
+                    if (col.transform.IsChildOf(sunTransform)) continue;
+
+                    occluded = true;
+                    lastRayEndPoints[feelerIdx] = s_HitBuffer[h].point;
+                    break;
+                }
+
+                if (!occluded)
+                {
+                    lastRayEndPoints[feelerIdx] = feelerPoint;
+                    isFeelerExposed = true;
+                }
+                lastSampleOccluded[feelerIdx] = occluded;
+            }
+
+            // 3. Check if player is safely standing on a solid shadow bridge
+            isOnShadowBridge = false;
             Collider2D[] footHits = Physics2D.OverlapPointAll(new Vector2(bounds.center.x, bounds.min.y - 0.05f), shadowBlockerMask);
             for (int f = 0; f < footHits.Length; f++)
             {
                 if (footHits[f].GetComponent<DynamicShadowCollider>() != null)
                 {
+                    isOnShadowBridge = true;
                     exposedSampleCount = 0;
                     break;
                 }
@@ -293,7 +380,16 @@ namespace UmbraChronos.Environment
 
         private void UpdateVisibleBeams(bool hideAll)
         {
-            if (!renderVisibleBeams || beamRenderers == null || sunTransform == null) return;
+            if (!renderVisibleBeams || sunTransform == null) return;
+
+            int bodyCount = Mathf.Max(1, verticalSamplePoints);
+            int totalCount = enableHazardFeeler ? bodyCount + 1 : bodyCount;
+
+            if (beamRenderers == null || beamRenderers.Length != totalCount)
+            {
+                SetupBeams();
+                if (beamRenderers == null) return;
+            }
 
             Vector3 sunPos = sunTransform.position;
 
@@ -308,27 +404,56 @@ namespace UmbraChronos.Environment
                     continue;
                 }
 
+                // Hazard Feeler Beam (Index = bodyCount)
+                if (i == bodyCount)
+                {
+                    if (isOnShadowBridge || !isFeelerExposed)
+                    {
+                        lr.enabled = false;
+                        continue;
+                    }
+
+                    lr.enabled = true;
+                    lr.SetPosition(0, sunPos);
+                    lr.SetPosition(1, new Vector3(lastRayEndPoints[i].x, lastRayEndPoints[i].y, 0f));
+
+                    float pulse = 0.08f + (Mathf.Sin(UnityEngine.Time.time * 14f) * 0.025f);
+                    lr.startColor = new Color(1f, 0.88f, 0.50f, 0.85f);
+                    lr.endColor = feelerWarningColor; // #F59E0B warning amber
+                    lr.startWidth = pulse * 0.6f;
+                    lr.endWidth = pulse * 1.3f;
+                    continue;
+                }
+
+                // Body Beams (Head, Core, Feet)
                 lr.enabled = true;
                 lr.SetPosition(0, sunPos);
                 lr.SetPosition(1, new Vector3(lastRayEndPoints[i].x, lastRayEndPoints[i].y, 0f));
 
-                bool occluded = lastSampleOccluded != null && lastSampleOccluded[i];
-                if (occluded)
+                if (isOnShadowBridge)
+                {
+                    // Grounded safely on solid shadow matter (cyan rim aesthetic)
+                    lr.startColor = new Color(0.22f, 0.74f, 0.97f, 0.35f);
+                    lr.endColor = new Color(0.22f, 0.74f, 0.97f, 0.10f);
+                    lr.startWidth = 0.05f;
+                    lr.endWidth = 0.08f;
+                }
+                else if (lastSampleOccluded != null && lastSampleOccluded[i])
                 {
                     // Blocked beam stopping safely on shelter, monolith, or wall
-                    lr.startColor = new Color(beamSafeColor.r, beamSafeColor.g, beamSafeColor.b, 0.4f);
-                    lr.endColor = new Color(beamSafeColor.r, beamSafeColor.g, beamSafeColor.b, 0.1f);
+                    lr.startColor = new Color(beamSafeColor.r, beamSafeColor.g, beamSafeColor.b, 0.40f);
+                    lr.endColor = new Color(beamSafeColor.r, beamSafeColor.g, beamSafeColor.b, 0.12f);
                     lr.startWidth = 0.05f;
-                    lr.endWidth = 0.1f;
+                    lr.endWidth = 0.10f;
                 }
                 else
                 {
-                    // Searing lethal light striking player!
-                    float pulse = 0.12f + (Mathf.Sin(UnityEngine.Time.time * 20f) * 0.03f);
+                    // Searing lethal light striking player body!
+                    float pulse = 0.11f + (Mathf.Sin(UnityEngine.Time.time * 20f) * 0.035f);
                     lr.startColor = Color.white;
                     lr.endColor = beamLethalColor;
                     lr.startWidth = pulse;
-                    lr.endWidth = pulse * 1.5f;
+                    lr.endWidth = pulse * 1.6f;
                 }
             }
         }
@@ -368,17 +493,26 @@ namespace UmbraChronos.Environment
         }
 
         [Header("Editor Debug")]
-        [SerializeField] private bool showDebugGizmos = false;
+        [SerializeField] private bool showDebugGizmos = true;
 
         private void OnDrawGizmosSelected()
         {
             if (!showDebugGizmos || sunTransform == null || lastSamplePoints == null) return;
 
             Vector3 sunPos = sunTransform.position;
+            int bodyCount = Mathf.Max(1, verticalSamplePoints);
             for (int i = 0; i < lastSamplePoints.Length; i++)
             {
-                bool isSafe = lastSampleOccluded != null && lastSampleOccluded[i];
-                Gizmos.color = isSafe ? new Color(0.2f, 1f, 0.2f, 0.6f) : new Color(1f, 0.2f, 0.1f, 0.85f);
+                if (i < bodyCount)
+                {
+                    bool isSafe = (lastSampleOccluded != null && lastSampleOccluded[i]) || isOnShadowBridge;
+                    Gizmos.color = isSafe ? new Color(0.2f, 1f, 0.2f, 0.6f) : new Color(1f, 0.2f, 0.1f, 0.85f);
+                }
+                else
+                {
+                    // Hazard feeler ray (amber warning when exposed to light ahead)
+                    Gizmos.color = isFeelerExposed ? new Color(0.96f, 0.62f, 0.04f, 0.9f) : new Color(0.2f, 0.8f, 1f, 0.3f);
+                }
                 Gizmos.DrawLine(sunPos, lastRayEndPoints != null ? (Vector3)lastRayEndPoints[i] : (Vector3)lastSamplePoints[i]);
             }
         }
