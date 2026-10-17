@@ -93,6 +93,11 @@ namespace UmbraChronos.Player
             {
                 gameObject.AddComponent<PlayerAnimator>();
             }
+
+            if (GetComponent<PlayerImpactFX>() == null)
+            {
+                gameObject.AddComponent<PlayerImpactFX>();
+            }
         }
 
         private void OnEnable()

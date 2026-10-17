@@ -46,6 +46,12 @@ namespace UmbraChronos.Time
         public float EnergyPercentage => currentEnergy / maxRewindEnergy;
         public bool IsRewinding => isRewindActive;
 
+        public void SetEnergy(float energy)
+        {
+            currentEnergy = Mathf.Clamp(energy, 0f, maxRewindEnergy);
+            TimeEvents.OnRewindEnergyChanged?.Invoke(currentEnergy, maxRewindEnergy);
+        }
+
         private void Awake()
         {
             if (Instance != null && Instance != this)

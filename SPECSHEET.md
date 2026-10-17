@@ -55,7 +55,7 @@ Status: DONE / IN PROGRESS / READY / QUEUED
 | Player Character Art & Animation ("Umbral Wanderer" + Echo) | Shaf | Sat 10:00 PM | DONE |
 | Unified Master Level & Environment Contrast (`Level_Master.unity`) | Chendline | Sat 10:30 PM | IN PROGRESS |
 | Audio + `AudioManager` | Shaf | Sat 11:00 PM | DONE |
-| Camera shake & particle polish | Shaf | Sat 11:30 PM | READY |
+| Camera shake & particle polish | Shaf | Sat 11:30 PM | DONE |
 | Playtesting + full playthrough | Both | Sun 12:00 AM – 02:00 AM | QUEUED |
 | Trailer + submission | Both | Sun 05:00 – 09:15 AM | QUEUED |
 
