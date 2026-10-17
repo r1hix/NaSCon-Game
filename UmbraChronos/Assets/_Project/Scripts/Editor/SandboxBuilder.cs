@@ -319,7 +319,7 @@ namespace UmbraChronos.Editor
             string path = $"{EnvironmentPrefabFolder}/Monolith.prefab";
 
             GameObject monolithObj = new GameObject("Monolith");
-            monolithObj.transform.localScale = new Vector3(1.4f, 1.6f, 1f);
+            monolithObj.transform.localScale = new Vector3(1.4f, 3.6f, 1f);
 
             var sr = monolithObj.AddComponent<SpriteRenderer>();
             sr.sprite = sprite;
@@ -414,10 +414,11 @@ namespace UmbraChronos.Editor
             GameObject blockInst = (GameObject)PrefabUtility.InstantiatePrefab(blockPrefab);
             blockInst.transform.position = new Vector3(-8f, -1.15f, 0f);
 
-            // Monolith 1 standing at edge of left cliff (x = -3.2, y = -0.95, scale 1.4 x 1.6)
+            // Monolith 1 standing at edge of left cliff (base at y = -1.75, height = 3.6, pos = (-3.2, 0.05))
             GameObject monolithInst1 = (GameObject)PrefabUtility.InstantiatePrefab(monolithPrefab);
             monolithInst1.name = "Monolith_1";
-            monolithInst1.transform.position = new Vector3(-3.2f, -0.95f, 0f);
+            monolithInst1.transform.position = new Vector3(-3.2f, 0.05f, 0f);
+            monolithInst1.transform.localScale = new Vector3(1.4f, 3.6f, 1f);
             var shadowComp1 = monolithInst1.GetComponent<DynamicShadowCollider>();
             if (shadowComp1 != null)
             {
@@ -446,12 +447,11 @@ namespace UmbraChronos.Editor
                 soPlate1.ApplyModifiedProperties();
             }
 
-            // 6. SCREEN 2: Step Ledge 2, Monolith 2, Chasm 2, and Grand Sanctuary Citadel!
-            CreatePlatform("Step_Ledge_2", new Vector3(12.5f, -1.0f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
-
+            // 6. SCREEN 2: Monolith 2, Chasm 2, and Grand Sanctuary Citadel!
             GameObject monolithInst2 = (GameObject)PrefabUtility.InstantiatePrefab(monolithPrefab);
             monolithInst2.name = "Monolith_2";
-            monolithInst2.transform.position = new Vector3(14.5f, -0.95f, 0f);
+            monolithInst2.transform.position = new Vector3(14.5f, 0.05f, 0f);
+            monolithInst2.transform.localScale = new Vector3(1.4f, 3.6f, 1f);
             var shadowComp2 = monolithInst2.GetComponent<DynamicShadowCollider>();
             if (shadowComp2 != null)
             {

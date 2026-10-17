@@ -71,22 +71,16 @@ namespace UmbraChronos.Editor
             CreatePlatform("Boundary_Wall_Left", new Vector3(-15f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
             CreatePlatform("Spawn_Shelter_Roof", new Vector3(-9.0f, 1.2f, 0f), new Vector3(6f, 0.5f, 1f), sprite);
 
-            // Step Ledge 1 (hop 0.95 from floor at y = -1.75 to y = -0.8)
-            CreatePlatform("Step_Ledge_1", new Vector3(-5.0f, -1.0f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
-
-            // Monolith 1: at x = -3.0 (top at y = -0.15)
-            CreateMonolithObject(sprite, new Vector3(-3.0f, -0.95f, 0f), new Vector2(1.4f, 1.6f), -1.75f, sunInst.transform);
+            // Monolith 1: standing at edge of left cliff (base at y = -1.75, top at y = 1.85, height = 3.6)
+            CreateMonolithObject(sprite, new Vector3(-3.0f, 0.05f, 0f), new Vector2(1.4f, 3.6f), -1.75f, sunInst.transform);
 
             // Center Island (Spans between Screen 1 and Screen 2: x = 3.5 to 14.5)
             CreatePlatform("Center_Island", new Vector3(9.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
             CreatePlatform("Center_Shelter_Roof", new Vector3(9.0f, 1.2f, 0f), new Vector3(5f, 0.5f, 1f), sprite);
 
-            // 6. SCREEN 2: Step Ledge 2, Monolith 2, Chasm 2, and Sanctuary Cliff
-            // Step Ledge 2 on Center Island (x = 12.5)
-            CreatePlatform("Step_Ledge_2", new Vector3(12.5f, -1.0f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
-
-            // Monolith 2: at x = 14.5 (top at y = -0.15)
-            CreateMonolithObject(sprite, new Vector3(14.5f, -0.95f, 0f), new Vector2(1.4f, 1.6f), -1.75f, sunInst.transform);
+            // 6. SCREEN 2: Monolith 2, Chasm 2, and Sanctuary Cliff
+            // Monolith 2: at x = 14.5 (base at y = -1.75, top at y = 1.85, height = 3.6)
+            CreateMonolithObject(sprite, new Vector3(14.5f, 0.05f, 0f), new Vector2(1.4f, 3.6f), -1.75f, sunInst.transform);
 
             // Sanctuary Landing Cliff (x = 21.5 to 33.0)
             CreatePlatform("Sanctuary_Cliff", new Vector3(27.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
@@ -223,12 +217,8 @@ namespace UmbraChronos.Editor
             CreatePlatform("Center_Hub", new Vector3(0f, -2.5f, 0f), new Vector3(9f, 1.5f, 1f), sprite);
             CreatePlatform("Center_Shelter_Roof", new Vector3(0f, 2.8f, 0f), new Vector3(8f, 0.5f, 1f), sprite);
 
-            // Step ledges on left and right of Central Monolith
-            CreatePlatform("Step_Ledge_Left", new Vector3(-2.2f, -1.0f, 0f), new Vector3(1.8f, 0.4f, 1f), sprite);
-            CreatePlatform("Step_Ledge_Right", new Vector3(2.2f, -1.0f, 0f), new Vector3(1.8f, 0.4f, 1f), sprite);
-
-            // Center Monolith: Base at y = -1.75, top at y = -0.15
-            CreateMonolithObject(sprite, new Vector3(0f, -0.95f, 0f), new Vector2(1.4f, 1.6f), -1.75f, sunInst.transform);
+            // Center Monolith: Base at y = -1.75, top at y = 2.25, height = 4.0, lengthMultiplier = 2.2
+            CreateMonolithObject(sprite, new Vector3(0f, 0.25f, 0f), new Vector2(1.6f, 4.0f), -1.75f, sunInst.transform, 2.2f);
 
             // 5. SCREEN 1 (Western Altar, center x = -24):
             CreatePlatform("Western_Altar_Floor", new Vector3(-24.0f, -2.5f, 0f), new Vector3(8f, 1.5f, 1f), sprite);
@@ -377,7 +367,7 @@ namespace UmbraChronos.Editor
             return plat;
         }
 
-        private static GameObject CreateMonolithObject(Sprite sprite, Vector3 pos, Vector2 size, float groundY, Transform sunTransform)
+        private static GameObject CreateMonolithObject(Sprite sprite, Vector3 pos, Vector2 size, float groundY, Transform sunTransform, float lengthMultiplier = 1.0f)
         {
             GameObject monolith = new GameObject("Monolith");
             monolith.transform.position = pos;
@@ -395,6 +385,7 @@ namespace UmbraChronos.Editor
             var shadowCollider = monolith.AddComponent<DynamicShadowCollider>();
             SerializedObject so = new SerializedObject(shadowCollider);
             so.FindProperty("fallbackGroundY").floatValue = groundY;
+            so.FindProperty("shadowLengthMultiplier").floatValue = lengthMultiplier;
             if (sunTransform != null) so.FindProperty("sunTransform").objectReferenceValue = sunTransform;
             so.ApplyModifiedProperties();
 
