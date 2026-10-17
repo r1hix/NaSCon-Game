@@ -22,6 +22,12 @@ namespace UmbraChronos.Core
         public static Action<bool> OnRewindStateChanged;
 
         /// <summary>
+        /// Invoked when the rewind buffer energy changes.
+        /// Parameters: float currentEnergy, float maxEnergy.
+        /// </summary>
+        public static Action<float, float> OnRewindEnergyChanged;
+
+        /// <summary>
         /// Invoked when an Umbral Echo (silhouette shadow clone) is anchored in the world.
         /// </summary>
         public static Action OnEchoCreated;

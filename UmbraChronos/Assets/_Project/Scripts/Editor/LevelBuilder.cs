@@ -348,6 +348,10 @@ namespace UmbraChronos.Editor
 
             GameObject rewindPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabCoreFolder}/RewindManager.prefab");
             if (rewindPrefab != null) PrefabUtility.InstantiatePrefab(rewindPrefab);
+
+            GameObject hudPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabCoreFolder}/HUD.prefab");
+            if (hudPrefab == null) hudPrefab = HUDBuilder.GenerateHUDPrefab();
+            if (hudPrefab != null) PrefabUtility.InstantiatePrefab(hudPrefab);
         }
 
         private static GameObject CreatePlatform(string name, Vector3 pos, Vector3 scale, Sprite sprite)
