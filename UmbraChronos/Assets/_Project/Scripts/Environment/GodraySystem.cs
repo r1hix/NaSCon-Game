@@ -168,6 +168,12 @@ namespace UmbraChronos.Environment
             psObj.transform.localPosition = new Vector3(0f, -4f, 0f);
 
             solarDustParticles = psObj.AddComponent<ParticleSystem>();
+
+            // A ParticleSystem added at runtime starts playing immediately (playOnAwake).
+            // Unity forbids changing modules such as duration while the system is playing,
+            // so stop and clear it before configuring.
+            solarDustParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
             ParticleSystemRenderer psRenderer = psObj.GetComponent<ParticleSystemRenderer>();
 
             Shader unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");

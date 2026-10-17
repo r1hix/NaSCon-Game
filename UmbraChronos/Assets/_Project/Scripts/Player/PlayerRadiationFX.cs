@@ -61,6 +61,12 @@ namespace UmbraChronos.Player
             psObj.transform.localPosition = Vector3.zero;
 
             sizzleParticles = psObj.AddComponent<ParticleSystem>();
+
+            // A ParticleSystem added at runtime starts playing immediately (playOnAwake).
+            // Unity forbids changing modules such as duration while the system is playing,
+            // so stop and clear it before configuring.
+            sizzleParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
             ParticleSystemRenderer psRenderer = psObj.GetComponent<ParticleSystemRenderer>();
 
             Shader unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");

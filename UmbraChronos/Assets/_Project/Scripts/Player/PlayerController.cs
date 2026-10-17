@@ -307,18 +307,11 @@ namespace UmbraChronos.Player
 
         private void Flip()
         {
+            // Facing is a single source of truth owned here; PlayerAnimator mirrors the
+            // sprite renderer from IsFacingRight. Negating the root scale here (as a
+            // fallback) mirrored the whole player - collider included - and cancelled
+            // the renderer flip out, so the sprite never visibly turned.
             isFacingRight = !isFacingRight;
-
-            if (spriteRenderer != null)
-            {
-                spriteRenderer.flipX = !isFacingRight;
-            }
-            else
-            {
-                Vector3 scale = transform.localScale;
-                scale.x = isFacingRight ? Mathf.Abs(scale.x) : -Mathf.Abs(scale.x);
-                transform.localScale = scale;
-            }
         }
 
         private void HandleRewindStateChanged(bool active)
