@@ -69,10 +69,40 @@ namespace UmbraChronos.Environment
 
         [SerializeField] private Color umbraColor = new Color(0.05f, 0.05f, 0.08f, 0.30f);
 
+        [Header("Shadow Boundary Edge (Razor-Sharp Cutoff)")]
+        [Tooltip("Render a crisp vertical boundary line at the shadow bridge tip so players see exactly where safe shadow ends.")]
+        [SerializeField] private bool renderShadowBoundary = true;
+
+        [Tooltip("Color of the shadow boundary line (bright warning edge).")]
+        [SerializeField] private Color boundaryColor = new Color(1f, 0.82f, 0.35f, 0.85f); // Warm amber warning
+
+        [Tooltip("Width of the boundary edge line.")]
+        [SerializeField] private float boundaryWidth = 0.08f;
+
+        [Tooltip("Height of the vertical boundary line above and below ground.")]
+        [SerializeField] private float boundaryHeight = 2.5f;
+
+        [Tooltip("Render a subtle sunlit glow strip on the exposed side of the boundary.")]
+        [SerializeField] private bool renderSunlitGlowStrip = true;
+
+        [Tooltip("Color of the sunlit glow strip on the lethal side (#FFEAA7 at low alpha).")]
+        [SerializeField] private Color sunlitGlowColor = new Color(1.0f, 0.918f, 0.655f, 0.12f); // #FFEAA7
+
+        [Tooltip("Width of the sunlit glow strip beyond the shadow boundary.")]
+        [SerializeField] private float sunlitGlowWidth = 1.5f;
+
         // Components
         private EdgeCollider2D edgeCollider;
         private BoxCollider2D boxCollider;
         private LineRenderer rimRenderer;
+
+        // Shadow Boundary Edge (Child)
+        private LineRenderer boundaryLineRenderer;
+
+        // Sunlit Glow Strip (Child)
+        private MeshFilter glowStripMeshFilter;
+        private MeshRenderer glowStripMeshRenderer;
+        private Mesh glowStripMesh;
 
         // Bridge Slab Visual (Child GameObject)
         private MeshFilter bridgeMeshFilter;
@@ -213,7 +243,8 @@ namespace UmbraChronos.Environment
             float xCenter = (xMin + xMax) * 0.5f;
             Vector2 sunPos = sunTransform != null ? (Vector2)sunTransform.position : Vector2.zero;
 
-            bool sunIsOnLeft;
+
+            bool sunIsOnLeft = false; // Declare early for use in boundary edge section
             float shadowLength;
 
             if (sunTransform != null)
@@ -352,6 +383,56 @@ namespace UmbraChronos.Environment
                     }
                 }
             }
+
+            // 5. UPDATE RAZOR-SHARP SHADOW BOUNDARY EDGE LINE
+            if (renderShadowBoundary)
+            {
+                if (boundaryLineRenderer == null) SetupVisuals();
+                if (boundaryLineRenderer != null)
+                {
+                    if (isRetracted || Mathf.Abs(xEnd - xStart) < 0.25f)
+                    {
+                        boundaryLineRenderer.enabled = false;
+                    }
+                    else
+                    {
+                        boundaryLineRenderer.enabled = true;
+                        // Place the vertical boundary line at the shadow tip
+                        float tipX = sunIsOnLeft ? xEnd : xStart;
+                        boundaryLineRenderer.positionCount = 2;
+                        boundaryLineRenderer.SetPosition(0, new Vector3(tipX, groundY - boundaryHeight * 0.3f, -0.06f));
+                        boundaryLineRenderer.SetPosition(1, new Vector3(tipX, groundY + boundaryHeight * 0.7f, -0.06f));
+
+                        // Pulsing amber glow to warn of the lethal boundary
+                        float pulse = 0.85f + Mathf.Sin(UnityEngine.Time.time * 3.5f) * 0.15f;
+                        Color pulsedColor = boundaryColor;
+                        pulsedColor.a = boundaryColor.a * pulse;
+                        boundaryLineRenderer.startColor = pulsedColor;
+                        boundaryLineRenderer.endColor = new Color(pulsedColor.r, pulsedColor.g, pulsedColor.b, pulsedColor.a * 0.3f);
+                    }
+                }
+            }
+
+            // 6. UPDATE SUNLIT GLOW STRIP (lethal side of boundary)
+            if (renderSunlitGlowStrip)
+            {
+                if (glowStripMesh == null || glowStripMeshFilter == null) SetupVisuals();
+                if (glowStripMesh != null && glowStripMeshFilter != null)
+                {
+                    if (isRetracted || Mathf.Abs(xEnd - xStart) < 0.25f)
+                    {
+                        glowStripMesh.Clear();
+                    }
+                    else
+                    {
+                        float tipX = sunIsOnLeft ? xEnd : xStart;
+                        // Glow strip extends from the shadow tip into the sunlit lethal zone
+                        float glowStartX = tipX;
+                        float glowEndX = sunIsOnLeft ? tipX + sunlitGlowWidth : tipX - sunlitGlowWidth;
+                        UpdateSunlitGlowStripMesh(glowStartX, glowEndX, groundY, sunIsOnLeft);
+                    }
+                }
+            }
         }
 
         private void UpdateBridgeSlabMesh(float xStart, float xEnd, float groundY, float thickness)
@@ -407,6 +488,53 @@ namespace UmbraChronos.Environment
                 0, 2, 1
             };
             umbraMesh.RecalculateBounds();
+        }
+
+        private void UpdateSunlitGlowStripMesh(float xStart, float xEnd, float groundY, bool glowToRight)
+        {
+            // Gradient quad: opaque at shadow boundary, transparent at the far end
+            float stripHeight = boundaryHeight;
+            float yBottom = groundY - stripHeight * 0.15f;
+            float yTop = groundY + stripHeight * 0.35f;
+
+            Vector3[] worldVerts = new Vector3[]
+            {
+                new Vector3(xStart, yBottom, 0.05f), // Bottom-near
+                new Vector3(xEnd, yBottom, 0.05f),    // Bottom-far
+                new Vector3(xEnd, yTop, 0.05f),       // Top-far
+                new Vector3(xStart, yTop, 0.05f),     // Top-near
+            };
+
+            Vector3[] localVerts = new Vector3[4];
+            for (int i = 0; i < 4; i++)
+            {
+                localVerts[i] = glowStripMeshFilter.transform.InverseTransformPoint(worldVerts[i]);
+            }
+
+            Color opaqueColor = sunlitGlowColor;
+            Color transparentColor = new Color(sunlitGlowColor.r, sunlitGlowColor.g, sunlitGlowColor.b, 0f);
+
+            Color[] colors;
+            if (glowToRight)
+            {
+                // Shadow tip is on left, glow extends right
+                colors = new Color[] { opaqueColor, transparentColor, transparentColor, opaqueColor };
+            }
+            else
+            {
+                // Shadow tip is on right, glow extends left
+                colors = new Color[] { transparentColor, opaqueColor, opaqueColor, transparentColor };
+            }
+
+            glowStripMesh.Clear();
+            glowStripMesh.vertices = localVerts;
+            glowStripMesh.colors = colors;
+            glowStripMesh.triangles = new int[]
+            {
+                0, 2, 1,
+                0, 3, 2
+            };
+            glowStripMesh.RecalculateBounds();
         }
 
         private void SetupVisuals()
@@ -495,6 +623,62 @@ namespace UmbraChronos.Environment
                     umbraMeshRenderer.sharedMaterial = new Material(uShader) { color = tintedUmbra };
                 }
                 umbraMeshRenderer.sortingOrder = -2; // Behind platforms and player, in front of sky canvas
+            }
+
+            // 4. Shadow Boundary Edge Line (Razor-Sharp Cutoff)
+            if (renderShadowBoundary)
+            {
+                Transform boundaryTransform = transform.Find("Shadow_Boundary_Edge");
+                GameObject boundaryObj = boundaryTransform != null ? boundaryTransform.gameObject : new GameObject("Shadow_Boundary_Edge");
+                boundaryObj.transform.SetParent(transform, false);
+                boundaryObj.transform.localPosition = Vector3.zero;
+                boundaryObj.transform.localRotation = Quaternion.identity;
+                boundaryObj.transform.localScale = Vector3.one;
+
+                boundaryLineRenderer = boundaryObj.GetComponent<LineRenderer>();
+                if (boundaryLineRenderer == null) boundaryLineRenderer = boundaryObj.AddComponent<LineRenderer>();
+
+                if (uShader != null)
+                {
+                    boundaryLineRenderer.material = new Material(uShader) { color = boundaryColor };
+                }
+                boundaryLineRenderer.startWidth = boundaryWidth;
+                boundaryLineRenderer.endWidth = boundaryWidth * 0.5f; // Tapers upward
+                boundaryLineRenderer.useWorldSpace = true;
+                boundaryLineRenderer.sortingOrder = 6; // Above the cyan rim
+                boundaryLineRenderer.alignment = LineAlignment.View;
+                boundaryLineRenderer.startColor = boundaryColor;
+                boundaryLineRenderer.endColor = new Color(boundaryColor.r, boundaryColor.g, boundaryColor.b, 0.2f);
+            }
+
+            // 5. Sunlit Glow Strip (gradient mesh on lethal side of boundary)
+            if (renderSunlitGlowStrip)
+            {
+                Transform glowTransform = transform.Find("Shadow_Sunlit_Glow");
+                GameObject glowObj = glowTransform != null ? glowTransform.gameObject : new GameObject("Shadow_Sunlit_Glow");
+                glowObj.transform.SetParent(transform, false);
+                glowObj.transform.localPosition = Vector3.zero;
+                glowObj.transform.localRotation = Quaternion.identity;
+                glowObj.transform.localScale = Vector3.one;
+
+                glowStripMeshFilter = glowObj.GetComponent<MeshFilter>();
+                if (glowStripMeshFilter == null) glowStripMeshFilter = glowObj.AddComponent<MeshFilter>();
+
+                glowStripMeshRenderer = glowObj.GetComponent<MeshRenderer>();
+                if (glowStripMeshRenderer == null) glowStripMeshRenderer = glowObj.AddComponent<MeshRenderer>();
+
+                if (glowStripMesh == null)
+                {
+                    glowStripMesh = new Mesh { name = "SunlitGlowMesh" };
+                    glowStripMesh.MarkDynamic();
+                    glowStripMeshFilter.sharedMesh = glowStripMesh;
+                }
+
+                if (uShader != null)
+                {
+                    glowStripMeshRenderer.sharedMaterial = new Material(uShader) { color = Color.white }; // Vertex colors handle gradient
+                }
+                glowStripMeshRenderer.sortingOrder = -1; // Behind bridge slab, in front of umbra cone
             }
         }
 

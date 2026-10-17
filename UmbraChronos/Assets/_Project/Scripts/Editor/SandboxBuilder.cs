@@ -28,6 +28,17 @@ namespace UmbraChronos.Editor
         [MenuItem("Umbra Chronos/Setup Shaf Sandbox & Prefabs")]
         public static void BuildSandboxAndPrefabs()
         {
+            BuildSandboxForUser("Sandbox_Shaf.unity");
+        }
+
+        [MenuItem("Umbra Chronos/Setup Chendline Sandbox & Prefabs")]
+        public static void BuildChendlineSandbox()
+        {
+            BuildSandboxForUser("Sandbox_Chendline.unity");
+        }
+
+        public static void BuildSandboxForUser(string sceneFileName)
+        {
             EnsureDirectoriesExist();
 
             Sprite squareSprite = GetOrCreateSquareSprite();
@@ -47,7 +58,7 @@ namespace UmbraChronos.Editor
             GameObject monolithPrefab = CreateMonolithPrefab(squareSprite);
 
             // 3. Assemble Sandbox Scene
-            BuildSandboxScene(playerPrefab, rewindManagerPrefab, postProcessingPrefab, lethalLightPrefab, sunDialPrefab, gatePrefab, platePrefab, blockPrefab, monolithPrefab, squareSprite);
+            BuildSandboxScene(sceneFileName, playerPrefab, rewindManagerPrefab, postProcessingPrefab, lethalLightPrefab, sunDialPrefab, gatePrefab, platePrefab, blockPrefab, monolithPrefab, squareSprite);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -56,7 +67,7 @@ namespace UmbraChronos.Editor
             {
                 EditorUtility.DisplayDialog(
                     "Umbra Chronos Playground Ready!",
-                    "Successfully generated:\n- SunDial.prefab (Interactive celestial sun with [Q]/[E] rotation!)\n- Monolith.prefab (Reachable height + glowing cyan shadow bridge!)\n- LethalLightZone.prefab (Visible sunbeams & danger)\n- PostProcessingVolume.prefab (Rewind VFX & Solar glare)\n- PressurePlate.prefab & TimedGate.prefab\n- PushableBlock.prefab (Mobile umbrella shield!)\n- Sandbox_Shaf.unity with interactive puzzle testbed!\n\nHit Play to test your time and echo puzzles!",
+                    $"Successfully generated {sceneFileName} with:\n- Dynamic shadow boundary edges\n- Sunlit ground sheen\n- Interior chamber dark backdrops\n- Monoliths & SunDial\n\nHit Play to test your time and echo puzzles!",
                     "Let's Go!");
             }
         }
@@ -104,17 +115,20 @@ namespace UmbraChronos.Editor
             string path = $"{PlayerPrefabFolder}/UmbralEcho.prefab";
 
             GameObject echoObj = new GameObject("UmbralEcho");
-            echoObj.transform.localScale = new Vector3(0.8f, 1.6f, 1f);
+            echoObj.transform.localScale = Vector3.one;
 
             var sr = echoObj.AddComponent<SpriteRenderer>();
             sr.sprite = sprite;
-            sr.color = new Color(0.12f, 0.11f, 0.29f, 0.70f); // Translucent Cyan-Indigo (#1E1B4B)
+            sr.color = Color.white;
             sr.sortingOrder = 5;
 
             var col = echoObj.AddComponent<BoxCollider2D>();
-            col.size = Vector2.one;
+            col.size = new Vector2(0.65f, 1.48f);
+            col.offset = new Vector2(0f, -0.05f);
 
             echoObj.AddComponent<UmbralEcho>();
+            var anim = echoObj.AddComponent<UmbraChronos.Player.PlayerAnimator>();
+            anim.ConfigureAsEcho();
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(echoObj, path);
             Object.DestroyImmediate(echoObj);
@@ -127,11 +141,11 @@ namespace UmbraChronos.Editor
 
             GameObject playerObj = new GameObject("Player");
             playerObj.tag = "Player";
-            playerObj.transform.localScale = new Vector3(0.8f, 1.6f, 1f);
+            playerObj.transform.localScale = Vector3.one;
 
             var sr = playerObj.AddComponent<SpriteRenderer>();
             sr.sprite = sprite;
-            sr.color = new Color(0.05f, 0.05f, 0.08f, 1f); // #0D0D15 Obsidian silhouette
+            sr.color = Color.white;
             sr.sortingOrder = 10;
 
             var rb = playerObj.AddComponent<Rigidbody2D>();
@@ -140,10 +154,12 @@ namespace UmbraChronos.Editor
             rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
             var col = playerObj.AddComponent<BoxCollider2D>();
-            col.size = Vector2.one;
+            col.size = new Vector2(0.65f, 1.48f);
+            col.offset = new Vector2(0f, -0.05f);
 
-            playerObj.AddComponent<PlayerController>();
+            var pc = playerObj.AddComponent<PlayerController>();
             playerObj.AddComponent<TimeBody>();
+            playerObj.AddComponent<UmbraChronos.Player.PlayerAnimator>();
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(playerObj, path);
             Object.DestroyImmediate(playerObj);
@@ -341,6 +357,7 @@ namespace UmbraChronos.Editor
         }
 
         private static void BuildSandboxScene(
+            string sceneFileName,
             GameObject playerPrefab, 
             GameObject rewindManagerPrefab,
             GameObject postProcessingPrefab,
@@ -403,9 +420,22 @@ namespace UmbraChronos.Editor
             }
 
             // 5. SCREEN 1: Left Cliff, Shelter, Monolith 1, Chasm 1, Plate 1, Gate 1
-            CreatePlatform("Cliff_Left", new Vector3(-9.0f, -2.5f, 0f), new Vector3(12f, 1.5f, 1f), sprite);
+            GameObject cliffLeft = CreatePlatform("Cliff_Left", new Vector3(-9.0f, -2.5f, 0f), new Vector3(12f, 1.5f, 1f), sprite);
+            var cliffSheen = cliffLeft.AddComponent<SunlitGroundSheen>();
+            SerializedObject soCliffSheen = new SerializedObject(cliffSheen);
+            soCliffSheen.FindProperty("sunTransform").objectReferenceValue = sunInst.transform;
+            soCliffSheen.ApplyModifiedProperties();
+
             CreatePlatform("Boundary_Wall_Left", new Vector3(-15.0f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
-            CreatePlatform("Spawn_Shelter_Roof", new Vector3(-10.5f, 1.2f, 0f), new Vector3(6f, 0.5f, 1f), sprite);
+            
+            // Spawn shelter with dark interior backdrop (#08080E) at sortingOrder -12
+            GameObject shelterRoof = CreatePlatform("Spawn_Shelter_Roof", new Vector3(-10.5f, 1.2f, 0f), new Vector3(6f, 0.5f, 1f), sprite);
+            var interiorBackdrop = shelterRoof.AddComponent<InteriorBackdrop>();
+            SerializedObject soBackdrop = new SerializedObject(interiorBackdrop);
+            soBackdrop.FindProperty("floorY").floatValue = -1.75f;
+            soBackdrop.FindProperty("horizontalPadding").floatValue = 0.5f;
+            soBackdrop.FindProperty("useEdgeFade").boolValue = true;
+            soBackdrop.ApplyModifiedProperties();
 
             // Stepping Stone Ledge 1 (hop 0.95 from floor at y = -1.75 to y = -0.8)
             CreatePlatform("Step_Ledge_1", new Vector3(-5.0f, -1.0f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
@@ -429,7 +459,11 @@ namespace UmbraChronos.Editor
             }
 
             // Mid Plateau connecting Screen 1 and Screen 2 (x = 3.5 to 14.5)
-            CreatePlatform("Mid_Plateau", new Vector3(9.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            GameObject midPlateau = CreatePlatform("Mid_Plateau", new Vector3(9.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            var midSheen = midPlateau.AddComponent<SunlitGroundSheen>();
+            SerializedObject soMidSheen = new SerializedObject(midSheen);
+            soMidSheen.FindProperty("sunTransform").objectReferenceValue = sunInst.transform;
+            soMidSheen.ApplyModifiedProperties();
 
             // Puzzle 1: PressurePlate 1 & TimedGate 1 (opens passageway to Screen 2!)
             GameObject gateInst1 = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
@@ -462,7 +496,12 @@ namespace UmbraChronos.Editor
             }
 
             // Sanctuary Citadel (x = 21.5 to 33.0)
-            CreatePlatform("Sanctuary_Citadel", new Vector3(27.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            GameObject citadel = CreatePlatform("Sanctuary_Citadel", new Vector3(27.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            var citadelSheen = citadel.AddComponent<SunlitGroundSheen>();
+            SerializedObject soCitadelSheen = new SerializedObject(citadelSheen);
+            soCitadelSheen.FindProperty("sunTransform").objectReferenceValue = sunInst.transform;
+            soCitadelSheen.ApplyModifiedProperties();
+
             CreatePlatform("Boundary_Wall_Right", new Vector3(32.5f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
 
             // Lethal Chasm Floor (deep abyss spanning under both rooms)
@@ -503,7 +542,7 @@ namespace UmbraChronos.Editor
             if (hudPrefab != null) PrefabUtility.InstantiatePrefab(hudPrefab);
 
             // Save Scene
-            string scenePath = $"{SceneFolderPath}/Sandbox_Shaf.unity";
+            string scenePath = $"{SceneFolderPath}/{sceneFileName}";
             EditorSceneManager.SaveScene(scene, scenePath);
         }
 
