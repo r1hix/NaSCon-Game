@@ -113,6 +113,8 @@ namespace UmbraChronos.Time
                 currentEnergy = Mathf.Min(maxRewindEnergy, currentEnergy + energyRechargeRate * UnityEngine.Time.deltaTime);
             }
 
+            TimeEvents.OnRewindEnergyChanged?.Invoke(currentEnergy, maxRewindEnergy);
+
             // Umbral Echo Trigger
             if (echoInput)
             {

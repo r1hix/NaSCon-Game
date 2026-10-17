@@ -497,6 +497,11 @@ namespace UmbraChronos.Editor
 
             PrefabUtility.InstantiatePrefab(rewindManagerPrefab);
 
+            // 9. HUD Overlay
+            GameObject hudPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{CorePrefabFolder}/HUD.prefab");
+            if (hudPrefab == null) hudPrefab = HUDBuilder.GenerateHUDPrefab();
+            if (hudPrefab != null) PrefabUtility.InstantiatePrefab(hudPrefab);
+
             // Save Scene
             string scenePath = $"{SceneFolderPath}/Sandbox_Shaf.unity";
             EditorSceneManager.SaveScene(scene, scenePath);
