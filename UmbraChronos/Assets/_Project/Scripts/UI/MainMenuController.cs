@@ -55,6 +55,13 @@ namespace UmbraChronos.UI
         [SerializeField] private CanvasGroup fadeOverlay;
         [SerializeField] private float startFadeDuration = 0.7f;
 
+        [Header("Audio")]
+        [SerializeField] private AudioSource menuMusicSource;
+        [SerializeField] private AudioClip titleAmbience;
+        [SerializeField] private AudioClip backSound;
+        [Range(0f, 1f)] [SerializeField] private float musicVolume = 0.70f;
+        [Range(0f, 1f)] [SerializeField] private float backVolume = 0.75f;
+
         private const string MasterVolumeKey = "umbra_master_volume";
         private const string FullscreenKey = "umbra_fullscreen";
 
@@ -96,6 +103,46 @@ namespace UmbraChronos.UI
 
             WireButtons();
             LoadSettings();
+
+#if UNITY_EDITOR
+            if (titleAmbience == null)
+                titleAmbience = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/_Project/Audio/Music/bgm_title_ambient.wav");
+            if (backSound == null)
+                backSound = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/_Project/Audio/SFX/sfx_ui_back.wav");
+#endif
+            SetupMenuAudio();
+        }
+
+        private void SetupMenuAudio()
+        {
+            if (menuMusicSource == null)
+            {
+                menuMusicSource = GetComponent<AudioSource>();
+                if (menuMusicSource == null)
+                {
+                    menuMusicSource = gameObject.AddComponent<AudioSource>();
+                }
+            }
+
+            menuMusicSource.playOnAwake = false;
+            menuMusicSource.loop = true;
+            menuMusicSource.spatialBlend = 0f;
+
+            if (titleAmbience != null && !menuMusicSource.isPlaying)
+            {
+                menuMusicSource.clip = titleAmbience;
+                float savedVol = PlayerPrefs.GetFloat(MasterVolumeKey, 1f);
+                menuMusicSource.volume = musicVolume * savedVol;
+                menuMusicSource.Play();
+            }
+        }
+
+        private void PlayBackSound()
+        {
+            if (backSound != null && menuMusicSource != null)
+            {
+                menuMusicSource.PlayOneShot(backSound, backVolume);
+            }
         }
 
         private PanelState BuildPanelState(CanvasGroup group, RectTransform rect, float direction, bool visible)
@@ -189,6 +236,7 @@ namespace UmbraChronos.UI
         private IEnumerator StartGameRoutine()
         {
             isStartingGame = true;
+            float initialMusicVol = menuMusicSource != null ? menuMusicSource.volume : 0f;
 
             if (fadeOverlay != null)
             {
@@ -198,7 +246,12 @@ namespace UmbraChronos.UI
                 while (t < duration)
                 {
                     t += UnityEngine.Time.unscaledDeltaTime;
-                    fadeOverlay.alpha = Mathf.Clamp01(t / duration);
+                    float progress = Mathf.Clamp01(t / duration);
+                    fadeOverlay.alpha = progress;
+                    if (menuMusicSource != null)
+                    {
+                        menuMusicSource.volume = Mathf.Lerp(initialMusicVol, 0f, progress);
+                    }
                     yield return null;
                 }
                 fadeOverlay.alpha = 1f;
@@ -240,6 +293,7 @@ namespace UmbraChronos.UI
 
         public void ReturnToMainMenu()
         {
+            PlayBackSound();
             SetPanelsVisible(main: true, settings: false, credits: false);
         }
 
@@ -291,6 +345,10 @@ namespace UmbraChronos.UI
         private void OnMasterVolumeChanged(float value)
         {
             AudioListener.volume = Mathf.Clamp01(value);
+            if (menuMusicSource != null)
+            {
+                menuMusicSource.volume = musicVolume * Mathf.Clamp01(value);
+            }
             PlayerPrefs.SetFloat(MasterVolumeKey, value);
             PlayerPrefs.Save();
         }
