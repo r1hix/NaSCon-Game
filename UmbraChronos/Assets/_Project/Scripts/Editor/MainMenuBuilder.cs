@@ -40,6 +40,7 @@ namespace UmbraChronos.Editor
         [MenuItem("Umbra Chronos/Generate Title Screen Scene")]
         public static void GenerateMainMenuScene()
         {
+            AssetDatabase.Refresh();
             EnsureDirectories();
             GenerateMenuSprites();
 
@@ -55,6 +56,19 @@ namespace UmbraChronos.Editor
             Sprite glowSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Sprite_Menu_Glow_256.png");
             Sprite moteSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Sprite_Menu_Mote_16.png");
             Sprite caretSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Sprite_Menu_Caret_32.png");
+
+            // Audio assets for title screen ambience and UI button SFX
+            AudioClip hoverClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/_Project/Audio/SFX/sfx_ui_hover.wav");
+            AudioClip selectClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/_Project/Audio/SFX/sfx_ui_select.wav");
+            AudioClip backClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/_Project/Audio/SFX/sfx_ui_back.wav");
+            AudioClip titleBgm = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/_Project/Audio/Music/bgm_title_ambient.wav");
+
+            if (hoverClip == null) hoverClip = AssetDatabase.LoadAssetAtPath<AudioClip>(AssetDatabase.GUIDToAssetPath("cca3324f5ed34b5abef01447e8d63eb6"));
+            if (selectClip == null) selectClip = AssetDatabase.LoadAssetAtPath<AudioClip>(AssetDatabase.GUIDToAssetPath("f96b6641c9f04dd68e93f5052d5deb3f"));
+            if (backClip == null) backClip = AssetDatabase.LoadAssetAtPath<AudioClip>(AssetDatabase.GUIDToAssetPath("6f9ecc7411e34e9c9b9d2eff91f20bdc"));
+            if (titleBgm == null) titleBgm = AssetDatabase.LoadAssetAtPath<AudioClip>(AssetDatabase.GUIDToAssetPath("c2fb135849c44f3a9c347342de225b44"));
+
+            Debug.Log($"[MainMenuBuilder] hoverClip={(hoverClip != null ? hoverClip.name : "NULL")}, selectClip={(selectClip != null ? selectClip.name : "NULL")}, backClip={(backClip != null ? backClip.name : "NULL")}, titleBgm={(titleBgm != null ? titleBgm.name : "NULL")}");
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -72,6 +86,13 @@ namespace UmbraChronos.Editor
             scaler.matchWidthOrHeight = 0.5f;
 
             canvasObj.AddComponent<GraphicRaycaster>();
+            AudioSource menuAudio = canvasObj.AddComponent<AudioSource>();
+            menuAudio.playOnAwake = true;
+            menuAudio.loop = true;
+            menuAudio.spatialBlend = 0f;
+            menuAudio.clip = titleBgm;
+            menuAudio.volume = 0.70f;
+
             MainMenuController menu = canvasObj.AddComponent<MainMenuController>();
             MenuAtmosphere atmosphere = canvasObj.AddComponent<MenuAtmosphere>();
 
@@ -145,10 +166,10 @@ namespace UmbraChronos.Editor
             layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = false;
 
-            Button playButton = CreateMenuButton(menuColumn.transform, "PLAY", caretSprite);
-            Button settingsButton = CreateMenuButton(menuColumn.transform, "SETTINGS", caretSprite);
-            Button creditsButton = CreateMenuButton(menuColumn.transform, "CREDITS", caretSprite);
-            Button quitButton = CreateMenuButton(menuColumn.transform, "QUIT", caretSprite);
+            Button playButton = CreateMenuButton(menuColumn.transform, "PLAY", caretSprite, hoverClip, selectClip);
+            Button settingsButton = CreateMenuButton(menuColumn.transform, "SETTINGS", caretSprite, hoverClip, selectClip);
+            Button creditsButton = CreateMenuButton(menuColumn.transform, "CREDITS", caretSprite, hoverClip, selectClip);
+            Button quitButton = CreateMenuButton(menuColumn.transform, "QUIT", caretSprite, hoverClip, selectClip);
 
             TextMeshProUGUI footer = CreateText(mainPanel.transform, "Footer_Text", "rihix  ·  chendline     —     developed for NaSCon 2026", 22, TextAlignmentOptions.Center, new Color(0.62f, 0.68f, 0.78f, 0.85f));
             footer.rectTransform.anchorMin = footer.rectTransform.anchorMax = new Vector2(0.5f, 0.06f);
@@ -176,7 +197,7 @@ namespace UmbraChronos.Editor
             fullscreenLabel.rectTransform.sizeDelta = new Vector2(360f, 40f);
             Toggle fullscreenToggle = CreateToggle(settingsPanel.transform, new Vector2(-40f, -110f), barSprite, knobSprite);
 
-            Button settingsBack = CreateMenuButton(settingsPanel.transform, "BACK", caretSprite);
+            Button settingsBack = CreateMenuButton(settingsPanel.transform, "BACK", caretSprite, hoverClip, backClip);
             settingsBack.GetComponent<RectTransform>().anchorMin = settingsBack.GetComponent<RectTransform>().anchorMax = new Vector2(0.5f, 0.5f);
             settingsBack.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, -230f);
             LayoutElement settingsBackLayout = settingsBack.gameObject.AddComponent<LayoutElement>();
@@ -201,7 +222,7 @@ namespace UmbraChronos.Editor
             creditsText.rectTransform.anchoredPosition = new Vector2(0f, 20f);
             creditsText.lineSpacing = 6f;
 
-            Button creditsBack = CreateMenuButton(creditsPanel.transform, "BACK", caretSprite);
+            Button creditsBack = CreateMenuButton(creditsPanel.transform, "BACK", caretSprite, hoverClip, backClip);
             creditsBack.GetComponent<RectTransform>().anchorMin = creditsBack.GetComponent<RectTransform>().anchorMax = new Vector2(0.5f, 0.5f);
             creditsBack.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, -320f);
             LayoutElement creditsBackLayout = creditsBack.gameObject.AddComponent<LayoutElement>();
@@ -221,7 +242,8 @@ namespace UmbraChronos.Editor
                 settingsGroup, settingsPanel.GetComponent<RectTransform>(),
                 creditsGroup, creditsPanel.GetComponent<RectTransform>(),
                 playButton, settingsButton, creditsButton, quitButton,
-                volumeSlider, fullscreenToggle, settingsBack, creditsBack, fadeGroup);
+                volumeSlider, fullscreenToggle, settingsBack, creditsBack, fadeGroup,
+                menuAudio, titleBgm, backClip);
 
             WireAtmosphere(atmosphere, sky.rectTransform, glow.rectTransform, farSpires.rectTransform, midSpires.rectTransform,
                 nearSpires.rectTransform, titleRect, menuRect, glow, moteTargets);
@@ -310,7 +332,7 @@ namespace UmbraChronos.Editor
             return targets;
         }
 
-        private static Button CreateMenuButton(Transform parent, string labelText, Sprite caretSprite)
+        private static Button CreateMenuButton(Transform parent, string labelText, Sprite caretSprite, AudioClip hoverClip = null, AudioClip clickClip = null)
         {
             GameObject obj = CreateUIObject($"Button_{labelText}", parent);
             RectTransform rect = obj.GetComponent<RectTransform>();
@@ -361,6 +383,8 @@ namespace UmbraChronos.Editor
             so.FindProperty("label").objectReferenceValue = label;
             so.FindProperty("cursor").objectReferenceValue = caretRect;
             so.FindProperty("cursorImage").objectReferenceValue = caretImage;
+            if (hoverClip != null) so.FindProperty("hoverSound").objectReferenceValue = hoverClip;
+            if (clickClip != null) so.FindProperty("clickSound").objectReferenceValue = clickClip;
             so.ApplyModifiedProperties();
 
             return button;
@@ -483,7 +507,8 @@ namespace UmbraChronos.Editor
             CanvasGroup creditsGroup, RectTransform creditsRect,
             Button play, Button settings, Button credits, Button quit,
             Slider volume, Toggle fullscreen, Button settingsBack, Button creditsBack,
-            CanvasGroup fade)
+            CanvasGroup fade,
+            AudioSource menuAudio = null, AudioClip titleBgm = null, AudioClip backSound = null)
         {
             string gameplayScene = File.Exists($"{LevelsFolder}/Level_Master.unity") ? "Level_Master" : "Level_01";
 
@@ -505,6 +530,9 @@ namespace UmbraChronos.Editor
             so.FindProperty("settingsBackButton").objectReferenceValue = settingsBack;
             so.FindProperty("creditsBackButton").objectReferenceValue = creditsBack;
             so.FindProperty("fadeOverlay").objectReferenceValue = fade;
+            if (menuAudio != null) so.FindProperty("menuMusicSource").objectReferenceValue = menuAudio;
+            if (titleBgm != null) so.FindProperty("titleAmbience").objectReferenceValue = titleBgm;
+            if (backSound != null) so.FindProperty("backSound").objectReferenceValue = backSound;
             so.ApplyModifiedProperties();
         }
 

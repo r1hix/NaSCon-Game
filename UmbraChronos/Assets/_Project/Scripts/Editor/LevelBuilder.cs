@@ -288,12 +288,16 @@ namespace UmbraChronos.Editor
                 BuildMasterLevel();
             }
 
-            string[] scenes = new string[] { path };
+            string menuPath = "Assets/_Project/Scenes/UI/MainMenu.unity";
+            var sceneList = new System.Collections.Generic.List<string>();
+            if (File.Exists(menuPath)) sceneList.Add(menuPath);
+            sceneList.Add(path);
+
             string macDir = "Builds/macOS";
             if (!Directory.Exists(macDir)) Directory.CreateDirectory(macDir);
             string macPath = $"{macDir}/UmbraChronos.app";
             Debug.Log($"[Build] Building macOS Standalone to {macPath}...");
-            var report = BuildPipeline.BuildPlayer(scenes, macPath, BuildTarget.StandaloneOSX, BuildOptions.None);
+            var report = BuildPipeline.BuildPlayer(sceneList.ToArray(), macPath, BuildTarget.StandaloneOSX, BuildOptions.None);
             Debug.Log($"[Build] macOS build completed with result: {report.summary.result}");
 
             if (!Application.isBatchMode)

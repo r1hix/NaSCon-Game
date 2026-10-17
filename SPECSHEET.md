@@ -156,10 +156,16 @@ Every chamber, puzzle, and platform in `Level_Master.unity` MUST adhere strictly
 1. **`AudioManager.cs`:**
    - SFX: `sfx_tick.wav` (sun rotating ratchet), `sfx_tape_rewind.wav` (looped rewind whir), `sfx_plate_click.wav`, `sfx_gate_open.wav`, `sfx_vaporize.wav` (solar death), `sfx_echo_spawn.wav`, `sfx_jump.wav`.
    - Dynamic Rewind Pitch-Shift: Lerp audio master/music pitch down to `0.5x` with tape wobble while rewinding.
-2. **Camera Shake & Environmental VFX:**
+2. **Title Screen Ambience & UI SFX (`MainMenu.unity`):**
+   - Seamless 16.0s ambient drone loop (`bgm_title_ambient.wav`) with deep F1/C2 sub-bass, atmospheric celestial chords, and subtle clock escapement ticks.
+   - Organic crystal hover chime (`sfx_ui_hover.wav`) with subtle pitch randomization ($0.96 - 1.05\times$) on menu item mouse-over / gamepad focus.
+   - Resonant stone rune actuation & harmonic chime (`sfx_ui_select.wav`) on button activation, and descending muted stone tap (`sfx_ui_back.wav`) on back navigation.
+   - Smooth audio fade-out when clicking PLAY into the gameplay master level.
+   - Master volume slider seamlessly synchronizes both `AudioListener.volume` and menu audio playback.
+3. **Camera Shake & Environmental VFX:**
    - Screen shake on lethal solar damage, gate grinding, and heavy plate triggering in `CameraController.cs`.
    - Micro-particles: Obsidian dust on jump/landing, solar embers in lethal chasms, scanline pulse on Echo deployment.
-3. **Death & Rewind Recovery:**
+4. **Death & Rewind Recovery:**
    - On death: flash monochrome vignette with prompt `[HOLD R TO REWIND TIME]`. Player can rewind time backwards to undo their death! If buffer is empty, auto-respawn at current chamber entry.
 
 ---

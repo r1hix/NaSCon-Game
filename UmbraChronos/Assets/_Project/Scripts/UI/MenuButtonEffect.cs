@@ -49,6 +49,15 @@ namespace UmbraChronos.UI
         private bool hasLabel;
         private bool hasCursor;
 
+        [Header("Audio")]
+        [SerializeField] private AudioClip hoverSound;
+        [SerializeField] private AudioClip clickSound;
+        [Range(0f, 1f)] [SerializeField] private float hoverVolume = 0.65f;
+        [Range(0f, 1f)] [SerializeField] private float clickVolume = 0.85f;
+
+        private static AudioSource sharedAudioSource;
+        private float lastClickSoundTime = -1f;
+
         private void Awake()
         {
             button = GetComponent<Button>();
@@ -56,6 +65,7 @@ namespace UmbraChronos.UI
             {
                 // We drive all visuals ourselves; disable the default colour tinting.
                 button.transition = Selectable.Transition.None;
+                button.onClick.AddListener(OnButtonClicked);
             }
 
             if (labelTransform == null && label != null) labelTransform = label.rectTransform;
@@ -73,6 +83,13 @@ namespace UmbraChronos.UI
             }
 
             phase = Random.value * 6.28318f;
+
+#if UNITY_EDITOR
+            if (hoverSound == null)
+                hoverSound = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/_Project/Audio/SFX/sfx_ui_hover.wav");
+            if (clickSound == null)
+                clickSound = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/_Project/Audio/SFX/sfx_ui_select.wav");
+#endif
         }
 
         private void OnEnable()
@@ -130,13 +147,63 @@ namespace UmbraChronos.UI
         {
             if (eventData.button != PointerEventData.InputButton.Left) return;
             pressT = 1f;
+            PlayClickSound();
         }
 
         public void OnPointerUp(PointerEventData eventData) => pressT = 0f;
 
+        private void OnButtonClicked()
+        {
+            // Avoid double-play if OnPointerDown already triggered within 0.12s
+            if (UnityEngine.Time.unscaledTime - lastClickSoundTime > 0.12f)
+            {
+                PlayClickSound();
+            }
+        }
+
         private void SetHighlighted(bool value)
         {
+            if (value && !isHighlighted)
+            {
+                PlayHoverSound();
+            }
             isHighlighted = value;
+        }
+
+        private void PlayHoverSound()
+        {
+            if (hoverSound == null) return;
+            EnsureAudioSource();
+            if (sharedAudioSource != null)
+            {
+                sharedAudioSource.pitch = Random.Range(0.96f, 1.05f);
+                sharedAudioSource.PlayOneShot(hoverSound, hoverVolume);
+            }
+        }
+
+        private void PlayClickSound()
+        {
+            if (clickSound == null) return;
+            lastClickSoundTime = UnityEngine.Time.unscaledTime;
+            EnsureAudioSource();
+            if (sharedAudioSource != null)
+            {
+                sharedAudioSource.pitch = 1.0f;
+                sharedAudioSource.PlayOneShot(clickSound, clickVolume);
+            }
+        }
+
+        private static void EnsureAudioSource()
+        {
+            if (sharedAudioSource == null)
+            {
+                var go = new GameObject("UI_SFX_Source");
+                sharedAudioSource = go.AddComponent<AudioSource>();
+                sharedAudioSource.playOnAwake = false;
+                sharedAudioSource.spatialBlend = 0f;
+                sharedAudioSource.ignoreListenerPause = true;
+                DontDestroyOnLoad(go);
+            }
         }
     }
 }
