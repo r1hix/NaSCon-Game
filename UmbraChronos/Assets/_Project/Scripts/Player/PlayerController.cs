@@ -47,6 +47,7 @@ namespace UmbraChronos.Player
         private float coyoteTimer;
         private float jumpBufferTimer;
         private bool isRewinding;
+        private bool isDead;
         private bool isFacingRight = true;
 
         // Public Accessors
@@ -54,6 +55,7 @@ namespace UmbraChronos.Player
         public Vector2 Velocity => rb != null ? rb.linearVelocity : Vector2.zero;
         public bool IsFacingRight => isFacingRight;
         public bool IsRewinding => isRewinding;
+        public bool IsDead => isDead;
 
         private void Awake()
         {
@@ -74,17 +76,19 @@ namespace UmbraChronos.Player
         {
             TimeEvents.OnRewindStateChanged += HandleRewindStateChanged;
             TimeEvents.OnPlayerDied += HandlePlayerDied;
+            TimeEvents.OnPlayerRespawned += HandlePlayerRespawned;
         }
 
         private void OnDisable()
         {
             TimeEvents.OnRewindStateChanged -= HandleRewindStateChanged;
             TimeEvents.OnPlayerDied -= HandlePlayerDied;
+            TimeEvents.OnPlayerRespawned -= HandlePlayerRespawned;
         }
 
         private void Update()
         {
-            if (isRewinding) return;
+            if (isRewinding || isDead) return;
 
             GatherInput();
             UpdateTimers();
@@ -92,7 +96,7 @@ namespace UmbraChronos.Player
 
         private void FixedUpdate()
         {
-            if (isRewinding) return;
+            if (isRewinding || isDead) return;
 
             CheckGround();
             HandleHorizontalMovement();
@@ -267,15 +271,22 @@ namespace UmbraChronos.Player
             rb.simulated = !active;
             if (active)
             {
+                // Rewinding clears death state, allowing player to rewind out of danger!
+                isDead = false;
                 rb.linearVelocity = Vector2.zero;
             }
         }
 
         private void HandlePlayerDied()
         {
-            // Reset velocity and disable input
+            isDead = true;
             rb.linearVelocity = Vector2.zero;
-            this.enabled = false;
+        }
+
+        private void HandlePlayerRespawned()
+        {
+            isDead = false;
+            rb.linearVelocity = Vector2.zero;
         }
 
         private void OnDrawGizmosSelected()

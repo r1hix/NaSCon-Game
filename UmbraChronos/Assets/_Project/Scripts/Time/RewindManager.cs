@@ -148,17 +148,17 @@ namespace UmbraChronos.Time
             var keyboard = Keyboard.current;
             if (keyboard != null)
             {
-                if (keyboard.eKey.wasPressedThisFrame) return true;
+                if (keyboard.fKey.wasPressedThisFrame || keyboard.cKey.wasPressedThisFrame) return true;
             }
 
             var gamepad = Gamepad.current;
             if (gamepad != null)
             {
-                if (gamepad.rightShoulder.wasPressedThisFrame) return true;
+                if (gamepad.buttonNorth.wasPressedThisFrame || gamepad.rightShoulder.wasPressedThisFrame) return true;
             }
             return false;
 #else
-            return Input.GetKeyDown(KeyCode.E);
+            return Input.GetKeyDown(KeyCode.F) || Input.GetKeyDown(KeyCode.C);
 #endif
         }
 

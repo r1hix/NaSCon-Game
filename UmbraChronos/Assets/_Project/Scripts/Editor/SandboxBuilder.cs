@@ -35,21 +35,24 @@ namespace UmbraChronos.Editor
             GameObject echoPrefab = CreateEchoPrefab(squareSprite);
             GameObject playerPrefab = CreatePlayerPrefab(squareSprite);
             GameObject rewindManagerPrefab = CreateRewindManagerPrefab(echoPrefab);
+            GameObject postProcessingPrefab = CreatePostProcessingPrefab();
 
             // 2. Interactive Puzzle Prefabs
             GameObject gatePrefab = CreateTimedGatePrefab(squareSprite);
             GameObject platePrefab = CreatePressurePlatePrefab(squareSprite);
             GameObject blockPrefab = CreatePushableBlockPrefab(squareSprite);
+            GameObject lethalLightPrefab = CreateLethalLightZonePrefab();
+            GameObject sunDialPrefab = CreateSunDialPrefab(squareSprite);
 
             // 3. Assemble Sandbox Scene
-            BuildSandboxScene(playerPrefab, rewindManagerPrefab, gatePrefab, platePrefab, blockPrefab, squareSprite);
+            BuildSandboxScene(playerPrefab, rewindManagerPrefab, postProcessingPrefab, lethalLightPrefab, sunDialPrefab, gatePrefab, platePrefab, blockPrefab, squareSprite);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
             EditorUtility.DisplayDialog(
                 "Umbra Chronos Playground Ready!",
-                "Successfully generated:\n- Player.prefab & UmbralEcho.prefab (no player dragging)\n- PressurePlate.prefab & TimedGate.prefab\n- PushableBlock.prefab (rewindable physics box)\n- Sandbox_Shaf.unity with interactive puzzle testbed!\n\nHit Play to test your time and echo puzzles!",
+                "Successfully generated:\n- SunDial.prefab (Interactive celestial sun with [Q]/[E] rotation!)\n- LethalLightZone.prefab (Visible sunbeams & danger)\n- PostProcessingVolume.prefab (Rewind VFX & Solar glare)\n- PressurePlate.prefab & TimedGate.prefab\n- PushableBlock.prefab (Mobile umbrella shield!)\n- Sandbox_Shaf.unity with interactive puzzle testbed!\n\nHit Play to test your time and echo puzzles!",
                 "Let's Go!");
         }
 
@@ -244,9 +247,70 @@ namespace UmbraChronos.Editor
             return prefab;
         }
 
+        private static GameObject CreateSunDialPrefab(Sprite sprite)
+        {
+            string path = $"{EnvironmentPrefabFolder}/SunDial.prefab";
+            GameObject sunObj = new GameObject("SunDial");
+            try { sunObj.tag = "Sun"; } catch (System.Exception) { }
+
+            var sunLight = sunObj.AddComponent<Light2D>();
+            sunLight.lightType = Light2D.LightType.Point;
+            sunLight.color = new Color(1f, 0.94f, 0.75f, 1f); // Searing solar flare
+            sunLight.pointLightOuterRadius = 26f;
+            sunLight.intensity = 1.35f;
+
+            // Visual Sun Orb in the sky
+            GameObject orb = new GameObject("Sun_Orb_Visual");
+            orb.transform.SetParent(sunObj.transform);
+            orb.transform.localPosition = Vector3.zero;
+            orb.transform.localScale = new Vector3(1.6f, 1.6f, 1f);
+            var orbSr = orb.AddComponent<SpriteRenderer>();
+            orbSr.sprite = sprite;
+            orbSr.color = new Color(1f, 0.96f, 0.7f, 1f); // Radiant white-gold core
+            orbSr.sortingOrder = 10;
+
+            var dial = sunObj.AddComponent<SunDialController>();
+            SerializedObject so = new SerializedObject(dial);
+            so.FindProperty("sunLight").objectReferenceValue = sunLight;
+            so.FindProperty("sunVisualOrb").objectReferenceValue = orb.transform;
+            so.ApplyModifiedProperties();
+
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(sunObj, path);
+            Object.DestroyImmediate(sunObj);
+            return prefab;
+        }
+
+        private static GameObject CreatePostProcessingPrefab()
+        {
+            string path = $"{CorePrefabFolder}/PostProcessingVolume.prefab";
+            GameObject volumeObj = new GameObject("PostProcessingVolume");
+            var volume = volumeObj.AddComponent<UnityEngine.Rendering.Volume>();
+            volume.isGlobal = true;
+            volume.priority = 100f;
+            volumeObj.AddComponent<RewindScreenFX>();
+
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(volumeObj, path);
+            Object.DestroyImmediate(volumeObj);
+            return prefab;
+        }
+
+        private static GameObject CreateLethalLightZonePrefab()
+        {
+            string path = $"{EnvironmentPrefabFolder}/LethalLightZone.prefab";
+            GameObject zoneObj = new GameObject("LethalLightZone");
+            zoneObj.AddComponent<LethalLightZone>();
+
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(zoneObj, path);
+            Object.DestroyImmediate(zoneObj);
+            return prefab;
+        }
+
         private static void BuildSandboxScene(
             GameObject playerPrefab, 
             GameObject rewindManagerPrefab,
+            GameObject postProcessingPrefab,
+            GameObject lethalLightPrefab,
+            GameObject sunDialPrefab,
             GameObject gatePrefab,
             GameObject platePrefab,
             GameObject blockPrefab,
@@ -257,12 +321,12 @@ namespace UmbraChronos.Editor
             // 1. Camera & Audio
             GameObject camObj = new GameObject("Main Camera");
             camObj.tag = "MainCamera";
-            camObj.transform.position = new Vector3(1f, 1.5f, -10f);
+            camObj.transform.position = new Vector3(0.5f, 1.5f, -10f);
 
             var cam = camObj.AddComponent<Camera>();
             cam.orthographic = true;
-            cam.orthographicSize = 7.0f;
-            cam.backgroundColor = new Color(0.10f, 0.08f, 0.22f); // Midnight Indigo (#1A1438)
+            cam.orthographicSize = 7.5f;
+            cam.backgroundColor = new Color(0.08f, 0.07f, 0.16f); // Midnight Indigo (#141128)
             cam.clearFlags = CameraClearFlags.SolidColor;
             camObj.AddComponent<AudioListener>();
 
@@ -272,25 +336,51 @@ namespace UmbraChronos.Editor
                 additionalCamData.renderPostProcessing = true;
             }
 
-            // 2. Global Light 2D
+            // 2. Large Background Canvas (catches 2D lighting falloff in Game view)
+            GameObject bgWall = new GameObject("Background_Canvas");
+            bgWall.transform.position = new Vector3(0f, 3f, 0f);
+            bgWall.transform.localScale = new Vector3(45f, 25f, 1f);
+            var bgSr = bgWall.AddComponent<SpriteRenderer>();
+            bgSr.sprite = sprite;
+            bgSr.color = new Color(0.12f, 0.10f, 0.22f, 1f); // Deep dusk canvas
+            bgSr.sortingOrder = -20;
+
+            // 3. Global Ambient Sky Light 2D
             GameObject lightObj = new GameObject("Global Light 2D");
             var light2D = lightObj.AddComponent<Light2D>();
             light2D.lightType = Light2D.LightType.Global;
-            light2D.color = Color.white;
-            light2D.intensity = 1.0f;
+            light2D.color = new Color(0.35f, 0.30f, 0.55f, 1f); // Deep atmospheric dusk
+            light2D.intensity = 0.5f;
 
-            // 3. Platforms
-            CreatePlatform("Ground Floor", new Vector3(0f, -2.5f, 0f), new Vector3(32f, 1.5f, 1f), sprite);
-            CreatePlatform("Ledge_Left_High", new Vector3(-8f, 0.5f, 0f), new Vector3(5f, 0.6f, 1f), sprite);
-            CreatePlatform("Ledge_Center_High", new Vector3(-1f, 2.5f, 0f), new Vector3(4.5f, 0.6f, 1f), sprite);
+            // 4. Interactive Celestial SunDial (Rotates with [Q] and [E]!)
+            GameObject sunInst = (GameObject)PrefabUtility.InstantiatePrefab(sunDialPrefab);
 
-            // 4. Instantiate TimedGate
+            // 5. Level Geometry: Shelters, Monoliths, and Safe Havens (Open, spacious layout)
+            // Ground Floor
+            CreatePlatform("Ground Floor", new Vector3(0f, -2.5f, 0f), new Vector3(36f, 1.5f, 1f), sprite);
+
+            // Left Border Wall (prevents falling off the back edge)
+            CreatePlatform("Boundary_Wall_Left", new Vector3(-16f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
+
+            // Haven 1: Spawn Shelter (Floating overhead monolith at y=2.2f with plenty of jump clearance)
+            CreatePlatform("Spawn_Shelter_Roof", new Vector3(-10f, 2.2f, 0f), new Vector3(6f, 0.8f, 1f), sprite);
+
+            // Haven 2: Center Ruins Floating Monolith (Safe intermediate haven with open walking floor below)
+            CreatePlatform("Center_Ruins_Roof", new Vector3(-2f, 2.2f, 0f), new Vector3(6f, 0.8f, 1f), sprite);
+
+            // Stepping Stone Ledge (optional high route)
+            CreatePlatform("High_Ledge", new Vector3(-6f, 0.2f, 0f), new Vector3(3f, 0.5f, 1f), sprite);
+
+            // 6. Pushable Physics Box (On floor at x=-6f, can be pushed as a mobile shadow shield)
+            GameObject blockInst = (GameObject)PrefabUtility.InstantiatePrefab(blockPrefab);
+            blockInst.transform.position = new Vector3(-6f, -1.0f, 0f);
+
+            // 7. Interactive Puzzle: PressurePlate & TimedGate
             GameObject gateInst = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
             gateInst.transform.position = new Vector3(7.5f, -0.25f, 0f);
 
-            // 5. Instantiate PressurePlate & link to TimedGate (placed flush on ground surface y = -1.75)
             GameObject plateInst = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
-            plateInst.transform.position = new Vector3(1.5f, -1.75f, 0f);
+            plateInst.transform.position = new Vector3(2.0f, -1.75f, 0f);
             var plateComp = plateInst.GetComponent<PressurePlate>();
             if (plateComp != null)
             {
@@ -303,21 +393,32 @@ namespace UmbraChronos.Editor
                 }
             }
 
-            // 6. Pushable Physics Box on Ledge
-            GameObject blockInst = (GameObject)PrefabUtility.InstantiatePrefab(blockPrefab);
-            blockInst.transform.position = new Vector3(-8f, 1.8f, 0f);
-
-            // 7. Goal Marker behind the gate
-            GameObject goalMarker = CreatePlatform("Goal_Sanctuary", new Vector3(12.5f, -1.25f, 0f), new Vector3(3f, 1f, 1f), sprite);
+            // 8. Goal Sanctuary Arch behind the gate
+            GameObject goalMarker = CreatePlatform("Goal_Sanctuary", new Vector3(12.5f, -1.25f, 0f), new Vector3(3.2f, 1.2f, 1f), sprite);
             var goalSr = goalMarker.GetComponent<SpriteRenderer>();
             if (goalSr != null)
             {
                 goalSr.color = new Color(0.98f, 0.82f, 0.4f, 1f); // Radiant Gold (#FFD166)
             }
 
-            // 8. Player & RewindManager
+            // 9. Post Processing & Lethal Light Zone
+            PrefabUtility.InstantiatePrefab(postProcessingPrefab);
+            GameObject lightZoneInst = (GameObject)PrefabUtility.InstantiatePrefab(lethalLightPrefab);
+            var lightZoneComp = lightZoneInst.GetComponent<LethalLightZone>();
+            if (lightZoneComp != null)
+            {
+                SerializedObject soLight = new SerializedObject(lightZoneComp);
+                SerializedProperty propSun = soLight.FindProperty("sunTransform");
+                if (propSun != null)
+                {
+                    propSun.objectReferenceValue = sunInst.transform;
+                    soLight.ApplyModifiedProperties();
+                }
+            }
+
+            // 10. Player & RewindManager (Spawned inside the safe spawn shelter)
             GameObject playerInst = (GameObject)PrefabUtility.InstantiatePrefab(playerPrefab);
-            playerInst.transform.position = new Vector3(-11f, -1.0f, 0f);
+            playerInst.transform.position = new Vector3(-10.5f, -1.0f, 0f);
 
             PrefabUtility.InstantiatePrefab(rewindManagerPrefab);
 

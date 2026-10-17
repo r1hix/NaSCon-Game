@@ -32,7 +32,7 @@
 2. **The Tape-Reel Rewind (`R` / Left Shift):**
    * Holding rewind pulls physics, player trajectory, and the celestial clock backward along a 5-second circular buffer.
    * Audio pitches down into a reverse tape-stop; screen distorts with subtle chromatic aberration and scanlines.
-3. **The Umbral Echo (`E` / Space + Rewind):**
+3. **The Umbral Echo (`F` / `C`):**
    * Snapping back in time can leave your past self behind as an **Umbral Echo** (a living silhouette shadow clone).
    * The Echo replays your past actions: holding pressure plates, pulling timed levers, or serving as a physical stepping-stone for the present player.
 

@@ -31,9 +31,20 @@ namespace UmbraChronos.Core
         public static Action OnEchoDissolved;
 
         /// <summary>
+        /// Invoked when the player's direct sunlight exposure changes.
+        /// Parameter: Exposure fraction from 0f (fully safe in shadow) to 1f (fatal burn).
+        /// </summary>
+        public static Action<float> OnSunlightExposureChanged;
+
+        /// <summary>
         /// Invoked when the player dies (e.g. touched lethal sunlight radiation).
         /// </summary>
         public static Action OnPlayerDied;
+
+        /// <summary>
+        /// Invoked when the player respawns or rewinds back to life.
+        /// </summary>
+        public static Action OnPlayerRespawned;
 
         /// <summary>
         /// Invoked when a level puzzle room is solved.
