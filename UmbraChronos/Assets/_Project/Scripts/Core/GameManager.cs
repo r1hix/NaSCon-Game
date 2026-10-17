@@ -25,11 +25,17 @@ namespace UmbraChronos.Core
         [Tooltip("Minimum rewind energy (seconds) guaranteed upon death so player can always rewind their last fatal step.")]
         [SerializeField] private float minDeathRewindEnergy = 2.5f;
 
+        [Header("Temporal Anchors (Lives)")]
+        [Tooltip("Number of rewind chances before permanent timeline collapse (Game Over).")]
+        [SerializeField] private int maxRewindChances = 3;
+
         [Header("Checkpoints")]
         [Tooltip("Current active respawn position.")]
         [SerializeField] private Vector3 currentCheckpoint;
 
         // State
+        private int currentRewindChances = 3;
+        private bool isGameOver = false;
         private bool isPlayerDead = false;
         private float deathCountdown = 0f;
         private float currentRewindEnergy = 5f;
@@ -39,6 +45,9 @@ namespace UmbraChronos.Core
 
         public Vector3 CurrentCheckpoint => currentCheckpoint;
         public bool IsPlayerDead => isPlayerDead;
+        public bool IsGameOver => isGameOver;
+        public int RemainingChances => currentRewindChances;
+        public int MaxChances => maxRewindChances;
         public float DeathCountdownFraction => deathRewindGraceSeconds > 0.01f ? Mathf.Clamp01(deathCountdown / deathRewindGraceSeconds) : 0f;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -70,6 +79,7 @@ namespace UmbraChronos.Core
             TimeEvents.OnRewindStateChanged += HandleRewindStateChanged;
             TimeEvents.OnRewindEnergyChanged += HandleRewindEnergyChanged;
             TimeEvents.OnRoomChanged += HandleRoomChanged;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += HandleSceneLoaded;
         }
 
         private void OnDisable()
@@ -79,6 +89,18 @@ namespace UmbraChronos.Core
             TimeEvents.OnRewindStateChanged -= HandleRewindStateChanged;
             TimeEvents.OnRewindEnergyChanged -= HandleRewindEnergyChanged;
             TimeEvents.OnRoomChanged -= HandleRoomChanged;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= HandleSceneLoaded;
+        }
+
+        private void HandleSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            isGameOver = false;
+            isPlayerDead = false;
+            deathCountdown = 0f;
+            currentRewindChances = maxRewindChances;
+            playerTransform = null;
+            LocatePlayer();
+            TimeEvents.OnLivesChanged?.Invoke(currentRewindChances, maxRewindChances);
         }
 
         private void Start()
@@ -88,10 +110,36 @@ namespace UmbraChronos.Core
             {
                 currentCheckpoint = playerTransform.position;
             }
+            TimeEvents.OnLivesChanged?.Invoke(currentRewindChances, maxRewindChances);
         }
 
         private void Update()
         {
+            if (isGameOver)
+            {
+                bool retry = false;
+                bool quit = false;
+#if ENABLE_INPUT_SYSTEM
+                if (UnityEngine.InputSystem.Keyboard.current != null)
+                {
+                    if (UnityEngine.InputSystem.Keyboard.current.rKey.wasPressedThisFrame) retry = true;
+                    if (UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame) quit = true;
+                }
+#endif
+                if (!retry && Input.GetKeyDown(KeyCode.R)) retry = true;
+                if (!quit && Input.GetKeyDown(KeyCode.Escape)) quit = true;
+
+                if (retry)
+                {
+                    RetryLevel();
+                }
+                else if (quit)
+                {
+                    ReturnToTitle();
+                }
+                return;
+            }
+
             if (playerTransform == null)
             {
                 LocatePlayer();
@@ -181,9 +229,21 @@ namespace UmbraChronos.Core
 
         /// <summary>
         /// Resets player to the active room checkpoint when rewind fails or is exhausted.
+        /// Decrements available rewind chances; triggers perma-death Game Over when 0.
         /// </summary>
         public void RespawnAtCheckpoint()
         {
+            if (isGameOver) return;
+
+            currentRewindChances--;
+            TimeEvents.OnLivesChanged?.Invoke(currentRewindChances, maxRewindChances);
+
+            if (currentRewindChances <= 0)
+            {
+                TriggerGameOver();
+                return;
+            }
+
             isPlayerDead = false;
             deathCountdown = 0f;
 
@@ -216,6 +276,41 @@ namespace UmbraChronos.Core
             }
 
             TimeEvents.OnPlayerRespawned?.Invoke();
+        }
+
+        private void TriggerGameOver()
+        {
+            isGameOver = true;
+            isPlayerDead = true;
+            deathCountdown = 0f;
+
+            if (playerRb != null)
+            {
+                playerRb.linearVelocity = Vector2.zero;
+                playerRb.simulated = false;
+            }
+            if (playerCtrl != null)
+            {
+                playerCtrl.enabled = false;
+            }
+
+            TimeEvents.OnGameOver?.Invoke();
+        }
+
+        public void RetryLevel()
+        {
+            isGameOver = false;
+            isPlayerDead = false;
+            currentRewindChances = maxRewindChances;
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+        }
+
+        public void ReturnToTitle()
+        {
+            isGameOver = false;
+            isPlayerDead = false;
+            currentRewindChances = maxRewindChances;
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
         }
 
         /// <summary>

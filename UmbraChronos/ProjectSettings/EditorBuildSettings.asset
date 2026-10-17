@@ -23,5 +23,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Project/Scenes/Levels/Level_Tutorial.unity
     guid: 7f91153e59a0247d095e201f486d56b4
+  - enabled: 1
+    path: Assets/_Project/Scenes/Sandboxes/Sandbox_Shaf.unity
+    guid: 31874f404ab014a3fa46e8ae9068bec9
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

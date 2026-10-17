@@ -218,7 +218,16 @@ namespace UmbraChronos.Environment
 
             if (sunTransform != null)
             {
-                sunIsOnLeft = sunPos.x < xCenter;
+                var sunDial = sunTransform.GetComponent<SunDialController>();
+                if (sunDial != null)
+                {
+                    currentSunAngle = sunDial.CurrentAngle;
+                    sunIsOnLeft = currentSunAngle < 89.9f;
+                }
+                else
+                {
+                    sunIsOnLeft = sunPos.x < xCenter;
+                }
                 Vector2 corner = sunIsOnLeft ? new Vector2(xMax, yTop) : new Vector2(xMin, yTop);
                 Vector2 rayDir = (corner - sunPos).normalized;
                 if (rayDir.y >= -0.01f) rayDir.y = -0.01f;

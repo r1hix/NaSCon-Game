@@ -123,16 +123,7 @@ namespace UmbraChronos.UI
 
         private void UpdatePrompt(TutorialPrompt p)
         {
-            if (p.isCompleted || p.canvasRoot == null) return;
-
-            // Check prerequisites
-            bool prereqMet = p.requiredPriorIndex < 0 || highestCompletedIndex >= p.requiredPriorIndex;
-            if (!prereqMet)
-            {
-                // Fade out if visible
-                FadePrompt(p, false);
-                return;
-            }
+            if (p.canvasRoot == null) return;
 
             // Check action requirements (event gating)
             if (p.requiresSunDialAction && !hasSunDialRotated) { FadePrompt(p, false); return; }
@@ -140,40 +131,11 @@ namespace UmbraChronos.UI
             if (p.requiresEchoAction && !hasSpawnedEcho) { FadePrompt(p, false); return; }
             if (p.requiresPlateAction && !hasSteppedOnPlate) { FadePrompt(p, false); return; }
 
-            // Check proximity
+            // Proximity check
             float dist = Vector2.Distance(playerTransform.position, p.worldPosition);
-            bool inRange = dist <= p.activationRadius;
+            bool inRange = dist <= Mathf.Max(p.activationRadius, 5.5f);
 
-            if (inRange && !p.hasBeenShown)
-            {
-                p.hasBeenShown = true;
-                p.displayTimer = p.displayDuration;
-            }
-
-            bool shouldShow = false;
-            if (p.hasBeenShown)
-            {
-                if (p.displayDuration > 0f)
-                {
-                    p.displayTimer -= UnityEngine.Time.deltaTime;
-                    shouldShow = p.displayTimer > 0f;
-                    if (p.displayTimer <= 0f)
-                    {
-                        CompletePrompt(p);
-                    }
-                }
-                else
-                {
-                    // Infinite duration: stay visible while in range
-                    shouldShow = inRange;
-                    if (!inRange && p.hasBeenShown)
-                    {
-                        // Player left the area — mark as completed
-                        CompletePrompt(p);
-                    }
-                }
-            }
-
+            bool shouldShow = inRange;
             FadePrompt(p, shouldShow);
 
             // Bob animation
@@ -296,16 +258,18 @@ namespace UmbraChronos.UI
             canvasObj.AddComponent<GraphicRaycaster>();
 
             RectTransform canvasRect = canvasObj.GetComponent<RectTransform>();
-            canvasRect.sizeDelta = new Vector2(6.0f, 2.2f); // world units
-            canvasRect.localScale = Vector3.one * 0.02f;      // scale down for world space
+            canvasRect.sizeDelta = new Vector2(480f, 180f);
+            canvasRect.localScale = new Vector3(0.012f, 0.012f, 1f); // 5.76u x 2.16u in world units
 
             // Card backdrop panel
             GameObject cardObj = new GameObject("Card");
             cardObj.transform.SetParent(canvasObj.transform, false);
 
             RectTransform cardRect = cardObj.AddComponent<RectTransform>();
-            cardRect.sizeDelta = new Vector2(300f, 110f);
-            cardRect.anchoredPosition = Vector2.zero;
+            cardRect.anchorMin = Vector2.zero;
+            cardRect.anchorMax = Vector2.one;
+            cardRect.offsetMin = Vector2.zero;
+            cardRect.offsetMax = Vector2.zero;
 
             Image bg = cardObj.AddComponent<Image>();
             bg.color = backdropColor;

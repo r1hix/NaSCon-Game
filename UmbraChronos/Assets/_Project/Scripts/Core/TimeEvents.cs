@@ -90,5 +90,22 @@ namespace UmbraChronos.Core
         /// Parameters: float intensity, float duration.
         /// </summary>
         public static Action<float, float> OnCameraShake;
+
+        /// <summary>
+        /// Invoked when the player's remaining rewind chances change.
+        /// Parameters: int remainingChances, int maxChances.
+        /// </summary>
+        public static Action<int, int> OnLivesChanged;
+
+        /// <summary>
+        /// Invoked when all rewind chances are exhausted (perma-death Game Over).
+        /// </summary>
+        public static Action OnGameOver;
+
+        /// <summary>
+        /// Invoked when a level is completed upon reaching the Sanctuary Arch.
+        /// Parameter: string chamberName.
+        /// </summary>
+        public static Action<string> OnLevelCompleted;
     }
 }
