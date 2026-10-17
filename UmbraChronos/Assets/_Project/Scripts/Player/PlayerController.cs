@@ -74,6 +74,15 @@ namespace UmbraChronos.Player
                 spriteRenderer.color = Color.white;
             }
 
+            if (col != null && col.sharedMaterial == null)
+            {
+                col.sharedMaterial = new PhysicsMaterial2D("Player_Frictionless")
+                {
+                    friction = 0f,
+                    bounciness = 0f
+                };
+            }
+
             if (GetComponent<PlayerRadiationFX>() == null)
             {
                 gameObject.AddComponent<PlayerRadiationFX>();
@@ -115,6 +124,12 @@ namespace UmbraChronos.Player
             HandleHorizontalMovement();
             HandleJump();
             ApplyCustomGravity();
+
+            // Settle ground velocity: prevent micro-accumulations from causing contact solver jitter
+            if (isGrounded && rb.linearVelocity.y < -0.01f && rb.linearVelocity.y > -2.0f)
+            {
+                rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
+            }
         }
 
         private void GatherInput()
@@ -197,15 +212,15 @@ namespace UmbraChronos.Player
             if (col == null) return;
 
             Bounds bounds = col.bounds;
-            // Place box check precisely at bottom edge of collider, slightly inset on sides
-            Vector2 checkCenter = new Vector2(bounds.center.x, bounds.min.y);
-            Vector2 checkSize = new Vector2(bounds.size.x * 0.85f, 0.14f);
+            // Place box check precisely at bottom edge of collider, probing slightly into floor
+            Vector2 checkCenter = new Vector2(bounds.center.x, bounds.min.y - 0.03f);
+            Vector2 checkSize = new Vector2(bounds.size.x * 0.80f, 0.12f);
 
             Collider2D[] hits = Physics2D.OverlapBoxAll(checkCenter, checkSize, 0f, groundLayer);
             isGrounded = false;
             for (int i = 0; i < hits.Length; i++)
             {
-                if (hits[i] != col && !hits[i].isTrigger)
+                if (hits[i] != col && !hits[i].isTrigger && !hits[i].transform.IsChildOf(transform))
                 {
                     isGrounded = true;
                     break;
@@ -240,14 +255,15 @@ namespace UmbraChronos.Player
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
                 jumpBufferTimer = 0f;
                 coyoteTimer = 0f;
+                isGrounded = false;
             }
         }
 
         private void ApplyCustomGravity()
         {
-            if (rb.linearVelocity.y < -0.05f)
+            if (!isGrounded && rb.linearVelocity.y < -0.05f)
             {
-                // Falling: scale gravity for crisp descent
+                // Falling: scale gravity for crisp descent (air only)
                 rb.gravityScale = normalGravityScale * fallGravityMultiplier;
             }
             else
