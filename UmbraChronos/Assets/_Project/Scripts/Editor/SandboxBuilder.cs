@@ -43,17 +43,21 @@ namespace UmbraChronos.Editor
             GameObject blockPrefab = CreatePushableBlockPrefab(squareSprite);
             GameObject lethalLightPrefab = CreateLethalLightZonePrefab();
             GameObject sunDialPrefab = CreateSunDialPrefab(squareSprite);
+            GameObject monolithPrefab = CreateMonolithPrefab(squareSprite);
 
             // 3. Assemble Sandbox Scene
-            BuildSandboxScene(playerPrefab, rewindManagerPrefab, postProcessingPrefab, lethalLightPrefab, sunDialPrefab, gatePrefab, platePrefab, blockPrefab, squareSprite);
+            BuildSandboxScene(playerPrefab, rewindManagerPrefab, postProcessingPrefab, lethalLightPrefab, sunDialPrefab, gatePrefab, platePrefab, blockPrefab, monolithPrefab, squareSprite);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            EditorUtility.DisplayDialog(
-                "Umbra Chronos Playground Ready!",
-                "Successfully generated:\n- SunDial.prefab (Interactive celestial sun with [Q]/[E] rotation!)\n- LethalLightZone.prefab (Visible sunbeams & danger)\n- PostProcessingVolume.prefab (Rewind VFX & Solar glare)\n- PressurePlate.prefab & TimedGate.prefab\n- PushableBlock.prefab (Mobile umbrella shield!)\n- Sandbox_Shaf.unity with interactive puzzle testbed!\n\nHit Play to test your time and echo puzzles!",
-                "Let's Go!");
+            if (!Application.isBatchMode)
+            {
+                EditorUtility.DisplayDialog(
+                    "Umbra Chronos Playground Ready!",
+                    "Successfully generated:\n- SunDial.prefab (Interactive celestial sun with [Q]/[E] rotation!)\n- Monolith.prefab (Walkable solid shadow bridge!)\n- LethalLightZone.prefab (Visible sunbeams & danger)\n- PostProcessingVolume.prefab (Rewind VFX & Solar glare)\n- PressurePlate.prefab & TimedGate.prefab\n- PushableBlock.prefab (Mobile umbrella shield!)\n- Sandbox_Shaf.unity with interactive puzzle testbed!\n\nHit Play to test your time and echo puzzles!",
+                    "Let's Go!");
+            }
         }
 
         private static void EnsureDirectoriesExist()
@@ -305,6 +309,34 @@ namespace UmbraChronos.Editor
             return prefab;
         }
 
+        private static GameObject CreateMonolithPrefab(Sprite sprite)
+        {
+            string path = $"{EnvironmentPrefabFolder}/Monolith.prefab";
+
+            GameObject monolithObj = new GameObject("Monolith");
+            monolithObj.transform.localScale = new Vector3(1.6f, 5.5f, 1f);
+
+            var sr = monolithObj.AddComponent<SpriteRenderer>();
+            sr.sprite = sprite;
+            sr.color = new Color(0.05f, 0.05f, 0.08f, 1f); // #0D0D15 Obsidian silhouette
+            sr.sortingOrder = 2;
+
+            var col = monolithObj.AddComponent<BoxCollider2D>();
+            col.size = Vector2.one;
+
+            var shadowCollider = monolithObj.AddComponent<DynamicShadowCollider>();
+            SerializedObject so = new SerializedObject(shadowCollider);
+            so.FindProperty("customDimensions").vector2Value = new Vector2(1.6f, 5.5f);
+            so.FindProperty("renderShadowMesh").boolValue = true;
+            so.FindProperty("generatePolygonCollider").boolValue = true;
+            so.FindProperty("fallbackGroundY").floatValue = -1.75f;
+            so.ApplyModifiedProperties();
+
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(monolithObj, path);
+            Object.DestroyImmediate(monolithObj);
+            return prefab;
+        }
+
         private static void BuildSandboxScene(
             GameObject playerPrefab, 
             GameObject rewindManagerPrefab,
@@ -314,6 +346,7 @@ namespace UmbraChronos.Editor
             GameObject gatePrefab,
             GameObject platePrefab,
             GameObject blockPrefab,
+            GameObject monolithPrefab,
             Sprite sprite)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -370,6 +403,18 @@ namespace UmbraChronos.Editor
 
             // Stepping Stone Ledge (optional high route)
             CreatePlatform("High_Ledge", new Vector3(-6f, 0.2f, 0f), new Vector3(3f, 0.5f, 1f), sprite);
+
+            // 5b. Monolith Pillar with Walkable Solid Shadow Bridge!
+            GameObject monolithInst = (GameObject)PrefabUtility.InstantiatePrefab(monolithPrefab);
+            monolithInst.transform.position = new Vector3(-1.0f, 1.0f, 0f);
+            var shadowComp = monolithInst.GetComponent<DynamicShadowCollider>();
+            if (shadowComp != null)
+            {
+                SerializedObject soMonolith = new SerializedObject(shadowComp);
+                soMonolith.FindProperty("sunTransform").objectReferenceValue = sunInst.transform;
+                soMonolith.FindProperty("fallbackGroundY").floatValue = -1.75f;
+                soMonolith.ApplyModifiedProperties();
+            }
 
             // 6. Pushable Physics Box (On floor at x=-6f, can be pushed as a mobile shadow shield)
             GameObject blockInst = (GameObject)PrefabUtility.InstantiatePrefab(blockPrefab);

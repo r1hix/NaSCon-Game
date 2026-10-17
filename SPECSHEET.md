@@ -46,13 +46,13 @@ Status: DONE / IN PROGRESS / READY / QUEUED
 | Umbral Echo | Shaf | Sat 10:30 AM | DONE |
 | `PressurePlate`, `TimedGate` | Shaf | Sat 10:30 AM | DONE |
 | `SandboxBuilder.cs` (prefab + sandbox generator) | Shaf | — | DONE |
-| `SunDialController` | Chendline / Shaf | Sat 12:00 PM | DONE |
-| `DynamicShadowCollider` | Chendline | Sat 02:00 PM | IN PROGRESS |
+| `SunDialController` | Shaf | Sat 12:00 PM | DONE |
+| `DynamicShadowCollider` | Shaf | Sat 02:00 PM | DONE |
 | `LethalLightZone` | Shaf | Sat 01:00 PM | DONE |
 | Rewind screen VFX (post-processing) | Shaf | Sat 02:00 PM | DONE |
-| Level 01 "Dawn of the Sundial" | Chendline | Sat 04:00 PM | QUEUED |
-| Level 02 "Echo of the Vault" | Chendline | Sat 05:30 PM | QUEUED |
-| Level 03 "The Eclipse Paradox" | Chendline | Sat 07:00 PM | QUEUED |
+| Level 01 "Dawn of the Sundial" | Shaf | Sat 04:00 PM | READY |
+| Level 02 "Echo of the Vault" | Shaf | Sat 05:30 PM | READY |
+| Level 03 "The Eclipse Paradox" | Shaf | Sat 07:00 PM | READY |
 | Audio + `AudioManager` | Shaf | Sat 05:00 PM | QUEUED |
 | HUD + controls overlay | Shaf | Sat 07:00 PM | QUEUED |
 | Playtesting + polish | Both | Sat 08:00 PM – Sun 02:00 AM | QUEUED |
