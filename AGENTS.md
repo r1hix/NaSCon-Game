@@ -77,6 +77,7 @@ namespace UmbraChronos.Core
 Always invoke with `?.Invoke(...)`. If the real `TimeEvents.cs` differs from this snippet, the file wins.
 
 ### Rule 4: Git hygiene
+- **NEVER push commits or merge PRs to remote (`origin`) without explicit user permission.** You are allowed to create local branches, stage, and commit locally, but you MUST NEVER run `git push` or merge PRs unless the user explicitly gives permission in that exact prompt.
 - **Never commit to `main`** unless the user explicitly says so.
 - Start from fresh main: `git pull --rebase origin main`, then create a branch:
   `feat/<name>`, `fix/<name>`, `refactor/<module>`, `chore/<task>`.

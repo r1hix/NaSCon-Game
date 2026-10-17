@@ -342,11 +342,9 @@ namespace UmbraChronos.Editor
             var box = monolith.AddComponent<BoxCollider2D>();
             box.size = Vector2.one;
 
+            monolith.AddComponent<EdgeCollider2D>();
             var shadowCollider = monolith.AddComponent<DynamicShadowCollider>();
             SerializedObject so = new SerializedObject(shadowCollider);
-            so.FindProperty("customDimensions").vector2Value = size;
-            so.FindProperty("renderShadowMesh").boolValue = true;
-            so.FindProperty("generatePolygonCollider").boolValue = true;
             so.FindProperty("fallbackGroundY").floatValue = groundY;
             if (sunTransform != null) so.FindProperty("sunTransform").objectReferenceValue = sunTransform;
             so.ApplyModifiedProperties();
