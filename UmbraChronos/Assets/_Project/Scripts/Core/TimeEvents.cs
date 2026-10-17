@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace UmbraChronos.Core
 {
@@ -50,5 +51,11 @@ namespace UmbraChronos.Core
         /// Invoked when a level puzzle room is solved.
         /// </summary>
         public static Action OnPuzzleSolved;
+
+        /// <summary>
+        /// Invoked when the camera shifts to a new room/screen.
+        /// Parameter: Vector2Int new room index.
+        /// </summary>
+        public static Action<Vector2Int> OnRoomChanged;
     }
 }

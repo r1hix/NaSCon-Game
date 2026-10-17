@@ -75,16 +75,26 @@ namespace UmbraChronos.Environment
             SetupBeams();
         }
 
+        [Header("Celestial Sun & Light")]
+        [SerializeField] private float currentSunAngle = 50f;
+
         private void OnEnable()
         {
+            TimeEvents.OnSunAngleChanged += HandleSunAngleChanged;
             TimeEvents.OnRewindStateChanged += HandleRewindStateChanged;
             TimeEvents.OnPlayerRespawned += HandlePlayerRespawned;
         }
 
         private void OnDisable()
         {
+            TimeEvents.OnSunAngleChanged -= HandleSunAngleChanged;
             TimeEvents.OnRewindStateChanged -= HandleRewindStateChanged;
             TimeEvents.OnPlayerRespawned -= HandlePlayerRespawned;
+        }
+
+        private void HandleSunAngleChanged(float angle)
+        {
+            currentSunAngle = angle;
         }
 
         private void LocateDependencies()
@@ -187,6 +197,7 @@ namespace UmbraChronos.Environment
 
         private void EvaluateSunlightExposure()
         {
+            if (sunTransform == null) return;
             Vector2 sunPos = sunTransform.position;
             Bounds bounds = playerCollider != null ? playerCollider.bounds : new Bounds(playerTransform.position, Vector3.one * 0.8f);
 
@@ -212,7 +223,7 @@ namespace UmbraChronos.Environment
                 float distance = toPlayer.magnitude;
                 Vector2 dir = toPlayer / distance;
 
-                // Raycast from Sun towards this player sample point
+                // Raycast from the Sun directly towards this player sample point
                 RaycastHit2D hit = Physics2D.Raycast(sunPos, dir, distance, shadowBlockerMask);
 
                 bool occluded = false;
@@ -232,6 +243,17 @@ namespace UmbraChronos.Environment
                 }
 
                 lastSampleOccluded[i] = occluded;
+            }
+
+            // Check if player is safely standing on a solid shadow bridge
+            Collider2D[] footHits = Physics2D.OverlapPointAll(new Vector2(bounds.center.x, bounds.min.y - 0.05f), shadowBlockerMask);
+            for (int f = 0; f < footHits.Length; f++)
+            {
+                if (footHits[f].GetComponent<DynamicShadowCollider>() != null)
+                {
+                    exposedSampleCount = 0;
+                    break;
+                }
             }
 
             isExposedToLight = exposedSampleCount > 0;
@@ -290,7 +312,7 @@ namespace UmbraChronos.Environment
                 bool occluded = lastSampleOccluded != null && lastSampleOccluded[i];
                 if (occluded)
                 {
-                    // Blocked beam stopping safely on shelter
+                    // Blocked beam stopping safely on shelter, monolith, or wall
                     lr.startColor = new Color(beamSafeColor.r, beamSafeColor.g, beamSafeColor.b, 0.4f);
                     lr.endColor = new Color(beamSafeColor.r, beamSafeColor.g, beamSafeColor.b, 0.1f);
                     lr.startWidth = 0.05f;

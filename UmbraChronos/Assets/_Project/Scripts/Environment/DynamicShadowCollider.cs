@@ -6,54 +6,87 @@ using UmbraChronos.Core;
 namespace UmbraChronos.Environment
 {
     /// <summary>
-    /// Projects an EdgeCollider2D and visible bridge graphics along the top surface of a monolith's cast shadow.
-    /// In Umbra Chronos, shadows are solid physical matter:
-    /// - When the celestial sun rotates ([Q] / [E] / scroll), monoliths cast dynamic shadows.
-    /// - Renders a solid obsidian shadow bridge (#0D0D15) with double-sided geometry (never backface-culled).
-    /// - Renders a luminous cyan walkable rim (#38BDF8) along the top surface.
-    /// - Updates an EdgeCollider2D so the top edge acts as a solid bridge the player can walk across.
-    /// - Works in both Edit Mode ([ExecuteAlways]) and Play Mode.
+    /// Projects a solid, horizontal EdgeCollider2D shadow bridge and visible graphics
+    /// when the celestial sun shines upon an ancient monolith.
+    /// 
+    /// In Umbra Chronos ("Ink & Solar Flare"):
+    /// - Shadows are solid physical matter: players can walk across cast shadows to traverse lethal chasms.
+    /// - Uses the celestial sun angle theta (degrees) directly, ensuring shadows remain completely stable
+    ///   when the camera shifts between screens.
+    /// - Generates a flat, horizontal walkable shadow bridge at ground level (Y = fallbackGroundY)
+    ///   spanning across the chasm from the monolith base to the shadow tip.
+    /// - Renders a luminous radiant cyan rim (#38BDF8) along the flat walkable bridge surface.
+    /// - Renders a solid obsidian matter bridge slab (#0D0D15) under the bridge.
+    /// - Renders a moody atmospheric umbral silhouette cone in the air between monolith top and bridge tip.
     /// </summary>
     [ExecuteAlways]
     [RequireComponent(typeof(EdgeCollider2D))]
     [DisallowMultipleComponent]
     public class DynamicShadowCollider : MonoBehaviour
     {
-        [Header("Celestial Sun Reference")]
-        [Tooltip("The celestial orbital sun transform. If null, automatically locates SunDialController or object tagged 'Sun'.")]
+        [Header("Celestial Sun & Angle")]
+        [Tooltip("Direct celestial sun angle in degrees (90 = overhead noon, <90 = dawn/morning casting right, >90 = dusk casting left).")]
+        [SerializeField] private float currentSunAngle = 50f;
+
+        [Tooltip("Transform of the celestial sun source. If null, locates SunDialController in scene.")]
         [SerializeField] private Transform sunTransform;
 
-        [Header("Ground & Projection Settings")]
-        [Tooltip("Layer mask for ground/platforms that stop the shadow projection.")]
+        [Header("Ground & Bridge Geometry")]
+        [Tooltip("Ground Y level where the solid shadow bridge forms (matches player walking plane).")]
+        [SerializeField] private float fallbackGroundY = -1.75f;
+
+        [Tooltip("Layer mask for ground/walls that stop the shadow projection.")]
         [SerializeField] private LayerMask groundLayerMask = ~0;
 
-        [Tooltip("Fallback ground Y level if raycast does not hit geometry (e.g. over a chasm).")]
-        [SerializeField] private float fallbackGroundY = 0f;
+        [Tooltip("Maximum length the shadow bridge can extend across chasms.")]
+        [SerializeField] private float maxShadowDistance = 25f;
 
-        [Tooltip("Maximum length the shadow bridge can extend.")]
-        [SerializeField] private float maxShadowDistance = 18f;
+        [Tooltip("Multiplier applied to the natural shadow length.")]
+        [SerializeField] private float shadowLengthMultiplier = 1.0f;
 
-        [Header("Visual Styling ('Ink & Solar Flare')")]
-        [Tooltip("Render a luminous cyan rim along the walkable top edge of the shadow.")]
+        [Header("Solid Shadow Bridge Matter ('Ink')")]
+        [Tooltip("Thickness of the solid obsidian bridge matter below the walking surface.")]
+        [SerializeField] private float bridgeThickness = 0.45f;
+
+        [Tooltip("Color of the solid obsidian bridge matter.")]
+        [SerializeField] private Color bridgeColor = new Color(0.05f, 0.05f, 0.08f, 1.0f); // #0D0D15 Solid Obsidian
+
+        [Header("Walkable Cyan Rim ('Solar Flare')")]
+        [Tooltip("Render luminous cyan rim along the walkable top surface of the horizontal bridge.")]
         [SerializeField] private bool renderWalkableRim = true;
 
-        [SerializeField] private Color rimColor = new Color(0.22f, 0.74f, 0.97f, 1.0f); // Radiant Cyan #38BDF8
+        [SerializeField] private Color rimColor = new Color(0.22f, 0.74f, 0.97f, 1.0f); // #38BDF8 Radiant Cyan
 
         [SerializeField] private float rimWidth = 0.12f;
 
-        [Tooltip("Render a solid obsidian shadow fill under the bridge.")]
-        [SerializeField] private bool renderShadowFill = true;
+        [Header("Atmospheric Umbral Silhouette")]
+        [Tooltip("Render subtle atmospheric shadow cone in the air between monolith top and ground tip.")]
+        [SerializeField] private bool renderUmbraSilhouette = true;
 
-        [SerializeField] private Color shadowFillColor = new Color(0.05f, 0.05f, 0.08f, 0.95f); // #0D0D15 Solid Obsidian
+        [Tooltip("Alpha opacity of the atmospheric shadow cone in the sky (0.2 to 0.4 allows sky gradient to shine through).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float umbraSilhouetteAlpha = 0.30f;
+
+        [SerializeField] private Color umbraColor = new Color(0.05f, 0.05f, 0.08f, 0.30f);
 
         // Components
         private EdgeCollider2D edgeCollider;
         private BoxCollider2D boxCollider;
         private LineRenderer rimRenderer;
-        private MeshFilter fillMeshFilter;
-        private MeshRenderer fillMeshRenderer;
-        private Mesh fillMesh;
-        private Vector2 lastSunPosition;
+
+        // Bridge Slab Visual (Child GameObject)
+        private MeshFilter bridgeMeshFilter;
+        private MeshRenderer bridgeMeshRenderer;
+        private Mesh bridgeMesh;
+
+        // Umbra Silhouette Visual (Child GameObject)
+        private MeshFilter umbraMeshFilter;
+        private MeshRenderer umbraMeshRenderer;
+        private Mesh umbraMesh;
+
+        // Public Accessors
+        public float CurrentSunAngle => currentSunAngle;
+        public float FallbackGroundY => fallbackGroundY;
 
         private void Awake()
         {
@@ -66,14 +99,14 @@ namespace UmbraChronos.Environment
 
         private void OnEnable()
         {
-            TimeEvents.OnSunAngleChanged += OnSunAngleChanged;
+            TimeEvents.OnSunAngleChanged += HandleSunAngleChanged;
             SetupVisuals();
             UpdateShadowBridge();
         }
 
         private void OnDisable()
         {
-            TimeEvents.OnSunAngleChanged -= OnSunAngleChanged;
+            TimeEvents.OnSunAngleChanged -= HandleSunAngleChanged;
         }
 
         private void Start()
@@ -87,19 +120,18 @@ namespace UmbraChronos.Environment
             if (sunTransform == null)
             {
                 LocateSun();
-                if (sunTransform == null) return;
             }
 
-            Vector2 currentSunPos = sunTransform.position;
-            if (Vector2.SqrMagnitude(currentSunPos - lastSunPosition) > 0.002f)
+            // In Edit Mode, keep shadow bridge synchronized with inspector or SunDial
+            if (!Application.isPlaying)
             {
                 UpdateShadowBridge();
-                lastSunPosition = currentSunPos;
             }
         }
 
-        private void OnSunAngleChanged(float angle)
+        private void HandleSunAngleChanged(float angle)
         {
+            currentSunAngle = angle;
             UpdateShadowBridge();
         }
 
@@ -111,6 +143,7 @@ namespace UmbraChronos.Environment
             if (sunDial != null)
             {
                 sunTransform = sunDial.transform;
+                currentSunAngle = sunDial.CurrentAngle;
                 return;
             }
 
@@ -132,151 +165,232 @@ namespace UmbraChronos.Environment
             }
         }
 
+        /// <summary>
+        /// Calculates the horizontal solid shadow bridge and atmospheric silhouette
+        /// strictly based on the celestial sun angle.
+        /// </summary>
         public void UpdateShadowBridge()
         {
             if (edgeCollider == null) edgeCollider = GetComponent<EdgeCollider2D>();
             if (edgeCollider == null) return;
 
-            if (sunTransform == null) LocateSun();
-            if (sunTransform == null) return;
+            if (boxCollider == null) boxCollider = GetComponent<BoxCollider2D>();
 
-            Vector2 sunPos = sunTransform.position;
+            // Query sun angle from SunDialController if available
+            if (sunTransform != null)
+            {
+                var sunDial = sunTransform.GetComponent<SunDialController>();
+                if (sunDial != null)
+                {
+                    currentSunAngle = sunDial.CurrentAngle;
+                }
+            }
 
-            // Compute world corners of the monolith pillar
-            Vector2 worldTopLeft, worldTopRight, worldBottomLeft, worldBottomRight;
+            // Monolith world bounds
+            float xMin, xMax, yTop, yBase;
             if (boxCollider != null)
             {
                 Bounds b = boxCollider.bounds;
-                worldTopLeft = new Vector2(b.min.x, b.max.y);
-                worldTopRight = new Vector2(b.max.x, b.max.y);
-                worldBottomLeft = new Vector2(b.min.x, b.min.y);
-                worldBottomRight = new Vector2(b.max.x, b.min.y);
+                xMin = b.min.x;
+                xMax = b.max.x;
+                yTop = b.max.y;
+                yBase = b.min.y;
             }
             else
             {
                 Vector2 half = transform.lossyScale * 0.5f;
                 Vector2 center = transform.position;
-                worldTopLeft = new Vector2(center.x - half.x, center.y + half.y);
-                worldTopRight = new Vector2(center.x + half.x, center.y + half.y);
-                worldBottomLeft = new Vector2(center.x - half.x, center.y - half.y);
-                worldBottomRight = new Vector2(center.x + half.x, center.y - half.y);
+                xMin = center.x - half.x;
+                xMax = center.x + half.x;
+                yTop = center.y + half.y;
+                yBase = center.y - half.y;
             }
 
-            float monolithCenterX = (worldTopLeft.x + worldTopRight.x) * 0.5f;
-            Vector2[] walkableBridgeWorld;
-            Vector3[] fillVertices;
+            float groundY = fallbackGroundY;
+            float pillarHeight = Mathf.Max(0.5f, yTop - groundY);
 
-            if (sunPos.x <= monolithCenterX)
+            // Celestial Angle Math:
+            // 90 deg = overhead noon (cot = 0, length = 0)
+            // < 90 deg = sun on left (dawn/morning) -> light shines down-right (+X)
+            // > 90 deg = sun on right (dusk) -> light shines down-left (-X)
+            float angleClamped = Mathf.Clamp(currentSunAngle, 15f, 165f);
+            float rad = angleClamped * Mathf.Deg2Rad;
+            float cot = Mathf.Cos(rad) / Mathf.Sin(rad);
+
+            float rawLength = pillarHeight * Mathf.Abs(cot) * shadowLengthMultiplier;
+            float shadowLength = Mathf.Min(rawLength, maxShadowDistance);
+
+            bool isRetracted = shadowLength < 0.25f;
+
+            float xStart = 0f;
+            float xEnd = 0f;
+            float targetX = 0f;
+            Vector3 umbraCorner = Vector3.zero;
+
+            if (!isRetracted)
             {
-                // Sun on LEFT -> Light projects shadow to the RIGHT (+X)
-                Vector2 dirRight = (worldTopRight - sunPos).normalized;
-                Vector2 groundHit = ProjectRayToGround(worldTopRight, dirRight);
-
-                // Walkable top surface: from TopLeft across TopRight down to ground landing
-                walkableBridgeWorld = new Vector2[]
+                if (angleClamped < 89.9f)
                 {
-                    worldTopLeft,
-                    worldTopRight,
-                    groundHit
-                };
+                    // Sun on LEFT -> Shadow casts to the RIGHT (+X)
+                    float xBase = xMax;
+                    targetX = xBase + shadowLength;
 
-                // Quad shadow fill under the bridge
-                fillVertices = new Vector3[]
+                    // Raycast along walking plane to check for blocking walls
+                    RaycastHit2D hit = Physics2D.Raycast(new Vector2(xBase + 0.05f, groundY + 0.1f), Vector2.right, shadowLength, groundLayerMask);
+                    if (hit.collider != null && hit.collider.gameObject != gameObject && !hit.collider.isTrigger && !hit.collider.CompareTag("Player"))
+                    {
+                        targetX = Mathf.Min(targetX, hit.point.x);
+                    }
+
+                    xStart = xBase;
+                    xEnd = targetX;
+                    umbraCorner = new Vector3(xMax, yTop, 0f);
+                }
+                else if (angleClamped > 90.1f)
                 {
-                    new Vector3(worldTopLeft.x, worldTopLeft.y, 0f),
-                    new Vector3(worldTopRight.x, worldTopRight.y, 0f),
-                    new Vector3(groundHit.x, groundHit.y, 0f),
-                    new Vector3(worldBottomRight.x, worldBottomRight.y, 0f)
-                };
+                    // Sun on RIGHT -> Shadow casts to the LEFT (-X)
+                    float xBase = xMin;
+                    targetX = xBase - shadowLength;
+
+                    // Raycast along walking plane to check for blocking walls
+                    RaycastHit2D hit = Physics2D.Raycast(new Vector2(xBase - 0.05f, groundY + 0.1f), Vector2.left, shadowLength, groundLayerMask);
+                    if (hit.collider != null && hit.collider.gameObject != gameObject && !hit.collider.isTrigger && !hit.collider.CompareTag("Player"))
+                    {
+                        targetX = Mathf.Max(targetX, hit.point.x);
+                    }
+
+                    xStart = targetX;
+                    xEnd = xBase;
+                    umbraCorner = new Vector3(xMin, yTop, 0f);
+                }
+                else
+                {
+                    isRetracted = true;
+                }
+            }
+
+            // 1. UPDATE PHYSICAL EDGE COLLIDER (Horizontal walking bridge at ground level)
+            if (isRetracted || Mathf.Abs(xEnd - xStart) < 0.25f)
+            {
+                edgeCollider.enabled = false;
             }
             else
             {
-                // Sun on RIGHT -> Light projects shadow to the LEFT (-X)
-                Vector2 dirLeft = (worldTopLeft - sunPos).normalized;
-                Vector2 groundHit = ProjectRayToGround(worldTopLeft, dirLeft);
-
-                // Walkable top surface: from ground landing up to TopLeft and across TopRight
-                walkableBridgeWorld = new Vector2[]
+                edgeCollider.enabled = true;
+                Vector2 worldP1 = new Vector2(xStart, groundY);
+                Vector2 worldP2 = new Vector2(xEnd, groundY);
+                edgeCollider.points = new Vector2[]
                 {
-                    groundHit,
-                    worldTopLeft,
-                    worldTopRight
-                };
-
-                fillVertices = new Vector3[]
-                {
-                    new Vector3(worldTopRight.x, worldTopRight.y, 0f),
-                    new Vector3(worldTopLeft.x, worldTopLeft.y, 0f),
-                    new Vector3(groundHit.x, groundHit.y, 0f),
-                    new Vector3(worldBottomLeft.x, worldBottomLeft.y, 0f)
+                    transform.InverseTransformPoint(worldP1),
+                    transform.InverseTransformPoint(worldP2)
                 };
             }
 
-            // 1. Update EdgeCollider2D (Local Space)
-            Vector2[] localColliderPoints = new Vector2[walkableBridgeWorld.Length];
-            for (int i = 0; i < walkableBridgeWorld.Length; i++)
-            {
-                localColliderPoints[i] = transform.InverseTransformPoint(walkableBridgeWorld[i]);
-            }
-            edgeCollider.points = localColliderPoints;
-
-            // 2. Update Luminous Cyan Rim LineRenderer
+            // 2. UPDATE LUMINOUS CYAN RIM (Flat line across the top of the horizontal bridge)
             if (renderWalkableRim)
             {
                 if (rimRenderer == null) SetupVisuals();
                 if (rimRenderer != null)
                 {
-                    rimRenderer.positionCount = walkableBridgeWorld.Length;
-                    for (int i = 0; i < walkableBridgeWorld.Length; i++)
+                    if (isRetracted || Mathf.Abs(xEnd - xStart) < 0.25f)
                     {
-                        rimRenderer.SetPosition(i, new Vector3(walkableBridgeWorld[i].x, walkableBridgeWorld[i].y, -0.05f));
+                        rimRenderer.enabled = false;
+                    }
+                    else
+                    {
+                        rimRenderer.enabled = true;
+                        rimRenderer.positionCount = 2;
+                        rimRenderer.SetPosition(0, new Vector3(xStart, groundY, -0.05f));
+                        rimRenderer.SetPosition(1, new Vector3(xEnd, groundY, -0.05f));
                     }
                 }
             }
 
-            // 3. Update Solid Obsidian Shadow Fill Mesh
-            if (renderShadowFill)
+            // 3. UPDATE SOLID OBSIDIAN BRIDGE SLAB MESH
+            if (bridgeMesh == null || bridgeMeshFilter == null) SetupVisuals();
+            if (bridgeMesh != null && bridgeMeshFilter != null)
             {
-                if (fillMesh == null) SetupVisuals();
-                if (fillMesh != null)
+                if (isRetracted || Mathf.Abs(xEnd - xStart) < 0.25f)
                 {
-                    UpdateFillMesh(fillVertices);
+                    bridgeMesh.Clear();
+                }
+                else
+                {
+                    UpdateBridgeSlabMesh(xStart, xEnd, groundY, bridgeThickness);
+                }
+            }
+
+            // 4. UPDATE UMBRAL ATMOSPHERIC SHADOW SILHOUETTE MESH
+            if (renderUmbraSilhouette)
+            {
+                if (umbraMesh == null || umbraMeshFilter == null) SetupVisuals();
+                if (umbraMesh != null && umbraMeshFilter != null)
+                {
+                    if (isRetracted || Mathf.Abs(xEnd - xStart) < 0.25f)
+                    {
+                        umbraMesh.Clear();
+                    }
+                    else
+                    {
+                        UpdateUmbraSilhouetteMesh(umbraCorner, targetX, groundY);
+                    }
                 }
             }
         }
 
-        private Vector2 ProjectRayToGround(Vector2 corner, Vector2 dir)
+        private void UpdateBridgeSlabMesh(float xStart, float xEnd, float groundY, float thickness)
         {
-            if (dir.y >= -0.001f)
+            Vector3[] worldVerts = new Vector3[]
             {
-                dir.y = -0.001f;
-                dir.Normalize();
+                new Vector3(xStart, groundY, 0f),
+                new Vector3(xEnd, groundY, 0f),
+                new Vector3(xEnd, groundY - thickness, 0f),
+                new Vector3(xStart, groundY - thickness, 0f)
+            };
+
+            Vector3[] localVerts = new Vector3[4];
+            for (int i = 0; i < 4; i++)
+            {
+                localVerts[i] = bridgeMeshFilter.transform.InverseTransformPoint(worldVerts[i]);
             }
 
-            // Raycast towards ground layer
-            Vector2 rayOrigin = corner + dir * 0.05f;
-            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, dir, maxShadowDistance, groundLayerMask);
-
-            if (hit.collider != null && hit.collider.gameObject != gameObject)
+            bridgeMesh.Clear();
+            bridgeMesh.vertices = localVerts;
+            // Double-sided quad triangles
+            bridgeMesh.triangles = new int[]
             {
-                if (!hit.collider.isTrigger && !hit.collider.CompareTag("Player"))
-                {
-                    return hit.point;
-                }
+                0, 1, 2,
+                0, 2, 1,
+                0, 2, 3,
+                0, 3, 2
+            };
+            bridgeMesh.RecalculateBounds();
+        }
+
+        private void UpdateUmbraSilhouetteMesh(Vector3 corner, float targetX, float groundY)
+        {
+            Vector3[] worldVerts = new Vector3[]
+            {
+                corner,
+                new Vector3(targetX, groundY, 0f),
+                new Vector3(corner.x, groundY, 0f)
+            };
+
+            Vector3[] localVerts = new Vector3[3];
+            for (int i = 0; i < 3; i++)
+            {
+                localVerts[i] = umbraMeshFilter.transform.InverseTransformPoint(worldVerts[i]);
             }
 
-            // Intersect with fallback ground plane
-            if (corner.y > fallbackGroundY)
+            umbraMesh.Clear();
+            umbraMesh.vertices = localVerts;
+            // Double-sided triangle
+            umbraMesh.triangles = new int[]
             {
-                float t = (fallbackGroundY - corner.y) / dir.y;
-                if (t > 0f)
-                {
-                    float clampedT = Mathf.Min(t, maxShadowDistance);
-                    return corner + dir * clampedT;
-                }
-            }
-
-            return corner + dir * maxShadowDistance;
+                0, 1, 2,
+                0, 2, 1
+            };
+            umbraMesh.RecalculateBounds();
         }
 
         private void SetupVisuals()
@@ -284,7 +398,7 @@ namespace UmbraChronos.Environment
             Shader uShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
             if (uShader == null) uShader = Shader.Find("Sprites/Default");
 
-            // 1. Setup Walkable Cyan Rim LineRenderer
+            // 1. Walkable Cyan Rim LineRenderer
             if (renderWalkableRim)
             {
                 rimRenderer = GetComponent<LineRenderer>();
@@ -297,68 +411,75 @@ namespace UmbraChronos.Environment
                 rimRenderer.startWidth = rimWidth;
                 rimRenderer.endWidth = rimWidth;
                 rimRenderer.useWorldSpace = true;
-                rimRenderer.sortingOrder = 5; // Crisp top rim above shadow
+                rimRenderer.sortingOrder = 5; // Crisp top rim above bridge
                 rimRenderer.alignment = LineAlignment.View;
             }
 
-            // 2. Setup Solid Obsidian Shadow Fill (Dedicated child object)
-            if (renderShadowFill)
+            // 2. Solid Obsidian Bridge Slab (Child GameObject)
+            Transform slabTransform = transform.Find("Shadow_Bridge_Slab");
+            GameObject slabObj = slabTransform != null ? slabTransform.gameObject : new GameObject("Shadow_Bridge_Slab");
+            slabObj.transform.SetParent(transform, false);
+            slabObj.transform.localPosition = Vector3.zero;
+            slabObj.transform.localRotation = Quaternion.identity;
+            slabObj.transform.localScale = Vector3.one;
+
+            bridgeMeshFilter = slabObj.GetComponent<MeshFilter>();
+            if (bridgeMeshFilter == null) bridgeMeshFilter = slabObj.AddComponent<MeshFilter>();
+
+            bridgeMeshRenderer = slabObj.GetComponent<MeshRenderer>();
+            if (bridgeMeshRenderer == null) bridgeMeshRenderer = slabObj.AddComponent<MeshRenderer>();
+
+            if (bridgeMesh == null)
             {
-                Transform existingFill = transform.Find("Shadow_Solid_Fill");
-                GameObject fillObj = existingFill != null ? existingFill.gameObject : new GameObject("Shadow_Solid_Fill");
-                fillObj.transform.SetParent(transform, false);
-                fillObj.transform.localPosition = Vector3.zero;
-                fillObj.transform.localRotation = Quaternion.identity;
-                fillObj.transform.localScale = Vector3.one;
+                bridgeMesh = new Mesh { name = "BridgeSlabMesh" };
+                bridgeMesh.MarkDynamic();
+                bridgeMeshFilter.sharedMesh = bridgeMesh;
+            }
 
-                fillMeshFilter = fillObj.GetComponent<MeshFilter>();
-                if (fillMeshFilter == null) fillMeshFilter = fillObj.AddComponent<MeshFilter>();
+            if (uShader != null)
+            {
+                bridgeMeshRenderer.sharedMaterial = new Material(uShader) { color = bridgeColor };
+            }
+            bridgeMeshRenderer.sortingOrder = 1; // Solid matter in line with platforms
 
-                fillMeshRenderer = fillObj.GetComponent<MeshRenderer>();
-                if (fillMeshRenderer == null) fillMeshRenderer = fillObj.AddComponent<MeshRenderer>();
+            // Clean up legacy fill child if present
+            Transform legacyFill = transform.Find("Shadow_Solid_Fill");
+            if (legacyFill != null)
+            {
+                if (Application.isPlaying) Destroy(legacyFill.gameObject);
+                else DestroyImmediate(legacyFill.gameObject);
+            }
 
-                if (fillMesh == null)
+            // 3. Umbral Atmospheric Shadow Silhouette (Child GameObject)
+            if (renderUmbraSilhouette)
+            {
+                Transform umbraTransform = transform.Find("Shadow_Umbra_Cone");
+                GameObject umbraObj = umbraTransform != null ? umbraTransform.gameObject : new GameObject("Shadow_Umbra_Cone");
+                umbraObj.transform.SetParent(transform, false);
+                umbraObj.transform.localPosition = Vector3.zero;
+                umbraObj.transform.localRotation = Quaternion.identity;
+                umbraObj.transform.localScale = Vector3.one;
+
+                umbraMeshFilter = umbraObj.GetComponent<MeshFilter>();
+                if (umbraMeshFilter == null) umbraMeshFilter = umbraObj.AddComponent<MeshFilter>();
+
+                umbraMeshRenderer = umbraObj.GetComponent<MeshRenderer>();
+                if (umbraMeshRenderer == null) umbraMeshRenderer = umbraObj.AddComponent<MeshRenderer>();
+
+                if (umbraMesh == null)
                 {
-                    fillMesh = new Mesh { name = "ShadowFillMesh" };
-                    fillMesh.MarkDynamic();
-                    fillMeshFilter.sharedMesh = fillMesh;
+                    umbraMesh = new Mesh { name = "UmbraConeMesh" };
+                    umbraMesh.MarkDynamic();
+                    umbraMeshFilter.sharedMesh = umbraMesh;
                 }
 
                 if (uShader != null)
                 {
-                    fillMeshRenderer.sharedMaterial = new Material(uShader) { color = shadowFillColor };
+                    Color tintedUmbra = new Color(umbraColor.r, umbraColor.g, umbraColor.b, umbraSilhouetteAlpha);
+                    umbraMeshRenderer.sharedMaterial = new Material(uShader) { color = tintedUmbra };
                 }
-                fillMeshRenderer.sortingOrder = -2; // Directly behind platforms (0) but well ahead of sky canvas (-20)
+                umbraMeshRenderer.sortingOrder = -2; // Behind platforms and player, in front of sky canvas
             }
-        }
-
-        private void UpdateFillMesh(Vector3[] worldVerts)
-        {
-            if (worldVerts == null || worldVerts.Length < 4 || fillMesh == null || fillMeshFilter == null) return;
-
-            // Convert world vertices into fill object's local space
-            Vector3[] localVerts = new Vector3[worldVerts.Length];
-            for (int i = 0; i < worldVerts.Length; i++)
-            {
-                localVerts[i] = fillMeshFilter.transform.InverseTransformPoint(worldVerts[i]);
-            }
-
-            fillMesh.Clear();
-            fillMesh.vertices = localVerts;
-
-            // DOUBLE-SIDED Triangles (Both clockwise and counter-clockwise)
-            // Ensures it is ALWAYS rendered and NEVER culled regardless of camera angle or light direction!
-            int[] triangles = new int[]
-            {
-                // Triangle 1 (Double-sided)
-                0, 1, 2,
-                0, 2, 1,
-                // Triangle 2 (Double-sided)
-                0, 2, 3,
-                0, 3, 2
-            };
-            fillMesh.triangles = triangles;
-            fillMesh.RecalculateBounds();
         }
 
         private void SetupShadowCaster()
@@ -370,7 +491,6 @@ namespace UmbraChronos.Environment
             }
 
             caster.castsShadows = true;
-            caster.useRendererSilhouette = true;
         }
     }
 }
