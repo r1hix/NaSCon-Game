@@ -59,6 +59,27 @@ namespace UmbraChronos.Core
         public static Action OnPuzzleSolved;
 
         /// <summary>
+        /// Invoked when the player jumps off the ground.
+        /// </summary>
+        public static Action OnPlayerJumped;
+
+        /// <summary>
+        /// Invoked when the player lands back on solid ground.
+        /// Parameter: float fallSpeed (impact velocity magnitude).
+        /// </summary>
+        public static Action<float> OnPlayerLanded;
+
+        /// <summary>
+        /// Invoked when a pressure plate changes state (pressed = true, released = false).
+        /// </summary>
+        public static Action<bool> OnPressurePlateChanged;
+
+        /// <summary>
+        /// Invoked when a timed gate changes state (opened = true, closed = false).
+        /// </summary>
+        public static Action<bool> OnGateStateChanged;
+
+        /// <summary>
         /// Invoked when the camera shifts to a new room/screen.
         /// Parameter: Vector2Int new room index.
         /// </summary>
