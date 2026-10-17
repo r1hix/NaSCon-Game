@@ -6,11 +6,10 @@ namespace UmbraChronos.Player
     /// <summary>
     /// Drives dynamic, high-feel 2D character animations for the Umbral Wanderer:
     /// - Frame-by-frame state animation: Idle (4 frames), Run (6 frames), Jump, Fall.
-    /// - Procedural Squash & Stretch on jump launch and ground impact.
+    /// - Procedural Squash & Stretch on jump launch and ground impact (isolated from physics collider).
     /// - Reverse frame playback during Time Rewind.
     /// - Auto-hooks to PlayerController or UmbralEcho.
     /// </summary>
-    [RequireComponent(typeof(SpriteRenderer))]
     public class PlayerAnimator : MonoBehaviour
     {
         [Header("Animation Frames (Wanderer)")]
@@ -30,6 +29,10 @@ namespace UmbraChronos.Player
         [SerializeField] private float landSquashFactor = 0.78f;
         [SerializeField] private float recoverySpeed = 10f;
 
+        [Header("Visual Transform")]
+        [Tooltip("Transform that is visually scaled for squash & stretch. If null, automatically isolates visual from physics collider.")]
+        [SerializeField] private Transform visualTransform;
+
         [Header("Character Type")]
         [Tooltip("If true, loads and uses the translucent Umbral Echo phantom sprites.")]
         [SerializeField] private bool isEcho = false;
@@ -44,6 +47,7 @@ namespace UmbraChronos.Player
         private int currentFrameIndex;
         private string currentState = "idle";
         private bool wasGrounded;
+        private float lastFallSpeed;
         private Vector3 baseScale = Vector3.one;
         private Vector3 currentScale = Vector3.one;
         private Vector3 lastPosition;
@@ -51,14 +55,60 @@ namespace UmbraChronos.Player
 
         private void Awake()
         {
-            spriteRenderer = GetComponent<SpriteRenderer>();
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
             playerController = GetComponent<PlayerController>() ?? GetComponentInParent<PlayerController>();
             rb = GetComponent<Rigidbody2D>() ?? GetComponentInParent<Rigidbody2D>();
-            baseScale = transform.localScale;
+
+            SetupVisualTransform();
+
+            baseScale = visualTransform != null ? visualTransform.localScale : Vector3.one;
             currentScale = baseScale;
             lastPosition = transform.position;
 
             LoadSprites();
+        }
+
+        private void SetupVisualTransform()
+        {
+            if (visualTransform != null) return;
+
+            Transform child = transform.Find("Visual");
+            if (child != null)
+            {
+                visualTransform = child;
+                return;
+            }
+
+            // If a Collider2D is on this GameObject, do NOT scale this transform!
+            // Create a child "Visual" GameObject to isolate squash & stretch from physics.
+            if (GetComponent<Collider2D>() != null)
+            {
+                GameObject vObj = new GameObject("Visual");
+                vObj.transform.SetParent(this.transform, false);
+                vObj.transform.localPosition = Vector3.zero;
+                vObj.transform.localScale = Vector3.one;
+
+                if (spriteRenderer != null && spriteRenderer.gameObject == this.gameObject)
+                {
+                    var oldSr = spriteRenderer;
+                    var newSr = vObj.AddComponent<SpriteRenderer>();
+                    newSr.sprite = oldSr.sprite;
+                    newSr.color = oldSr.color;
+                    newSr.flipX = oldSr.flipX;
+                    newSr.flipY = oldSr.flipY;
+                    newSr.sortingLayerID = oldSr.sortingLayerID;
+                    newSr.sortingOrder = oldSr.sortingOrder;
+                    newSr.sharedMaterial = oldSr.sharedMaterial;
+
+                    Destroy(oldSr);
+                    spriteRenderer = newSr;
+                }
+                visualTransform = vObj.transform;
+            }
+            else
+            {
+                visualTransform = this.transform;
+            }
         }
 
         private void LoadSprites()
@@ -118,16 +168,32 @@ namespace UmbraChronos.Player
             Vector2 vel = playerController != null ? playerController.Velocity : (rb != null && rb.simulated ? rb.linearVelocity : derivedVelocity);
             bool isRewinding = playerController != null ? playerController.IsRewinding : false;
 
-            // Ground impact check (land squash)
+            if (!isGrounded && vel.y < -0.5f)
+            {
+                lastFallSpeed = Mathf.Max(lastFallSpeed, Mathf.Abs(vel.y));
+            }
+
+            // Ground impact check (land squash) - only triggers upon a genuine landing impact!
             if (isGrounded && !wasGrounded && enableSquashStretch)
             {
-                ApplySquash(landSquashFactor);
+                if (lastFallSpeed > 2.5f)
+                {
+                    ApplySquash(landSquashFactor);
+                }
+                lastFallSpeed = 0f;
             }
             // Jump launch check (jump stretch)
             else if (!isGrounded && wasGrounded && vel.y > 1f && enableSquashStretch)
             {
                 ApplyStretch(jumpStretchFactor);
+                lastFallSpeed = 0f;
             }
+
+            if (isGrounded)
+            {
+                lastFallSpeed = 0f;
+            }
+
             wasGrounded = isGrounded;
 
             // Determine active animation state
@@ -233,23 +299,31 @@ namespace UmbraChronos.Player
 
         private void ApplySquash(float factor)
         {
-            // Squash: wide and short
+            if (factor <= 0.01f) return;
             currentScale = new Vector3(baseScale.x * (1f / factor), baseScale.y * factor, baseScale.z);
         }
 
         private void ApplyStretch(float factor)
         {
-            // Stretch: narrow and tall
+            if (factor <= 0.01f) return;
             currentScale = new Vector3(baseScale.x * (1f / factor), baseScale.y * factor, baseScale.z);
         }
 
         private void UpdateSquashStretch(float dt)
         {
-            if (!enableSquashStretch) return;
+            if (!enableSquashStretch || visualTransform == null) return;
 
             // Smoothly ease current scale back to base scale
             currentScale = Vector3.MoveTowards(currentScale, baseScale, recoverySpeed * dt);
-            transform.localScale = currentScale;
+            visualTransform.localScale = currentScale;
+
+            // Anchor feet to ground during squash & stretch so the bottom edge doesn't lift
+            if (visualTransform != this.transform)
+            {
+                const float feetY = -0.74f;
+                float deltaY = feetY * (1f - currentScale.y);
+                visualTransform.localPosition = new Vector3(0f, deltaY, 0f);
+            }
         }
 
         /// <summary>
