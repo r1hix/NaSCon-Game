@@ -9,10 +9,12 @@ namespace UmbraChronos.Environment
     /// Projects an EdgeCollider2D and visible bridge graphics along the top surface of a monolith's cast shadow.
     /// In Umbra Chronos, shadows are solid physical matter:
     /// - When the celestial sun rotates ([Q] / [E] / scroll), monoliths cast dynamic shadows.
-    /// - This component renders a visible shadow fill and a luminous cyan walkable rim (#38BDF8),
-    ///   and updates an EdgeCollider2D so the top edge acts as a solid bridge the player can cross.
-    /// - Uses thin EdgeCollider2D geometry (NOT a solid block) so it never traps the player or bulldozes objects.
+    /// - Renders a solid obsidian shadow bridge (#0D0D15) with double-sided geometry (never backface-culled).
+    /// - Renders a luminous cyan walkable rim (#38BDF8) along the top surface.
+    /// - Updates an EdgeCollider2D so the top edge acts as a solid bridge the player can walk across.
+    /// - Works in both Edit Mode ([ExecuteAlways]) and Play Mode.
     /// </summary>
+    [ExecuteAlways]
     [RequireComponent(typeof(EdgeCollider2D))]
     [DisallowMultipleComponent]
     public class DynamicShadowCollider : MonoBehaviour
@@ -26,23 +28,23 @@ namespace UmbraChronos.Environment
         [SerializeField] private LayerMask groundLayerMask = ~0;
 
         [Tooltip("Fallback ground Y level if raycast does not hit geometry (e.g. over a chasm).")]
-        [SerializeField] private float fallbackGroundY = -1.75f;
+        [SerializeField] private float fallbackGroundY = 0f;
 
         [Tooltip("Maximum length the shadow bridge can extend.")]
-        [SerializeField] private float maxShadowDistance = 14f;
+        [SerializeField] private float maxShadowDistance = 18f;
 
         [Header("Visual Styling ('Ink & Solar Flare')")]
         [Tooltip("Render a luminous cyan rim along the walkable top edge of the shadow.")]
         [SerializeField] private bool renderWalkableRim = true;
 
-        [SerializeField] private Color rimColor = new Color(0.22f, 0.74f, 0.97f, 0.85f); // Radiant Cyan #38BDF8
+        [SerializeField] private Color rimColor = new Color(0.22f, 0.74f, 0.97f, 1.0f); // Radiant Cyan #38BDF8
 
-        [SerializeField] private float rimWidth = 0.08f;
+        [SerializeField] private float rimWidth = 0.12f;
 
-        [Tooltip("Render a translucent shadow fill under the bridge.")]
+        [Tooltip("Render a solid obsidian shadow fill under the bridge.")]
         [SerializeField] private bool renderShadowFill = true;
 
-        [SerializeField] private Color shadowFillColor = new Color(0.05f, 0.05f, 0.08f, 0.65f); // Translucent ink
+        [SerializeField] private Color shadowFillColor = new Color(0.05f, 0.05f, 0.08f, 0.95f); // #0D0D15 Solid Obsidian
 
         // Components
         private EdgeCollider2D edgeCollider;
@@ -65,6 +67,8 @@ namespace UmbraChronos.Environment
         private void OnEnable()
         {
             TimeEvents.OnSunAngleChanged += OnSunAngleChanged;
+            SetupVisuals();
+            UpdateShadowBridge();
         }
 
         private void OnDisable()
@@ -87,7 +91,7 @@ namespace UmbraChronos.Environment
             }
 
             Vector2 currentSunPos = sunTransform.position;
-            if (Vector2.SqrMagnitude(currentSunPos - lastSunPosition) > 0.005f)
+            if (Vector2.SqrMagnitude(currentSunPos - lastSunPosition) > 0.002f)
             {
                 UpdateShadowBridge();
                 lastSunPosition = currentSunPos;
@@ -110,10 +114,21 @@ namespace UmbraChronos.Environment
                 return;
             }
 
-            GameObject sunObj = GameObject.FindWithTag("Sun");
-            if (sunObj != null)
+            try
             {
-                sunTransform = sunObj.transform;
+                GameObject sunObj = GameObject.FindWithTag("Sun");
+                if (sunObj != null)
+                {
+                    sunTransform = sunObj.transform;
+                    return;
+                }
+            }
+            catch (UnityException) { }
+
+            var anyLight = UnityEngine.Object.FindAnyObjectByType<Light2D>();
+            if (anyLight != null)
+            {
+                sunTransform = anyLight.transform;
             }
         }
 
@@ -165,7 +180,7 @@ namespace UmbraChronos.Environment
                     groundHit
                 };
 
-                // Triangular / quad shadow fill under the bridge (rendered behind platforms at order -10)
+                // Quad shadow fill under the bridge
                 fillVertices = new Vector3[]
                 {
                     new Vector3(worldTopLeft.x, worldTopLeft.y, 0f),
@@ -206,19 +221,27 @@ namespace UmbraChronos.Environment
             edgeCollider.points = localColliderPoints;
 
             // 2. Update Luminous Cyan Rim LineRenderer
-            if (renderWalkableRim && rimRenderer != null)
+            if (renderWalkableRim)
             {
-                rimRenderer.positionCount = walkableBridgeWorld.Length;
-                for (int i = 0; i < walkableBridgeWorld.Length; i++)
+                if (rimRenderer == null) SetupVisuals();
+                if (rimRenderer != null)
                 {
-                    rimRenderer.SetPosition(i, new Vector3(walkableBridgeWorld[i].x, walkableBridgeWorld[i].y, 0f));
+                    rimRenderer.positionCount = walkableBridgeWorld.Length;
+                    for (int i = 0; i < walkableBridgeWorld.Length; i++)
+                    {
+                        rimRenderer.SetPosition(i, new Vector3(walkableBridgeWorld[i].x, walkableBridgeWorld[i].y, -0.05f));
+                    }
                 }
             }
 
-            // 3. Update Translucent Shadow Fill Mesh
-            if (renderShadowFill && fillMesh != null)
+            // 3. Update Solid Obsidian Shadow Fill Mesh
+            if (renderShadowFill)
             {
-                UpdateFillMesh(fillVertices);
+                if (fillMesh == null) SetupVisuals();
+                if (fillMesh != null)
+                {
+                    UpdateFillMesh(fillVertices);
+                }
             }
         }
 
@@ -258,29 +281,31 @@ namespace UmbraChronos.Environment
 
         private void SetupVisuals()
         {
-            // 1. Setup Walkable Cyan Rim
+            Shader uShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+            if (uShader == null) uShader = Shader.Find("Sprites/Default");
+
+            // 1. Setup Walkable Cyan Rim LineRenderer
             if (renderWalkableRim)
             {
                 rimRenderer = GetComponent<LineRenderer>();
                 if (rimRenderer == null) rimRenderer = gameObject.AddComponent<LineRenderer>();
 
-                Shader shader = Shader.Find("Sprites/Default");
-                if (shader == null) shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
-                if (shader != null)
+                if (uShader != null)
                 {
-                    rimRenderer.material = new Material(shader) { color = rimColor };
+                    rimRenderer.material = new Material(uShader) { color = rimColor };
                 }
                 rimRenderer.startWidth = rimWidth;
                 rimRenderer.endWidth = rimWidth;
                 rimRenderer.useWorldSpace = true;
-                rimRenderer.sortingOrder = 4; // Above shadows and background, crisp and readable
+                rimRenderer.sortingOrder = 5; // Crisp top rim above shadow
+                rimRenderer.alignment = LineAlignment.View;
             }
 
-            // 2. Setup Translucent Shadow Fill (Dedicated child object with sortingOrder -10)
+            // 2. Setup Solid Obsidian Shadow Fill (Dedicated child object)
             if (renderShadowFill)
             {
-                Transform existingFill = transform.Find("Shadow_Translucent_Fill");
-                GameObject fillObj = existingFill != null ? existingFill.gameObject : new GameObject("Shadow_Translucent_Fill");
+                Transform existingFill = transform.Find("Shadow_Solid_Fill");
+                GameObject fillObj = existingFill != null ? existingFill.gameObject : new GameObject("Shadow_Solid_Fill");
                 fillObj.transform.SetParent(transform, false);
                 fillObj.transform.localPosition = Vector3.zero;
                 fillObj.transform.localRotation = Quaternion.identity;
@@ -299,19 +324,17 @@ namespace UmbraChronos.Environment
                     fillMeshFilter.sharedMesh = fillMesh;
                 }
 
-                Shader fillShader = Shader.Find("Sprites/Default");
-                if (fillShader == null) fillShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
-                if (fillShader != null)
+                if (uShader != null)
                 {
-                    fillMeshRenderer.sharedMaterial = new Material(fillShader) { color = shadowFillColor };
+                    fillMeshRenderer.sharedMaterial = new Material(uShader) { color = shadowFillColor };
                 }
-                fillMeshRenderer.sortingOrder = -10; // Behind platforms and player, but in front of sky canvas
+                fillMeshRenderer.sortingOrder = -2; // Directly behind platforms (0) but well ahead of sky canvas (-20)
             }
         }
 
         private void UpdateFillMesh(Vector3[] worldVerts)
         {
-            if (worldVerts == null || worldVerts.Length < 3 || fillMesh == null) return;
+            if (worldVerts == null || worldVerts.Length < 4 || fillMesh == null || fillMeshFilter == null) return;
 
             // Convert world vertices into fill object's local space
             Vector3[] localVerts = new Vector3[worldVerts.Length];
@@ -323,8 +346,17 @@ namespace UmbraChronos.Environment
             fillMesh.Clear();
             fillMesh.vertices = localVerts;
 
-            // Quad triangles (0-1-2 and 0-2-3)
-            int[] triangles = new int[] { 0, 1, 2, 0, 2, 3 };
+            // DOUBLE-SIDED Triangles (Both clockwise and counter-clockwise)
+            // Ensures it is ALWAYS rendered and NEVER culled regardless of camera angle or light direction!
+            int[] triangles = new int[]
+            {
+                // Triangle 1 (Double-sided)
+                0, 1, 2,
+                0, 2, 1,
+                // Triangle 2 (Double-sided)
+                0, 2, 3,
+                0, 3, 2
+            };
             fillMesh.triangles = triangles;
             fillMesh.RecalculateBounds();
         }

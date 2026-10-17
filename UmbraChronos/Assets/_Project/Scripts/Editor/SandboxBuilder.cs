@@ -55,7 +55,7 @@ namespace UmbraChronos.Editor
             {
                 EditorUtility.DisplayDialog(
                     "Umbra Chronos Playground Ready!",
-                    "Successfully generated:\n- SunDial.prefab (Interactive celestial sun with [Q]/[E] rotation!)\n- Monolith.prefab (Walkable solid shadow bridge!)\n- LethalLightZone.prefab (Visible sunbeams & danger)\n- PostProcessingVolume.prefab (Rewind VFX & Solar glare)\n- PressurePlate.prefab & TimedGate.prefab\n- PushableBlock.prefab (Mobile umbrella shield!)\n- Sandbox_Shaf.unity with interactive puzzle testbed!\n\nHit Play to test your time and echo puzzles!",
+                    "Successfully generated:\n- SunDial.prefab (Interactive celestial sun with [Q]/[E] rotation!)\n- Monolith.prefab (Reachable height + glowing cyan shadow bridge!)\n- LethalLightZone.prefab (Visible sunbeams & danger)\n- PostProcessingVolume.prefab (Rewind VFX & Solar glare)\n- PressurePlate.prefab & TimedGate.prefab\n- PushableBlock.prefab (Mobile umbrella shield!)\n- Sandbox_Shaf.unity with interactive puzzle testbed!\n\nHit Play to test your time and echo puzzles!",
                     "Let's Go!");
             }
         }
@@ -130,13 +130,13 @@ namespace UmbraChronos.Editor
 
             var sr = playerObj.AddComponent<SpriteRenderer>();
             sr.sprite = sprite;
-            sr.color = new Color(0.05f, 0.05f, 0.08f, 1.0f); // Obsidian Black (#0D0D15)
+            sr.color = new Color(0.05f, 0.05f, 0.08f, 1f); // #0D0D15 Obsidian silhouette
             sr.sortingOrder = 10;
 
             var rb = playerObj.AddComponent<Rigidbody2D>();
             rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             rb.freezeRotation = true;
-            rb.gravityScale = 3.0f;
+            rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
             var col = playerObj.AddComponent<BoxCollider2D>();
             col.size = Vector2.one;
@@ -153,19 +153,15 @@ namespace UmbraChronos.Editor
         {
             string path = $"{CorePrefabFolder}/RewindManager.prefab";
 
-            GameObject managerObj = new GameObject("RewindManager");
-            var rewindComp = managerObj.AddComponent<RewindManager>();
+            GameObject rmObj = new GameObject("RewindManager");
+            var rm = rmObj.AddComponent<RewindManager>();
 
-            SerializedObject so = new SerializedObject(rewindComp);
-            SerializedProperty prop = so.FindProperty("echoPrefab");
-            if (prop != null)
-            {
-                prop.objectReferenceValue = echoPrefab;
-                so.ApplyModifiedProperties();
-            }
+            SerializedObject so = new SerializedObject(rm);
+            so.FindProperty("echoPrefab").objectReferenceValue = echoPrefab;
+            so.ApplyModifiedProperties();
 
-            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(managerObj, path);
-            Object.DestroyImmediate(managerObj);
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(rmObj, path);
+            Object.DestroyImmediate(rmObj);
             return prefab;
         }
 
@@ -174,17 +170,25 @@ namespace UmbraChronos.Editor
             string path = $"{InteractablePrefabFolder}/TimedGate.prefab";
 
             GameObject gateObj = new GameObject("TimedGate");
-            gateObj.transform.localScale = new Vector3(0.6f, 3.0f, 1f);
-
-            var sr = gateObj.AddComponent<SpriteRenderer>();
-            sr.sprite = sprite;
-            sr.color = new Color(0.08f, 0.08f, 0.12f, 1f);
-            sr.sortingOrder = 2;
+            var gateComp = gateObj.AddComponent<TimedGate>();
 
             var col = gateObj.AddComponent<BoxCollider2D>();
             col.size = Vector2.one;
 
-            gateObj.AddComponent<TimedGate>();
+            // Visual child
+            GameObject visualChild = new GameObject("Visual");
+            visualChild.transform.SetParent(gateObj.transform, false);
+            visualChild.transform.localScale = new Vector3(0.6f, 2.8f, 1f);
+
+            var sr = visualChild.AddComponent<SpriteRenderer>();
+            sr.sprite = sprite;
+            sr.color = new Color(0.2f, 0.2f, 0.25f, 1f); // Stone slab
+            sr.sortingOrder = 3;
+
+            SerializedObject so = new SerializedObject(gateComp);
+            so.FindProperty("gateRenderer").objectReferenceValue = sr;
+            so.FindProperty("openOffset").vector2Value = new Vector2(0f, 3.2f);
+            so.ApplyModifiedProperties();
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(gateObj, path);
             Object.DestroyImmediate(gateObj);
@@ -260,7 +264,7 @@ namespace UmbraChronos.Editor
             var sunLight = sunObj.AddComponent<Light2D>();
             sunLight.lightType = Light2D.LightType.Point;
             sunLight.color = new Color(1f, 0.94f, 0.75f, 1f); // Searing solar flare
-            sunLight.pointLightOuterRadius = 26f;
+            sunLight.pointLightOuterRadius = 28f;
             sunLight.intensity = 1.35f;
 
             // Visual Sun Orb in the sky
@@ -271,7 +275,7 @@ namespace UmbraChronos.Editor
             var orbSr = orb.AddComponent<SpriteRenderer>();
             orbSr.sprite = sprite;
             orbSr.color = new Color(1f, 0.96f, 0.7f, 1f); // Radiant white-gold core
-            orbSr.sortingOrder = 10;
+            orbSr.sortingOrder = 15;
 
             var dial = sunObj.AddComponent<SunDialController>();
             SerializedObject so = new SerializedObject(dial);
@@ -314,7 +318,7 @@ namespace UmbraChronos.Editor
             string path = $"{EnvironmentPrefabFolder}/Monolith.prefab";
 
             GameObject monolithObj = new GameObject("Monolith");
-            monolithObj.transform.localScale = new Vector3(1.6f, 5.5f, 1f);
+            monolithObj.transform.localScale = new Vector3(1.4f, 1.6f, 1f);
 
             var sr = monolithObj.AddComponent<SpriteRenderer>();
             sr.sprite = sprite;
@@ -357,7 +361,7 @@ namespace UmbraChronos.Editor
             var cam = camObj.AddComponent<Camera>();
             cam.orthographic = true;
             cam.orthographicSize = 7.5f;
-            cam.backgroundColor = new Color(0.08f, 0.07f, 0.16f); // Midnight Indigo (#141128)
+            cam.backgroundColor = new Color(0.75f, 0.32f, 0.22f); // Warm Radiant Sunset
             cam.clearFlags = CameraClearFlags.SolidColor;
             camObj.AddComponent<AudioListener>();
 
@@ -367,20 +371,20 @@ namespace UmbraChronos.Editor
                 additionalCamData.renderPostProcessing = true;
             }
 
-            // 2. Large Background Canvas (catches 2D lighting falloff in Game view)
+            // 2. Large Background Canvas - High contrast vivid Dusk sky
             GameObject bgWall = new GameObject("Background_Canvas");
             bgWall.transform.position = new Vector3(0f, 3f, 0f);
-            bgWall.transform.localScale = new Vector3(45f, 25f, 1f);
+            bgWall.transform.localScale = new Vector3(50f, 30f, 1f);
             var bgSr = bgWall.AddComponent<SpriteRenderer>();
             bgSr.sprite = sprite;
-            bgSr.color = new Color(0.12f, 0.10f, 0.22f, 1f); // Deep dusk canvas
+            bgSr.color = new Color(0.78f, 0.35f, 0.22f, 1f); // Vivid Dusk Sky (#C75938) - High Contrast!
             bgSr.sortingOrder = -20;
 
             // 3. Global Ambient Sky Light 2D
             GameObject lightObj = new GameObject("Global Light 2D");
             var light2D = lightObj.AddComponent<Light2D>();
             light2D.lightType = Light2D.LightType.Global;
-            light2D.color = new Color(0.35f, 0.30f, 0.55f, 1f); // Deep atmospheric dusk
+            light2D.color = new Color(1.0f, 0.85f, 0.70f, 1f);
             light2D.intensity = 0.5f;
 
             // 4. Interactive Celestial SunDial (starts in the sky at noon!)
@@ -388,24 +392,24 @@ namespace UmbraChronos.Editor
             sunInst.transform.position = new Vector3(1f, 14f, 0f);
 
             // 5. Level Geometry with Real Chasm & Comfortable Step Heights:
-            // Left Cliff (extends from -15 to -3.5, surface at y = -1.75)
-            CreatePlatform("Cliff_Left", new Vector3(-9.5f, -2.5f, 0f), new Vector3(12f, 1.5f, 1f), sprite);
-            CreatePlatform("Boundary_Wall_Left", new Vector3(-15.5f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
+            // Left Cliff (extends from -15 to -3.2, surface at y = -1.75)
+            CreatePlatform("Cliff_Left", new Vector3(-9.0f, -2.5f, 0f), new Vector3(12f, 1.5f, 1f), sprite);
+            CreatePlatform("Boundary_Wall_Left", new Vector3(-15.0f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
 
             // Left Shelter (Overhead roof protecting spawn point)
-            CreatePlatform("Spawn_Shelter_Roof", new Vector3(-11f, 1.2f, 0f), new Vector3(5f, 0.5f, 1f), sprite);
+            CreatePlatform("Spawn_Shelter_Roof", new Vector3(-10.5f, 1.2f, 0f), new Vector3(6f, 0.5f, 1f), sprite);
 
-            // Stepping Stone Ledge (easy 1.0 unit hop from floor at y = -1.75)
-            CreatePlatform("Step_Ledge", new Vector3(-5.5f, -0.75f, 0f), new Vector3(2.5f, 0.4f, 1f), sprite);
+            // Stepping Stone Ledge (effortless 0.95 unit hop from floor at y = -1.75 to y = -0.8)
+            CreatePlatform("Step_Ledge", new Vector3(-5.0f, -1.0f, 0f), new Vector3(2.2f, 0.4f, 1f), sprite);
 
             // Pushable Physics Box (at x = -8f on floor)
             GameObject blockInst = (GameObject)PrefabUtility.InstantiatePrefab(blockPrefab);
             blockInst.transform.position = new Vector3(-8f, -1.15f, 0f);
 
-            // Monolith standing at edge of left cliff (x = -3.5, y = 0.0, scale 1.6 x 3.5)
-            // Base sits at y = -1.75, top is at y = 1.75 (easy 1.25 unit hop from step ledge!)
+            // Monolith standing at edge of left cliff (x = -3.2, y = -0.95, scale 1.4 x 1.6)
+            // Base sits at y = -1.75, top is at y = -0.15 (effortless 0.65 unit hop from step ledge!)
             GameObject monolithInst = (GameObject)PrefabUtility.InstantiatePrefab(monolithPrefab);
-            monolithInst.transform.position = new Vector3(-3.5f, 0.0f, 0f);
+            monolithInst.transform.position = new Vector3(-3.2f, -0.95f, 0f);
             var shadowComp = monolithInst.GetComponent<DynamicShadowCollider>();
             if (shadowComp != null)
             {
@@ -416,17 +420,17 @@ namespace UmbraChronos.Editor
             }
 
             // Lethal Chasm Floor (deep abyss at y = -6.5f)
-            CreatePlatform("Chasm_Floor", new Vector3(0f, -6.5f, 0f), new Vector3(12f, 1.5f, 1f), sprite);
+            CreatePlatform("Chasm_Floor", new Vector3(0.5f, -6.5f, 0f), new Vector3(14f, 1.5f, 1f), sprite);
 
-            // Right Cliff (extends from 2.5 to 15, surface at y = -1.75)
-            CreatePlatform("Cliff_Right", new Vector3(8.5f, -2.5f, 0f), new Vector3(12f, 1.5f, 1f), sprite);
+            // Right Cliff (extends from 3.5 to 15, surface at y = -1.75)
+            CreatePlatform("Cliff_Right", new Vector3(9.0f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
 
             // 6. Interactive Puzzle: PressurePlate & TimedGate on Right Cliff
             GameObject gateInst = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
-            gateInst.transform.position = new Vector3(8.0f, -0.25f, 0f);
+            gateInst.transform.position = new Vector3(8.5f, -0.25f, 0f);
 
             GameObject plateInst = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
-            plateInst.transform.position = new Vector3(4.5f, -1.65f, 0f);
+            plateInst.transform.position = new Vector3(5.5f, -1.65f, 0f);
             var plateComp = plateInst.GetComponent<PressurePlate>();
             if (plateComp != null)
             {
@@ -464,7 +468,7 @@ namespace UmbraChronos.Editor
 
             // 9. Player & RewindManager (Spawned safely inside the spawn shelter)
             GameObject playerInst = (GameObject)PrefabUtility.InstantiatePrefab(playerPrefab);
-            playerInst.transform.position = new Vector3(-11f, -1.0f, 0f);
+            playerInst.transform.position = new Vector3(-10.5f, -1.0f, 0f);
 
             PrefabUtility.InstantiatePrefab(rewindManagerPrefab);
 

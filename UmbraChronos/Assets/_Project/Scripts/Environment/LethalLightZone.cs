@@ -143,8 +143,9 @@ namespace UmbraChronos.Environment
             int count = Mathf.Max(1, verticalSamplePoints);
             beamRenderers = new LineRenderer[count];
 
-            // Default Sprite/Unlit material for crisp beams
-            Shader unlitShader = Shader.Find("Sprites/Default");
+            // Prefer URP 2D Unlit shader for crisp beams
+            Shader unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+            if (unlitShader == null) unlitShader = Shader.Find("Sprites/Default");
             Material lineMat = unlitShader != null ? new Material(unlitShader) : null;
 
             for (int i = 0; i < count; i++)
