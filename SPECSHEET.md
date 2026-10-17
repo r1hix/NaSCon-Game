@@ -53,10 +53,10 @@ Status: DONE / IN PROGRESS / READY / QUEUED
 | HUD + controls overlay | Shaf | Sat 07:00 PM | DONE |
 | Atmospheric Godrays & Solar Particle VFX | Shaf | Sat 09:30 PM | DONE |
 | Player Character Art & Animation ("Umbral Wanderer" + Echo) | Shaf | Sat 10:00 PM | DONE |
-| Unified Master Level & Environment Contrast (`Level_Master.unity`) | Chendline | Sat 10:30 PM | IN PROGRESS |
+| Unified Master Level & Environment Contrast (`Level_Master.unity`) | Both | Sat 10:30 PM | DONE |
 | Audio + `AudioManager` | Shaf | Sat 11:00 PM | DONE |
 | Camera shake & particle polish | Shaf | Sat 11:30 PM | DONE |
-| Playtesting + full playthrough | Both | Sun 12:00 AM – 02:00 AM | QUEUED |
+| Playtesting + full playthrough | Both | Sun 12:00 AM – 02:00 AM | IN PROGRESS |
 | Trailer + submission | Both | Sun 05:00 – 09:15 AM | QUEUED |
 
 **Already built & merged to `main`:** Unity 6 URP 2D project, `TimeEvents`, snappy `PlayerController` (coyote, jump buffer, variable jump), 5 s circular rewind buffer, `UmbralEcho`, `PressurePlate` + `TimedGate`, `DynamicShadowCollider` horizontal shadow bridges, `LethalLightZone`, diegetic HUD (sundial compass, 3-tier non-overlapping rewind gauge, danger vignette, runic prompts), `GodraySystem` (roof-occluding light shafts, solar dust particles, player radiation embers, shadow alignment).
