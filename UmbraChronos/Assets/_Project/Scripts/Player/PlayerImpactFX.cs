@@ -45,6 +45,7 @@ namespace UmbraChronos.Player
             psObj.transform.localPosition = new Vector3(0f, -0.75f, 0f); // Feet level
 
             groundDustPS = psObj.AddComponent<ParticleSystem>();
+            groundDustPS.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             ParticleSystemRenderer psRenderer = psObj.GetComponent<ParticleSystemRenderer>();
 
             Shader unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
