@@ -35,8 +35,15 @@ namespace UmbraChronos.Time
 
             if (spriteRenderer != null)
             {
-                spriteRenderer.color = echoColor;
+                spriteRenderer.color = Color.white;
             }
+
+            var anim = GetComponent<UmbraChronos.Player.PlayerAnimator>();
+            if (anim == null)
+            {
+                anim = gameObject.AddComponent<UmbraChronos.Player.PlayerAnimator>();
+            }
+            anim.ConfigureAsEcho();
 
             if (ignorePlayerCollision)
             {
