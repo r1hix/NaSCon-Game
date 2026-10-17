@@ -127,6 +127,7 @@ namespace UmbraChronos.Environment
             }
 #endif
 
+#if !ENABLE_INPUT_SYSTEM
             // Dual input fallback if Input System didn't register
             if (Mathf.Abs(input) < 0.01f)
             {
@@ -143,6 +144,7 @@ namespace UmbraChronos.Environment
                 }
                 catch (System.Exception) { }
             }
+#endif
 
             if (Mathf.Abs(input) > 0.01f)
             {

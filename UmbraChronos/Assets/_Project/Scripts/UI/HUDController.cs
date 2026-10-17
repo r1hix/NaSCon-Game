@@ -73,6 +73,8 @@ namespace UmbraChronos.UI
         private float exposureFraction = 0f;
         private float titleTimer = 0f;
 
+        private bool isGameOver = false;
+
         private void OnEnable()
         {
             TimeEvents.OnSunAngleChanged += HandleSunAngleChanged;
@@ -82,6 +84,9 @@ namespace UmbraChronos.UI
             TimeEvents.OnPlayerDied += HandlePlayerDied;
             TimeEvents.OnPlayerRespawned += HandlePlayerRespawned;
             TimeEvents.OnRoomChanged += HandleRoomChanged;
+            TimeEvents.OnLivesChanged += HandleLivesChanged;
+            TimeEvents.OnGameOver += HandleGameOver;
+            TimeEvents.OnLevelCompleted += HandleLevelCompleted;
         }
 
         private void OnDisable()
@@ -93,6 +98,9 @@ namespace UmbraChronos.UI
             TimeEvents.OnPlayerDied -= HandlePlayerDied;
             TimeEvents.OnPlayerRespawned -= HandlePlayerRespawned;
             TimeEvents.OnRoomChanged -= HandleRoomChanged;
+            TimeEvents.OnLivesChanged -= HandleLivesChanged;
+            TimeEvents.OnGameOver -= HandleGameOver;
+            TimeEvents.OnLevelCompleted -= HandleLevelCompleted;
         }
 
         private void Start()
@@ -146,12 +154,50 @@ namespace UmbraChronos.UI
 
         private void HandlePlayerDied()
         {
+            if (isGameOver) return;
             isDead = true;
+            if (deathPromptText != null)
+            {
+                deathPromptText.text = "TIME FRACTURED\n\nHOLD [R] TO REWIND TIME";
+            }
         }
 
         private void HandlePlayerRespawned()
         {
             isDead = false;
+            isGameOver = false;
+            if (deathOverlayGroup != null)
+            {
+                deathOverlayGroup.alpha = 0f;
+            }
+        }
+
+        private void HandleLivesChanged(int remaining, int max)
+        {
+            if (remaining < max && remaining > 0)
+            {
+                ShowLevelTitle("TIME FRACTURE", $"{remaining} OF {max} TEMPORAL ANCHORS REMAINING", 3.0f);
+            }
+        }
+
+        private void HandleGameOver()
+        {
+            isGameOver = true;
+            isDead = true;
+            if (deathOverlayGroup != null)
+            {
+                deathOverlayGroup.alpha = 1.0f;
+                deathOverlayGroup.blocksRaycasts = true;
+            }
+            if (deathPromptText != null)
+            {
+                deathPromptText.text = "<size=120%><color=#EF4444>TIMELINE COLLAPSED</color></size>\n\n<size=75%><color=#F87171>All temporal anchors severed.</color>\n\n<color=#38BDF8>[ R ]  RETRY ERA</color>          <color=#94A3B8>[ ESC ]  TITLE SCREEN</color></size>";
+            }
+        }
+
+        private void HandleLevelCompleted(string chamber)
+        {
+            ShowLevelTitle("SANCTUARY REACHED", $"{chamber} · Celestial Harmony Restored", 4.0f);
         }
 
         private void HandleRoomChanged(Vector2Int roomIndex)

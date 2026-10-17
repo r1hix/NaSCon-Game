@@ -198,7 +198,7 @@ namespace UmbraChronos.Editor
             CreateGlowLichen(lichenA, new Vector3(81.0f, -1.65f, 0f), new Vector3(1.3f, 1.0f, 1f), new Color(0.38f, 0.65f, 0.98f, 1f), 0.55f, 3.2f);
             CreateGlowLichen(lichenB, new Vector3(85.5f, 0.0f, 0f), new Vector3(1.0f, 1.3f, 1f), new Color(0.38f, 0.65f, 0.98f, 1f), 0.55f, 3.2f);
 
-            CreateSanctuaryArch(squareSprite, new Vector3(83.5f, -0.4f, 0f));
+            CreateSanctuaryArch(squareSprite, new Vector3(83.5f, -0.4f, 0f), "The Grand Sanctuary", "MainMenu");
             CreatePlatform("W4_Eclipse_Abyss", new Vector3(72.0f, -7.5f, 0f), new Vector3(28f, 2f, 1f), squareSprite);
 
             // 5. Setup Player, Rewind, Audio, HUD
@@ -238,6 +238,10 @@ namespace UmbraChronos.Editor
             buildScenes.Add(new EditorBuildSettingsScene($"{LevelsFolder}/Level_01.unity", true));
             buildScenes.Add(new EditorBuildSettingsScene($"{LevelsFolder}/Level_02.unity", true));
             buildScenes.Add(new EditorBuildSettingsScene($"{LevelsFolder}/Level_03.unity", true));
+            string tutPath = $"{LevelsFolder}/Level_Tutorial.unity";
+            if (File.Exists(tutPath)) buildScenes.Add(new EditorBuildSettingsScene(tutPath, true));
+            string shafPath = "Assets/_Project/Scenes/Sandboxes/Sandbox_Shaf.unity";
+            if (File.Exists(shafPath)) buildScenes.Add(new EditorBuildSettingsScene(shafPath, true));
             EditorBuildSettings.scenes = buildScenes.ToArray();
 
             AssetDatabase.SaveAssets();
@@ -354,7 +358,7 @@ namespace UmbraChronos.Editor
             CreatePlatform("Boundary_Wall_Right", new Vector3(32.5f, 2.5f, 0f), new Vector3(1.5f, 9.0f, 1f), sprite);
 
             // Radiant Sanctuary Arch
-            CreateSanctuaryArch(sprite, new Vector3(28.0f, -0.4f, 0f));
+            CreateSanctuaryArch(sprite, new Vector3(28.0f, -0.4f, 0f), "Dawn of the Sundial", "Level_02");
 
             // Continuous Chasm Receptor Floor (x = -15 to 35 at y = -7.0)
             CreatePlatform("Chasm_Floor", new Vector3(10.0f, -7.0f, 0f), new Vector3(52f, 2f, 1f), sprite);
@@ -494,7 +498,7 @@ namespace UmbraChronos.Editor
             CreatePlatform("Wall_Right", new Vector3(33.5f, 2.0f, 0f), new Vector3(1.5f, 8f, 1f), sprite);
 
             // Radiant Sanctuary Arch
-            CreateSanctuaryArch(sprite, new Vector3(30.5f, -0.4f, 0f));
+            CreateSanctuaryArch(sprite, new Vector3(30.5f, -0.4f, 0f), "Echo of the Vault", "Level_03");
 
             // Bioluminescent Glow Lichens (Electric Cyan-Azure #22D3EE / #38BDF8)
             Color vaultCyan = new Color(0.25f, 0.80f, 0.98f, 1f);
@@ -546,8 +550,8 @@ namespace UmbraChronos.Editor
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-            // 1. Camera with ScreenShift room-paging
-            SetupLevelCamera(new Vector3(0f, 1.5f, -10f), 7.5f, new Color(0.02f, 0.015f, 0.045f), new Vector2(24f, 15f), new Vector2(0f, 1.5f));
+            // 1. Camera framed on entire climax chamber (30u wide bounds prevent screen pops)
+            SetupLevelCamera(new Vector3(0f, 1.0f, -10f), 7.5f, new Color(0.02f, 0.015f, 0.045f), new Vector2(30f, 15f), new Vector2(0f, 1.0f));
 
             // 2. Multi-Layered Cosmic Eclipse Backdrop
             SetupAtmosphere(
@@ -556,44 +560,51 @@ namespace UmbraChronos.Editor
                 pillarSprite,
                 archSprite,
                 mistSprite,
-                -34f, 36f,
+                -18f, 18f,
                 new Color(0.85f, 0.55f, 0.98f, 1.0f),  // Cosmic Royal Violet Tint
                 new Color(0.08f, 0.05f, 0.15f, 0.90f),  // Shattered Ruin Silhouette Color
                 new Color(0.28f, 0.20f, 0.38f, 1.0f),  // Celestial Violet Ambiance
                 0.45f,
                 new Color(0.88f, 0.70f, 0.98f, 0.80f),  // Swirling Cosmic Violet Mist
-                new float[] { -26f, -18f, -10f, 0f, 10f, 18f, 26f }, // Spires
-                new float[] { -14f, 0f, 14f },                         // Arches
-                new float[] { -14.0f, 0.0f, 14.0f }                   // Mist Centers
+                new float[] { -14f, -9f, -4f, 0f, 4f, 9f, 14f }, // Spires
+                new float[] { -8f, 0f, 8f },                     // Arches
+                new float[] { -5.0f, 5.0f }                      // Mist Centers
             );
 
-            // 3. SunDial & Radiation Stack
+            // 3. SunDial & Radiation Stack (Centered on Monolith, No camera-follow jitter)
             GameObject sunInst = SetupSunDial(sprite, new Vector2(0f, 0f), 15f, 90f);
+            var dialComp = sunInst.GetComponent<SunDialController>();
+            if (dialComp != null)
+            {
+                SerializedObject soDial = new SerializedObject(dialComp);
+                soDial.FindProperty("followCameraX").boolValue = false;
+                soDial.ApplyModifiedProperties();
+            }
             SetupPostProcessingAndLight(sunInst);
 
             // 4. Ground Geometry & Dual-Switch Climax Setup
-            // Western Altar (surface at y = -1.75)
-            GameObject westAltar = CreatePlatform("Western_Altar_Floor", new Vector3(-24.0f, -2.5f, 0f), new Vector3(8.0f, 1.5f, 1f), sprite);
+            // Western Altar (surface at y = -1.75, spans x = -10.5 to -5.5)
+            GameObject westAltar = CreatePlatform("Western_Altar_Floor", new Vector3(-8.0f, -2.5f, 0f), new Vector3(5.0f, 1.5f, 1f), sprite);
             AddSunlitSheen(westAltar, sunInst.transform);
 
-            CreatePlatform("Western_Boundary_Wall", new Vector3(-28.5f, 2.0f, 0f), new Vector3(1.5f, 8f, 1f), sprite);
-            GameObject westShelter = CreatePlatform("Western_Shelter", new Vector3(-24.0f, 1.5f, 0f), new Vector3(6.0f, 0.5f, 1f), sprite);
+            CreatePlatform("Western_Boundary_Wall", new Vector3(-11.0f, 2.0f, 0f), new Vector3(1.5f, 8f, 1f), sprite);
+            GameObject westShelter = CreatePlatform("Western_Shelter", new Vector3(-8.0f, 1.5f, 0f), new Vector3(5.0f, 0.5f, 1f), sprite);
             AddInteriorBackdrop(westShelter, -1.75f, 0.5f);
 
-            // Central Hub (surface at y = -1.75)
-            CreatePlatform("Center_Hub", new Vector3(0f, -2.5f, 0f), new Vector3(8.0f, 1.5f, 1f), sprite);
-            GameObject centerRoof = CreatePlatform("Center_Shelter_Roof", new Vector3(0f, 2.8f, 0f), new Vector3(8.0f, 0.5f, 1f), sprite);
+            // Central Hub (surface at y = -1.75, spans x = -2.5 to +2.5)
+            CreatePlatform("Center_Hub", new Vector3(0f, -2.5f, 0f), new Vector3(5.0f, 1.5f, 1f), sprite);
+            GameObject centerRoof = CreatePlatform("Center_Shelter_Roof", new Vector3(0f, 2.8f, 0f), new Vector3(5.0f, 0.5f, 1f), sprite);
             AddInteriorBackdrop(centerRoof, -1.75f, 0.5f);
 
             // Central Monolith (casts dynamic bridges left to Western Altar and right to Eastern Citadel)
             CreateMonolithObject(sprite, new Vector3(0f, 0.5f, 0f), new Vector2(1.8f, 4.5f), -1.75f, sunInst.transform, 2.2f);
 
-            // Eastern Citadel (surface at y = -1.75)
-            GameObject eastCitadel = CreatePlatform("Eastern_Citadel_Floor", new Vector3(24.0f, -2.5f, 0f), new Vector3(10.0f, 1.5f, 1f), sprite);
+            // Eastern Citadel (surface at y = -1.75, spans x = +5.0 to +11.0)
+            GameObject eastCitadel = CreatePlatform("Eastern_Citadel_Floor", new Vector3(8.0f, -2.5f, 0f), new Vector3(6.0f, 1.5f, 1f), sprite);
             AddSunlitSheen(eastCitadel, sunInst.transform);
 
-            CreatePlatform("Eastern_Boundary_Wall", new Vector3(29.5f, 2.0f, 0f), new Vector3(1.5f, 8f, 1f), sprite);
-            GameObject eastShelter = CreatePlatform("Eastern_Shelter", new Vector3(24.0f, 1.5f, 0f), new Vector3(6.0f, 0.5f, 1f), sprite);
+            CreatePlatform("Eastern_Boundary_Wall", new Vector3(11.5f, 2.0f, 0f), new Vector3(1.5f, 8f, 1f), sprite);
+            GameObject eastShelter = CreatePlatform("Eastern_Shelter", new Vector3(8.0f, 1.5f, 0f), new Vector3(5.0f, 0.5f, 1f), sprite);
             AddInteriorBackdrop(eastShelter, -1.75f, 0.5f);
 
             GameObject gatePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabInteractFolder}/TimedGate.prefab");
@@ -602,12 +613,12 @@ namespace UmbraChronos.Editor
             // TimedGate sealing the Sanctuary
             GameObject gateInst = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
             gateInst.name = "TimedGate_Eclipse";
-            gateInst.transform.position = new Vector3(22.0f, -0.25f, 0f);
+            gateInst.transform.position = new Vector3(6.5f, -0.25f, 0f);
 
             // PressurePlate 1 on Western Altar
             GameObject plate1 = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
             plate1.name = "PressurePlate_Western_Altar";
-            plate1.transform.position = new Vector3(-24.0f, -1.60f, 0f);
+            plate1.transform.position = new Vector3(-8.0f, -1.60f, 0f);
 
             var plateComp1 = plate1.GetComponent<PressurePlate>();
             if (plateComp1 != null)
@@ -618,32 +629,32 @@ namespace UmbraChronos.Editor
             }
 
             // Radiant Sanctuary Arch
-            CreateSanctuaryArch(sprite, new Vector3(26.5f, -0.4f, 0f));
+            CreateSanctuaryArch(sprite, new Vector3(9.5f, -0.4f, 0f), "The Eclipse Paradox", "MainMenu");
 
             // Bottomless Eclipse Abyss Receptor Floor (surface at y = -7.5)
-            CreatePlatform("Eclipse_Abyss", new Vector3(0f, -7.5f, 0f), new Vector3(74f, 2f, 1f), sprite);
+            CreatePlatform("Eclipse_Abyss", new Vector3(0f, -7.5f, 0f), new Vector3(32f, 2f, 1f), sprite);
 
             // Bioluminescent Glow Lichens (Twilight Cyan & Cosmic Violet)
             Color twilightCyan = new Color(0.35f, 0.65f, 0.98f, 1f);
             Color cosmicViolet = new Color(0.55f, 0.50f, 0.98f, 1f);
 
-            // Western Altar
-            CreateGlowLichen(lichenC, new Vector3(-25.5f, 1.2f, 0f), new Vector3(1.2f, 1.2f, 1f), cosmicViolet, 0.55f, 3.2f);
-            CreateGlowLichen(lichenA, new Vector3(-24.0f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), twilightCyan, 0.50f, 3.0f);
-            CreateGlowLichen(lichenB, new Vector3(-21.0f, -1.65f, 0f), new Vector3(1.1f, 1.2f, 1f), twilightCyan, 0.55f, 3.2f);
+            // Western Altar Lichens
+            CreateGlowLichen(lichenC, new Vector3(-9.5f, 1.2f, 0f), new Vector3(1.2f, 1.2f, 1f), cosmicViolet, 0.55f, 3.2f);
+            CreateGlowLichen(lichenA, new Vector3(-8.0f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), twilightCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenB, new Vector3(-6.2f, -1.65f, 0f), new Vector3(1.1f, 1.2f, 1f), twilightCyan, 0.55f, 3.2f);
 
-            // Central Hub
-            CreateGlowLichen(lichenC, new Vector3(-2.8f, 2.5f, 0f), new Vector3(1.3f, 1.3f, 1f), cosmicViolet, 0.60f, 3.5f);
-            CreateGlowLichen(lichenC, new Vector3(2.8f, 2.5f, 0f), new Vector3(1.3f, 1.3f, 1f), cosmicViolet, 0.60f, 3.5f);
-            CreateGlowLichen(lichenA, new Vector3(-3.2f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), twilightCyan, 0.50f, 3.0f);
-            CreateGlowLichen(lichenA, new Vector3(3.2f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), twilightCyan, 0.50f, 3.0f);
+            // Central Hub Lichens
+            CreateGlowLichen(lichenC, new Vector3(-2.2f, 2.5f, 0f), new Vector3(1.3f, 1.3f, 1f), cosmicViolet, 0.60f, 3.5f);
+            CreateGlowLichen(lichenC, new Vector3(2.2f, 2.5f, 0f), new Vector3(1.3f, 1.3f, 1f), cosmicViolet, 0.60f, 3.5f);
+            CreateGlowLichen(lichenA, new Vector3(-2.0f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), twilightCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenA, new Vector3(2.0f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), twilightCyan, 0.50f, 3.0f);
             CreateGlowLichen(lichenB, new Vector3(0.0f, 2.2f, 0f), new Vector3(1.0f, 1.2f, 1f), twilightCyan, 0.55f, 3.2f);
 
-            // Eastern Citadel & Sanctuary
-            CreateGlowLichen(lichenA, new Vector3(20.0f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), twilightCyan, 0.50f, 3.0f);
-            CreateGlowLichen(lichenC, new Vector3(24.0f, 1.2f, 0f), new Vector3(1.2f, 1.2f, 1f), cosmicViolet, 0.55f, 3.2f);
-            CreateGlowLichen(lichenA, new Vector3(26.5f, -1.65f, 0f), new Vector3(1.3f, 1.0f, 1f), twilightCyan, 0.55f, 3.2f);
-            CreateGlowLichen(lichenB, new Vector3(28.5f, 0.2f, 0f), new Vector3(1.0f, 1.2f, 1f), cosmicViolet, 0.55f, 3.2f);
+            // Eastern Citadel & Sanctuary Lichens
+            CreateGlowLichen(lichenA, new Vector3(5.5f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), twilightCyan, 0.50f, 3.0f);
+            CreateGlowLichen(lichenC, new Vector3(8.0f, 1.2f, 0f), new Vector3(1.2f, 1.2f, 1f), cosmicViolet, 0.55f, 3.2f);
+            CreateGlowLichen(lichenA, new Vector3(9.5f, -1.65f, 0f), new Vector3(1.3f, 1.0f, 1f), twilightCyan, 0.55f, 3.2f);
+            CreateGlowLichen(lichenB, new Vector3(10.5f, 0.2f, 0f), new Vector3(1.0f, 1.2f, 1f), cosmicViolet, 0.55f, 3.2f);
 
             // 5. Setup Player at Central Hub
             SetupPlayer(new Vector3(0f, -1.0f, 0f));
@@ -902,7 +913,7 @@ namespace UmbraChronos.Editor
             return monolith;
         }
 
-        public static void CreateSanctuaryArch(Sprite sprite, Vector3 pos)
+        public static void CreateSanctuaryArch(Sprite sprite, Vector3 pos, string chamberName = "Sanctuary Reached", string nextScene = "")
         {
             GameObject arch = new GameObject("Sanctuary_Arch");
             arch.transform.position = pos;
@@ -916,6 +927,18 @@ namespace UmbraChronos.Editor
             var trigger = arch.AddComponent<BoxCollider2D>();
             trigger.size = Vector2.one;
             trigger.isTrigger = true;
+
+            var goal = arch.AddComponent<LevelGoal>();
+            if (!string.IsNullOrEmpty(chamberName))
+            {
+                SerializedObject so = new SerializedObject(goal);
+                so.FindProperty("chamberName").stringValue = chamberName;
+                if (!string.IsNullOrEmpty(nextScene))
+                {
+                    so.FindProperty("nextSceneName").stringValue = nextScene;
+                }
+                so.ApplyModifiedProperties();
+            }
         }
 
         public static GameObject CreateGlowLichen(Sprite sprite, Vector3 pos, Vector3 scale, Color glowColor, float intensity = 0.55f, float radius = 3.2f)

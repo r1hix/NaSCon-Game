@@ -530,6 +530,12 @@ namespace UmbraChronos.Editor
             var trigger = arch.AddComponent<BoxCollider2D>();
             trigger.size = Vector2.one;
             trigger.isTrigger = true;
+
+            var goal = arch.AddComponent<LevelGoal>();
+            SerializedObject so = new SerializedObject(goal);
+            so.FindProperty("chamberName").stringValue = "Tutorial Completed";
+            so.FindProperty("nextSceneName").stringValue = "Level_01";
+            so.ApplyModifiedProperties();
         }
 
         private static GameObject CreateGlowLichen(Sprite sprite, Vector3 pos, Vector3 scale, Color glowColor, float intensity = 0.55f, float radius = 3.2f)

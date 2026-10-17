@@ -167,6 +167,7 @@ namespace UmbraChronos.Editor
             layout.childForceExpandHeight = false;
 
             Button playButton = CreateMenuButton(menuColumn.transform, "PLAY", caretSprite, hoverClip, selectClip);
+            Button levelSelectButton = CreateMenuButton(menuColumn.transform, "SELECT LEVEL [P]", caretSprite, hoverClip, selectClip);
             Button settingsButton = CreateMenuButton(menuColumn.transform, "SETTINGS", caretSprite, hoverClip, selectClip);
             Button creditsButton = CreateMenuButton(menuColumn.transform, "CREDITS", caretSprite, hoverClip, selectClip);
             Button quitButton = CreateMenuButton(menuColumn.transform, "QUIT", caretSprite, hoverClip, selectClip);
@@ -175,7 +176,7 @@ namespace UmbraChronos.Editor
             footer.rectTransform.anchorMin = footer.rectTransform.anchorMax = new Vector2(0.5f, 0.06f);
             footer.rectTransform.sizeDelta = new Vector2(1400f, 40f);
 
-            TextMeshProUGUI hint = CreateText(mainPanel.transform, "Hint_Text", "Vibe Coding Game Dev  ·  Unity 6  ·  URP 2D", 16, TextAlignmentOptions.Right, new Color(0.55f, 0.60f, 0.70f, 0.55f));
+            TextMeshProUGUI hint = CreateText(mainPanel.transform, "Hint_Text", "Press [P] for Level Select  ·  Unity 6  ·  URP 2D", 16, TextAlignmentOptions.Right, new Color(0.55f, 0.60f, 0.70f, 0.75f));
             hint.rectTransform.anchorMin = hint.rectTransform.anchorMax = new Vector2(1f, 0f);
             hint.rectTransform.pivot = new Vector2(1f, 0f);
             hint.rectTransform.anchoredPosition = new Vector2(-40f, 30f);
@@ -241,7 +242,7 @@ namespace UmbraChronos.Editor
             WireController(menu, mainGroup, mainPanel.GetComponent<RectTransform>(),
                 settingsGroup, settingsPanel.GetComponent<RectTransform>(),
                 creditsGroup, creditsPanel.GetComponent<RectTransform>(),
-                playButton, settingsButton, creditsButton, quitButton,
+                playButton, levelSelectButton, settingsButton, creditsButton, quitButton,
                 volumeSlider, fullscreenToggle, settingsBack, creditsBack, fadeGroup,
                 menuAudio, titleBgm, backClip);
 
@@ -505,7 +506,7 @@ namespace UmbraChronos.Editor
             CanvasGroup mainGroup, RectTransform mainRect,
             CanvasGroup settingsGroup, RectTransform settingsRect,
             CanvasGroup creditsGroup, RectTransform creditsRect,
-            Button play, Button settings, Button credits, Button quit,
+            Button play, Button levelSelect, Button settings, Button credits, Button quit,
             Slider volume, Toggle fullscreen, Button settingsBack, Button creditsBack,
             CanvasGroup fade,
             AudioSource menuAudio = null, AudioClip titleBgm = null, AudioClip backSound = null)
@@ -522,6 +523,7 @@ namespace UmbraChronos.Editor
             so.FindProperty("settingsPanel").objectReferenceValue = settingsRect;
             so.FindProperty("creditsPanel").objectReferenceValue = creditsRect;
             so.FindProperty("playButton").objectReferenceValue = play;
+            so.FindProperty("levelSelectButton").objectReferenceValue = levelSelect;
             so.FindProperty("settingsButton").objectReferenceValue = settings;
             so.FindProperty("creditsButton").objectReferenceValue = credits;
             so.FindProperty("quitButton").objectReferenceValue = quit;
@@ -589,7 +591,9 @@ namespace UmbraChronos.Editor
                 $"{LevelsFolder}/Level_Master.unity",
                 $"{LevelsFolder}/Level_01.unity",
                 $"{LevelsFolder}/Level_02.unity",
-                $"{LevelsFolder}/Level_03.unity"
+                $"{LevelsFolder}/Level_03.unity",
+                $"{LevelsFolder}/Level_Tutorial.unity",
+                "Assets/_Project/Scenes/Sandboxes/Sandbox_Shaf.unity"
             };
 
             foreach (string path in gameplayScenes)
