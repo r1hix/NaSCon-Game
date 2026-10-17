@@ -94,10 +94,12 @@ namespace UmbraChronos.Player
             shape.shapeType = ParticleSystemShapeType.Box;
             shape.scale = new Vector3(0.6f, 1.4f, 0.1f);
 
-            // Velocity over lifetime (upward rising heat)
+            // Velocity over lifetime (upward rising heat with gentle drift)
             var vel = sizzleParticles.velocityOverLifetime;
             vel.enabled = true;
+            vel.x = new ParticleSystem.MinMaxCurve(-0.25f, 0.25f);
             vel.y = new ParticleSystem.MinMaxCurve(1.5f, 3.5f);
+            vel.z = new ParticleSystem.MinMaxCurve(0f, 0f);
 
             // Color Over Lifetime: White-hot gold -> Amber -> Fade
             var col = sizzleParticles.colorOverLifetime;

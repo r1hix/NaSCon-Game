@@ -6,8 +6,9 @@ namespace UmbraChronos.Environment
 {
     /// <summary>
     /// Projects atmospheric volumetric godrays and floating celestial dust motes
-    /// from the celestial sun source. Aligns seamlessly with the sun orbit angle
-    /// and replaces harsh laser lines with radiant, glowing atmospheric light.
+    /// from the celestial sun source. Aligns seamlessly with the sun orbit angle,
+    /// dynamically raycasts to terminate on roofs/monoliths, and leaves covered areas
+    /// shaded while casting radiant light shafts across open sky/chasms.
     /// </summary>
     public class GodraySystem : MonoBehaviour
     {
@@ -20,19 +21,23 @@ namespace UmbraChronos.Environment
         [SerializeField] private Sprite godraySprite;
 
         [Tooltip("Number of light shafts radiating across the chamber.")]
-        [SerializeField] [Range(2, 8)] private int beamCount = 5;
+        [SerializeField] [Range(3, 8)] private int beamCount = 6;
 
-        [Tooltip("Length of the light shafts in world units.")]
-        [SerializeField] private float beamLength = 26f;
+        [Tooltip("Maximum reach of light shafts across open voids.")]
+        [SerializeField] private float maxBeamLength = 28f;
 
         [Tooltip("Base width of each light shaft.")]
-        [SerializeField] private float beamWidth = 3.6f;
+        [SerializeField] private float beamWidth = 1.4f;
 
-        [Tooltip("Angular fan (degrees) across all beams.")]
-        [SerializeField] private float totalSpreadAngle = 28f;
+        [Tooltip("Angular spread across the beam fan.")]
+        [SerializeField] private float totalSpreadAngle = 38f;
 
         [Tooltip("Base color and opacity of the celestial light shafts.")]
-        [SerializeField] private Color beamColor = new Color(1f, 0.96f, 0.78f, 0.18f);
+        [SerializeField] private Color beamColor = new Color(1f, 0.94f, 0.72f, 0.18f);
+
+        [Header("Occlusion & Shadow Blocking")]
+        [Tooltip("Layers that block light beams (roofs, monoliths, ground).")]
+        [SerializeField] private LayerMask shadowBlockerMask = ~0;
 
         [Header("Atmospheric Solar Dust (Particle System)")]
         [Tooltip("Enable floating solar dust motes drifting along sunbeam angles.")]
@@ -49,11 +54,14 @@ namespace UmbraChronos.Environment
         private float[] beamSpeeds;
         private float[] beamPhases;
         private float[] beamWidthOffsets;
+        private float[] currentBeamLengths;
         private float currentSunAngle = 50f;
         private float targetRotationZ = 0f;
 
         // Particle System
         private ParticleSystem solarDustParticles;
+
+        private const float BaseSpriteHeightUnits = 16f; // 1024px / 64 PPU = 16 units
 
         private void Awake()
         {
@@ -108,7 +116,6 @@ namespace UmbraChronos.Environment
 
         private void CreateBeamHierarchy()
         {
-            // Root Pivot following sun position
             GameObject pivotObj = new GameObject("Godray_Pivot");
             pivotObj.transform.SetParent(this.transform);
             beamPivot = pivotObj.transform;
@@ -121,6 +128,7 @@ namespace UmbraChronos.Environment
             beamSpeeds = new float[beamCount];
             beamPhases = new float[beamCount];
             beamWidthOffsets = new float[beamCount];
+            currentBeamLengths = new float[beamCount];
 
             float stepAngle = beamCount > 1 ? totalSpreadAngle / (beamCount - 1) : 0f;
             float startAngle = -totalSpreadAngle * 0.5f;
@@ -138,19 +146,16 @@ namespace UmbraChronos.Environment
                 if (beamMat != null) sr.material = beamMat;
                 sr.color = beamColor;
                 sr.sortingLayerName = "Default";
-                sr.sortingOrder = 3; // Behind player, in front of background ruins
+                sr.sortingOrder = -5; // Behind platforms (0) and player (10), in front of sky canvas (-20)
 
-                // Scale: X = width, Y = length
                 float widthVariance = 0.85f + (Mathf.Sin(i * 1.7f) * 0.25f);
-                beamObj.transform.localScale = new Vector3(beamWidth * widthVariance, beamLength, 1f);
+                beamObj.transform.localScale = new Vector3(beamWidth * widthVariance, maxBeamLength / BaseSpriteHeightUnits, 1f);
 
-                // Pivot is at top center (x: 0.5, y: 1.0) so scaling Y stretches downwards
                 beamRenderers.Add(sr);
-
-                // Breathing variance
-                beamSpeeds[i] = 1.1f + (i * 0.35f);
+                beamSpeeds[i] = 0.9f + (i * 0.35f);
                 beamPhases[i] = i * 1.25f;
                 beamWidthOffsets[i] = widthVariance;
+                currentBeamLengths[i] = maxBeamLength;
             }
 
             UpdateSunAngle(currentSunAngle, true);
@@ -160,7 +165,7 @@ namespace UmbraChronos.Environment
         {
             GameObject psObj = new GameObject("Solar_Dust_Particle_System");
             psObj.transform.SetParent(beamPivot, false);
-            psObj.transform.localPosition = new Vector3(0f, -beamLength * 0.35f, 0f);
+            psObj.transform.localPosition = new Vector3(0f, -4f, 0f);
 
             solarDustParticles = psObj.AddComponent<ParticleSystem>();
             ParticleSystemRenderer psRenderer = psObj.GetComponent<ParticleSystemRenderer>();
@@ -173,7 +178,7 @@ namespace UmbraChronos.Environment
                 if (moteSprite != null) psMat.mainTexture = moteSprite.texture;
                 psRenderer.material = psMat;
             }
-            psRenderer.sortingOrder = 4;
+            psRenderer.sortingOrder = -4; // In front of godrays (-5), behind platforms (0)
 
             // Main Module
             var main = solarDustParticles.main;
@@ -181,22 +186,22 @@ namespace UmbraChronos.Environment
             main.loop = true;
             main.startLifetime = new ParticleSystem.MinMaxCurve(3.5f, 6.5f);
             main.startSpeed = new ParticleSystem.MinMaxCurve(0.8f, 2.2f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.24f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.22f);
             main.startColor = particleColor;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.maxParticles = 60;
+            main.maxParticles = 50;
             main.playOnAwake = true;
 
             // Emission Module
             var emission = solarDustParticles.emission;
-            emission.rateOverTime = 10f;
+            emission.rateOverTime = 8f;
 
-            // Shape Module: Box spanning the upper light zone
+            // Shape Module: Box across upper light zone
             var shape = solarDustParticles.shape;
             shape.shapeType = ParticleSystemShapeType.Box;
-            shape.scale = new Vector3(beamWidth * beamCount * 0.7f, 3f, 1f);
+            shape.scale = new Vector3(beamWidth * beamCount * 0.9f, 2f, 1f);
 
-            // Color Over Lifetime (Smooth Fade In & Out)
+            // Color Over Lifetime
             var col = solarDustParticles.colorOverLifetime;
             col.enabled = true;
             Gradient grad = new Gradient();
@@ -206,10 +211,18 @@ namespace UmbraChronos.Environment
             );
             col.color = grad;
 
+            // 2D Collision Module (stops motes from penetrating roofs into covered rooms!)
+            var collision = solarDustParticles.collision;
+            collision.enabled = true;
+            collision.type = ParticleSystemCollisionType.World;
+            collision.mode = ParticleSystemCollisionMode.Collision2D;
+            collision.lifetimeLoss = 1f; // Dies on contact with roofs/monoliths
+            collision.collidesWith = shadowBlockerMask;
+
             // Noise / Gentle Wobble
             var noise = solarDustParticles.noise;
             noise.enabled = true;
-            noise.strength = 0.35f;
+            noise.strength = 0.25f;
             noise.frequency = 0.4f;
 
             solarDustParticles.Play();
@@ -230,15 +243,44 @@ namespace UmbraChronos.Environment
                 beamPivot.rotation = Quaternion.Euler(0f, 0f, newZ);
             }
 
-            // Subtle luminous breathing of light shafts
+            // Dynamic Occlusion Raycasts + Subtle Shimmering
+            Vector2 sunPos = beamPivot != null ? (Vector2)beamPivot.position : Vector2.zero;
             float time = UnityEngine.Time.time;
+
             for (int i = 0; i < beamRenderers.Count; i++)
             {
                 SpriteRenderer sr = beamRenderers[i];
                 if (sr == null) continue;
 
+                Transform beamT = sr.transform;
+                // Beam points down along -beamT.up
+                Vector2 beamDir = -beamT.up;
+
+                // Raycast to check for roofs, monoliths, or platforms (filtering out triggers)
+                RaycastHit2D[] hits = Physics2D.RaycastAll(sunPos, beamDir, maxBeamLength, shadowBlockerMask);
+                float targetLength = maxBeamLength;
+
+                for (int h = 0; h < hits.Length; h++)
+                {
+                    var col = hits[h].collider;
+                    if (col == null || col.isTrigger) continue;
+                    if (col.CompareTag("Player")) continue;
+                    if (col.transform.IsChildOf(transform)) continue;
+
+                    targetLength = hits[h].distance;
+                    break;
+                }
+
+                // Smooth length adjustment to prevent snapping
+                currentBeamLengths[i] = Mathf.MoveTowards(currentBeamLengths[i], targetLength, 45f * UnityEngine.Time.deltaTime);
+
+                // Update scale: X = width, Y = length (divided by sprite base height)
+                float scaleY = Mathf.Max(0.1f, currentBeamLengths[i] / BaseSpriteHeightUnits);
+                beamT.localScale = new Vector3(beamWidth * beamWidthOffsets[i], scaleY, 1f);
+
+                // Subtle luminous shimmer
                 float pulse = Mathf.Sin((time * beamSpeeds[i]) + beamPhases[i]);
-                float alphaMult = 1f + (pulse * 0.22f);
+                float alphaMult = 1f + (pulse * 0.2f);
 
                 Color c = beamColor;
                 c.a = Mathf.Clamp01(beamColor.a * alphaMult);
@@ -254,11 +296,10 @@ namespace UmbraChronos.Environment
         private void UpdateSunAngle(float angle, bool snap)
         {
             currentSunAngle = angle;
-            // Angle theta: 90 deg = overhead (sun at top, light points straight down -90 deg / 270 deg)
-            // 20 deg = dawn (left, light points down-right)
-            // 160 deg = dusk (right, light points down-left)
-            // Light rays project opposite from the sun position relative to center
-            targetRotationZ = angle - 90f;
+            // Angle theta: 90 deg = overhead (sun at top, light points straight down, Z = 0)
+            // 20 deg = dawn (sun at top-left, light points down-right, Z = +70 deg)
+            // 160 deg = dusk (sun at top-right, light points down-left, Z = -70 deg)
+            targetRotationZ = 90f - angle;
 
             if (snap && beamPivot != null)
             {

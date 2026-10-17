@@ -209,18 +209,38 @@ namespace UmbraChronos.Environment
             float groundY = fallbackGroundY;
             float pillarHeight = Mathf.Max(0.5f, yTop - groundY);
 
-            // Celestial Angle Math:
-            // 90 deg = overhead noon (cot = 0, length = 0)
-            // < 90 deg = sun on left (dawn/morning) -> light shines down-right (+X)
-            // > 90 deg = sun on right (dusk) -> light shines down-left (-X)
-            float angleClamped = Mathf.Clamp(currentSunAngle, 15f, 165f);
-            float rad = angleClamped * Mathf.Deg2Rad;
-            float cot = Mathf.Cos(rad) / Mathf.Sin(rad);
+            // Determine sun position and direction relative to this monolith
+            float xCenter = (xMin + xMax) * 0.5f;
+            Vector2 sunPos = sunTransform != null ? (Vector2)sunTransform.position : Vector2.zero;
 
-            float rawLength = pillarHeight * Mathf.Abs(cot) * shadowLengthMultiplier;
-            float shadowLength = Mathf.Min(rawLength, maxShadowDistance);
+            bool sunIsOnLeft;
+            float shadowLength;
 
-            bool isRetracted = shadowLength < 0.25f;
+            if (sunTransform != null)
+            {
+                sunIsOnLeft = sunPos.x < xCenter;
+                Vector2 corner = sunIsOnLeft ? new Vector2(xMax, yTop) : new Vector2(xMin, yTop);
+                Vector2 rayDir = (corner - sunPos).normalized;
+                if (rayDir.y >= -0.01f) rayDir.y = -0.01f;
+
+                float t = (groundY - corner.y) / rayDir.y;
+                float rawTargetX = corner.x + (rayDir.x * t);
+                float rawLen = Mathf.Abs(rawTargetX - corner.x) * shadowLengthMultiplier;
+                shadowLength = Mathf.Clamp(rawLen, 0f, maxShadowDistance);
+            }
+            else
+            {
+                // Fallback to celestial angle math if sun transform is unavailable
+                float angleClamped = Mathf.Clamp(currentSunAngle, 15f, 165f);
+                float rad = angleClamped * Mathf.Deg2Rad;
+                float cot = Mathf.Cos(rad) / Mathf.Sin(rad);
+
+                sunIsOnLeft = angleClamped < 89.9f;
+                float rawLen = pillarHeight * Mathf.Abs(cot) * shadowLengthMultiplier;
+                shadowLength = Mathf.Min(rawLen, maxShadowDistance);
+            }
+
+            bool isRetracted = shadowLength < 0.25f || (sunTransform != null && Mathf.Abs(sunPos.x - xCenter) < 0.25f && sunPos.y > yTop);
 
             float xStart = 0f;
             float xEnd = 0f;
@@ -229,9 +249,9 @@ namespace UmbraChronos.Environment
 
             if (!isRetracted)
             {
-                if (angleClamped < 89.9f)
+                if (sunIsOnLeft)
                 {
-                    // Sun on LEFT -> Shadow casts to the RIGHT (+X)
+                    // Sun is to the LEFT of this pillar -> Shadow projects to the RIGHT (+X)
                     float xBase = xMax;
                     targetX = xBase + shadowLength;
 
@@ -246,9 +266,9 @@ namespace UmbraChronos.Environment
                     xEnd = targetX;
                     umbraCorner = new Vector3(xMax, yTop, 0f);
                 }
-                else if (angleClamped > 90.1f)
+                else
                 {
-                    // Sun on RIGHT -> Shadow casts to the LEFT (-X)
+                    // Sun is to the RIGHT of this pillar -> Shadow projects to the LEFT (-X)
                     float xBase = xMin;
                     targetX = xBase - shadowLength;
 
@@ -262,10 +282,6 @@ namespace UmbraChronos.Environment
                     xStart = targetX;
                     xEnd = xBase;
                     umbraCorner = new Vector3(xMin, yTop, 0f);
-                }
-                else
-                {
-                    isRetracted = true;
                 }
             }
 

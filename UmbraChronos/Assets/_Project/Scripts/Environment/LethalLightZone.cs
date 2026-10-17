@@ -223,17 +223,20 @@ namespace UmbraChronos.Environment
                 float distance = toPlayer.magnitude;
                 Vector2 dir = toPlayer / distance;
 
-                // Raycast from the Sun directly towards this player sample point
-                RaycastHit2D hit = Physics2D.Raycast(sunPos, dir, distance, shadowBlockerMask);
+                // Raycast from the Sun directly towards this player sample point (filtering out triggers)
+                RaycastHit2D[] hits = Physics2D.RaycastAll(sunPos, dir, distance, shadowBlockerMask);
 
                 bool occluded = false;
-                if (hit.collider != null)
+                for (int h = 0; h < hits.Length; h++)
                 {
-                    if (hit.collider != playerCollider && !hit.collider.transform.IsChildOf(playerTransform))
-                    {
-                        occluded = true;
-                        lastRayEndPoints[i] = hit.point;
-                    }
+                    var col = hits[h].collider;
+                    if (col == null || col.isTrigger) continue;
+                    if (col == playerCollider || col.transform.IsChildOf(playerTransform)) continue;
+                    if (col.transform.IsChildOf(sunTransform)) continue;
+
+                    occluded = true;
+                    lastRayEndPoints[i] = hits[h].point;
+                    break;
                 }
 
                 if (!occluded)
@@ -364,9 +367,12 @@ namespace UmbraChronos.Environment
             }
         }
 
-        private void OnDrawGizmos()
+        [Header("Editor Debug")]
+        [SerializeField] private bool showDebugGizmos = false;
+
+        private void OnDrawGizmosSelected()
         {
-            if (sunTransform == null || lastSamplePoints == null) return;
+            if (!showDebugGizmos || sunTransform == null || lastSamplePoints == null) return;
 
             Vector3 sunPos = sunTransform.position;
             for (int i = 0; i < lastSamplePoints.Length; i++)

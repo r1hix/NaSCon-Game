@@ -57,3 +57,4 @@ MonoBehaviour:
   beamSafeColor: {r: 0.9, g: 0.65, b: 0.25, a: 0.22}
   useTriggerBoundsOnly: 0
   currentSunAngle: 50
+  showDebugGizmos: 0
