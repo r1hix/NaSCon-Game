@@ -147,6 +147,7 @@ Every chamber, puzzle, and platform in `Level_Master.unity` MUST adhere strictly
 - **Interactable Elements:** Pressure plates and gate runes must be muted slate (`#1E293B`) when inactive, snapping to brilliant radiant cyan (`#38BDF8`) when energized.
 - **Lethal Radiation Areas:** Blinding solar yellow-white (`#FFF8E7` to `#FFD166`) with high URP Bloom glare.
 - **Umbral Echo Ghost:** Deep midnight indigo (`#1E1B4B`) with a glowing `70%` alpha cyan rim (`#38BDF8`).
+- **Bioluminescent Glow Lichen (Ambient Illumination):** Safe, non-lethal organic moss patches (`GlowLichen.cs`) emitting soft cyan Point Light 2D (`#38BDF8`, intensity $0.50 - 0.65$, radius $3.0 - 3.8\text{ m}$) with subtle sine breathing pulses. Strategically scattered along deep chasm recesses, crypt ceiling arches, and obsidian cave walls to guarantee chamber readability and navigation without relying on celestial sunlight.
 
 ---
 

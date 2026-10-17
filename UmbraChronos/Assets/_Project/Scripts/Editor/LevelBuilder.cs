@@ -35,12 +35,17 @@ namespace UmbraChronos.Editor
         [MenuItem("Umbra Chronos/Build Master Level (Level_Master.unity)")]
         public static void BuildMasterLevel()
         {
+            AssetDatabase.Refresh();
             EnsureLevelsDirectory();
             Sprite squareSprite = GetOrCreateSquareSprite();
             Sprite gradientSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Environment/Bg_Gradient_Hollow.png");
             Sprite pillarSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Environment/Bg_Gothic_Pillar.png");
             Sprite archSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Environment/Bg_Arch_Silhouette.png");
             Sprite mistSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{SpriteFolder}/Environment/Chasm_Mist_Gradient.png");
+            Sprite lichenA = LoadSprite($"{SpriteFolder}/Environment/Glow_Lichen_A.png");
+            Sprite lichenB = LoadSprite($"{SpriteFolder}/Environment/Glow_Lichen_B.png");
+            Sprite lichenC = LoadSprite($"{SpriteFolder}/Environment/Glow_Lichen_C.png");
+            Debug.Log($"[LevelBuilder] Lichen sprites: A={lichenA != null}, B={lichenB != null}, C={lichenC != null}");
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -73,6 +78,11 @@ namespace UmbraChronos.Editor
             // Center Island / Receiving Plateau (x = 4 to 12, surface at y = -1.75)
             CreatePlatform("W1_Plateau_Right", new Vector3(8.0f, -2.5f, 0f), new Vector3(8.0f, 1.5f, 1f), squareSprite);
             CreatePlatform("W1_Threshold_Shelter", new Vector3(8.0f, 1.5f, 0f), new Vector3(6.0f, 0.6f, 1f), squareSprite);
+
+            // Bioluminescent Glow Lichens (Safe ambient lighting)
+            CreateGlowLichen(lichenC, new Vector3(-11.5f, 1.15f, 0f), new Vector3(1.2f, 1.2f, 1f), new Color(0.22f, 0.74f, 0.97f, 1f), 0.55f, 3.2f);
+            CreateGlowLichen(lichenA, new Vector3(-3.5f, -1.65f, 0f), new Vector3(1.3f, 1.0f, 1f), new Color(0.22f, 0.74f, 0.97f, 1f), 0.50f, 3.0f);
+            CreateGlowLichen(lichenA, new Vector3(5.5f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), new Color(0.22f, 0.74f, 0.97f, 1f), 0.50f, 3.0f);
 
             // Deep Chasm Floor (x = -14 to 12 at y = -7.0)
             CreatePlatform("W1_Chasm_Floor", new Vector3(0f, -7.0f, 0f), new Vector3(26f, 2f, 1f), squareSprite);
@@ -111,6 +121,14 @@ namespace UmbraChronos.Editor
             // Vault Floor 2 behind the gate (x = 24 to 36, surface at y = -1.75)
             CreatePlatform("W2_Floor_2", new Vector3(30.0f, -2.5f, 0f), new Vector3(12.0f, 1.5f, 1f), squareSprite);
 
+            // Glow Lichens in Vault (illuminating dark crypt crevices)
+            CreateGlowLichen(lichenB, new Vector3(13.0f, 0.0f, 0f), new Vector3(1.0f, 1.3f, 1f), new Color(0.25f, 0.80f, 0.98f, 1f), 0.60f, 3.5f);
+            CreateGlowLichen(lichenC, new Vector3(18.0f, 4.4f, 0f), new Vector3(1.4f, 1.4f, 1f), new Color(0.25f, 0.80f, 0.98f, 1f), 0.65f, 3.8f);
+            CreateGlowLichen(lichenA, new Vector3(15.0f, -0.65f, 0f), new Vector3(1.2f, 1.0f, 1f), new Color(0.25f, 0.80f, 0.98f, 1f), 0.50f, 3.0f);
+            CreateGlowLichen(lichenC, new Vector3(20.5f, -0.1f, 0f), new Vector3(1.1f, 1.1f, 1f), new Color(0.25f, 0.80f, 0.98f, 1f), 0.55f, 3.2f);
+            CreateGlowLichen(lichenB, new Vector3(27.0f, 1.0f, 0f), new Vector3(1.0f, 1.2f, 1f), new Color(0.25f, 0.80f, 0.98f, 1f), 0.55f, 3.2f);
+            CreateGlowLichen(lichenA, new Vector3(33.0f, -1.65f, 0f), new Vector3(1.3f, 1.0f, 1f), new Color(0.25f, 0.80f, 0.98f, 1f), 0.50f, 3.0f);
+
             // -------------------------------------------------------------
             // WING 3: The Clockwork Spire (Room 2, x = 36 to 60, Center 48)
             // -------------------------------------------------------------
@@ -143,6 +161,12 @@ namespace UmbraChronos.Editor
                 so2.FindProperty("targetGate").objectReferenceValue = gate2.GetComponent<TimedGate>();
                 so2.ApplyModifiedProperties();
             }
+
+            // Glow Lichens in Spire
+            CreateGlowLichen(lichenA, new Vector3(37.5f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), new Color(0.22f, 0.74f, 0.97f, 1f), 0.50f, 3.0f);
+            CreateGlowLichen(lichenB, new Vector3(37.0f, 0.5f, 0f), new Vector3(1.0f, 1.2f, 1f), new Color(0.22f, 0.74f, 0.97f, 1f), 0.55f, 3.2f);
+            CreateGlowLichen(lichenA, new Vector3(42.5f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), new Color(0.22f, 0.74f, 0.97f, 1f), 0.50f, 3.0f);
+            CreateGlowLichen(lichenA, new Vector3(57.5f, 0.40f, 0f), new Vector3(1.2f, 1.0f, 1f), new Color(0.22f, 0.74f, 0.97f, 1f), 0.50f, 3.0f);
 
             // Chasm 3 Floor (under x = 36 to 60 at y = -7.0)
             CreatePlatform("W3_Chasm_Floor", new Vector3(48.0f, -7.0f, 0f), new Vector3(26f, 2f, 1f), squareSprite);
@@ -184,6 +208,13 @@ namespace UmbraChronos.Editor
                 so3.ApplyModifiedProperties();
             }
 
+            // Glow Lichens in Sanctuary (Cosmic twilight cyan)
+            CreateGlowLichen(lichenA, new Vector3(62.5f, -1.65f, 0f), new Vector3(1.2f, 1.0f, 1f), new Color(0.38f, 0.65f, 0.98f, 1f), 0.55f, 3.2f);
+            CreateGlowLichen(lichenC, new Vector3(64.0f, 1.2f, 0f), new Vector3(1.2f, 1.2f, 1f), new Color(0.38f, 0.65f, 0.98f, 1f), 0.55f, 3.2f);
+            CreateGlowLichen(lichenC, new Vector3(72.0f, 2.2f, 0f), new Vector3(1.3f, 1.3f, 1f), new Color(0.38f, 0.65f, 0.98f, 1f), 0.60f, 3.5f);
+            CreateGlowLichen(lichenA, new Vector3(81.0f, -1.65f, 0f), new Vector3(1.3f, 1.0f, 1f), new Color(0.38f, 0.65f, 0.98f, 1f), 0.55f, 3.2f);
+            CreateGlowLichen(lichenB, new Vector3(85.5f, 0.0f, 0f), new Vector3(1.0f, 1.3f, 1f), new Color(0.38f, 0.65f, 0.98f, 1f), 0.55f, 3.2f);
+
             // Sanctuary Arch of Victory at x = 83.5
             CreateSanctuaryArch(squareSprite, new Vector3(83.5f, -0.4f, 0f));
 
@@ -197,15 +228,18 @@ namespace UmbraChronos.Editor
             EditorSceneManager.SaveScene(scene, path);
             Debug.Log($"[LevelBuilder] Saved Contiguous Master Level to {path}");
 
-            // Configure Build Settings so Level_Master.unity is Scene 0
-            EditorBuildSettingsScene[] buildScenes = new EditorBuildSettingsScene[]
+            // Configure Build Settings: MainMenu.unity first if it exists, then Level_Master.unity
+            string menuPath = "Assets/_Project/Scenes/UI/MainMenu.unity";
+            var buildScenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
+            if (File.Exists(menuPath))
             {
-                new EditorBuildSettingsScene(path, true),
-                new EditorBuildSettingsScene($"{LevelsFolder}/Level_01.unity", true),
-                new EditorBuildSettingsScene($"{LevelsFolder}/Level_02.unity", true),
-                new EditorBuildSettingsScene($"{LevelsFolder}/Level_03.unity", true)
-            };
-            EditorBuildSettings.scenes = buildScenes;
+                buildScenes.Add(new EditorBuildSettingsScene(menuPath, true));
+            }
+            buildScenes.Add(new EditorBuildSettingsScene(path, true));
+            buildScenes.Add(new EditorBuildSettingsScene($"{LevelsFolder}/Level_01.unity", true));
+            buildScenes.Add(new EditorBuildSettingsScene($"{LevelsFolder}/Level_02.unity", true));
+            buildScenes.Add(new EditorBuildSettingsScene($"{LevelsFolder}/Level_03.unity", true));
+            EditorBuildSettings.scenes = buildScenes.ToArray();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -673,6 +707,40 @@ namespace UmbraChronos.Editor
             trigger.isTrigger = true;
         }
 
+        private static GameObject CreateGlowLichen(Sprite sprite, Vector3 pos, Vector3 scale, Color glowColor, float intensity = 0.55f, float radius = 3.2f)
+        {
+            GameObject lichen = new GameObject("Glow_Lichen");
+            lichen.transform.position = pos;
+            lichen.transform.localScale = scale;
+
+            var sr = lichen.AddComponent<SpriteRenderer>();
+            sr.sprite = sprite != null ? sprite : GetOrCreateSquareSprite();
+            sr.color = glowColor;
+            sr.sortingOrder = 1;
+
+            GameObject lightChild = new GameObject("Lichen_PointLight");
+            lightChild.transform.SetParent(lichen.transform, false);
+            lightChild.transform.localPosition = Vector3.zero;
+
+            var pointLight = lightChild.AddComponent<Light2D>();
+            pointLight.lightType = Light2D.LightType.Point;
+            pointLight.pointLightInnerRadius = 0.25f;
+            pointLight.pointLightOuterRadius = radius;
+            pointLight.color = glowColor;
+            pointLight.intensity = intensity;
+            pointLight.falloffIntensity = 0.65f;
+
+            var comp = lichen.AddComponent<GlowLichen>();
+            SerializedObject so = new SerializedObject(comp);
+            so.FindProperty("pointLight").objectReferenceValue = pointLight;
+            so.FindProperty("glowColor").colorValue = glowColor;
+            so.FindProperty("baseIntensity").floatValue = intensity;
+            so.FindProperty("lightRadius").floatValue = radius;
+            so.ApplyModifiedProperties();
+
+            return lichen;
+        }
+
         private static void EnsureLevelsDirectory()
         {
             if (!Directory.Exists(LevelsFolder)) Directory.CreateDirectory(LevelsFolder);
@@ -695,6 +763,25 @@ namespace UmbraChronos.Editor
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
 
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
+        private static Sprite LoadSprite(string path)
+        {
+            Sprite s = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (s != null) return s;
+
+            Object[] allAssets = AssetDatabase.LoadAllAssetsAtPath(path);
+            if (allAssets != null)
+            {
+                for (int i = 0; i < allAssets.Length; i++)
+                {
+                    if (allAssets[i] is Sprite spriteObj)
+                    {
+                        return spriteObj;
+                    }
+                }
+            }
+            return null;
         }
     }
 }
