@@ -49,6 +49,7 @@ namespace UmbraChronos.Player
         private bool isRewinding;
         private bool isDead;
         private bool isFacingRight = true;
+        private float lastFallVelocity;
 
         // Public Accessors
         public bool IsGrounded => isGrounded;
@@ -217,6 +218,7 @@ namespace UmbraChronos.Player
             Vector2 checkSize = new Vector2(bounds.size.x * 0.80f, 0.12f);
 
             Collider2D[] hits = Physics2D.OverlapBoxAll(checkCenter, checkSize, 0f, groundLayer);
+            bool previouslyGrounded = isGrounded;
             isGrounded = false;
             for (int i = 0; i < hits.Length; i++)
             {
@@ -225,6 +227,24 @@ namespace UmbraChronos.Player
                     isGrounded = true;
                     break;
                 }
+            }
+
+            if (!isGrounded && rb.linearVelocity.y < -0.5f)
+            {
+                lastFallVelocity = Mathf.Max(lastFallVelocity, Mathf.Abs(rb.linearVelocity.y));
+            }
+
+            if (isGrounded && !previouslyGrounded)
+            {
+                if (lastFallVelocity > 1.5f)
+                {
+                    TimeEvents.OnPlayerLanded?.Invoke(lastFallVelocity);
+                }
+                lastFallVelocity = 0f;
+            }
+            else if (isGrounded)
+            {
+                lastFallVelocity = 0f;
             }
         }
 
@@ -256,6 +276,8 @@ namespace UmbraChronos.Player
                 jumpBufferTimer = 0f;
                 coyoteTimer = 0f;
                 isGrounded = false;
+                lastFallVelocity = 0f;
+                TimeEvents.OnPlayerJumped?.Invoke();
             }
         }
 

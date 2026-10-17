@@ -56,8 +56,12 @@ namespace UmbraChronos.Environment
         /// </summary>
         public void SetOpen(bool open)
         {
-            isOpen = open;
-            targetPos = open ? (closedPos + openOffset) : closedPos;
+            if (isOpen != open)
+            {
+                isOpen = open;
+                targetPos = open ? (closedPos + openOffset) : closedPos;
+                UmbraChronos.Core.TimeEvents.OnGateStateChanged?.Invoke(isOpen);
+            }
         }
     }
 }

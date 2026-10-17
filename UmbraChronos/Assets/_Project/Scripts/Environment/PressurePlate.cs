@@ -1,4 +1,5 @@
 using UnityEngine;
+using UmbraChronos.Core;
 using UmbraChronos.Time;
 
 namespace UmbraChronos.Environment
@@ -112,6 +113,8 @@ namespace UmbraChronos.Environment
 
             isPressed = pressed;
             visualTargetLocalPos = isPressed ? visualDepressedLocalPos : visualRestingLocalPos;
+
+            TimeEvents.OnPressurePlateChanged?.Invoke(isPressed);
 
             if (targetGate != null)
             {
