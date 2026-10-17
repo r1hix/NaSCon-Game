@@ -1,15 +1,17 @@
 using System;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using UmbraChronos.Core;
 
 namespace UmbraChronos.Environment
 {
     /// <summary>
-    /// Projects an EdgeCollider2D along the top surface of a monolith's cast shadow based on sun position.
+    /// Projects an EdgeCollider2D and visible bridge graphics along the top surface of a monolith's cast shadow.
     /// In Umbra Chronos, shadows are solid physical matter:
-    /// - When the sun rotates ([Q] / [E] / mouse scroll), monoliths cast dynamic shadows.
-    /// - This component updates an EdgeCollider2D so the top edge of the cast shadow acts as a solid walkable bridge.
-    /// - Uses thin edge geometry (NOT a solid filled block) to prevent bulldozing physics objects or trapping the player.
+    /// - When the celestial sun rotates ([Q] / [E] / scroll), monoliths cast dynamic shadows.
+    /// - This component renders a visible shadow fill and a luminous cyan walkable rim (#38BDF8),
+    ///   and updates an EdgeCollider2D so the top edge acts as a solid bridge the player can cross.
+    /// - Uses thin EdgeCollider2D geometry (NOT a solid block) so it never traps the player or bulldozes objects.
     /// </summary>
     [RequireComponent(typeof(EdgeCollider2D))]
     [DisallowMultipleComponent]
@@ -29,16 +31,26 @@ namespace UmbraChronos.Environment
         [Tooltip("Maximum length the shadow bridge can extend.")]
         [SerializeField] private float maxShadowDistance = 14f;
 
-        [Header("Bridge Edge Visual (Optional)")]
-        [Tooltip("Optional subtle LineRenderer showing the walkable rim of the shadow.")]
-        [SerializeField] private bool showBridgeLine = false;
+        [Header("Visual Styling ('Ink & Solar Flare')")]
+        [Tooltip("Render a luminous cyan rim along the walkable top edge of the shadow.")]
+        [SerializeField] private bool renderWalkableRim = true;
 
-        [SerializeField] private Color bridgeLineColor = new Color(0.22f, 0.74f, 0.97f, 0.7f); // Subtle cyan rim #38BDF8
+        [SerializeField] private Color rimColor = new Color(0.22f, 0.74f, 0.97f, 0.85f); // Radiant Cyan #38BDF8
 
-        // Cached components
+        [SerializeField] private float rimWidth = 0.08f;
+
+        [Tooltip("Render a translucent shadow fill under the bridge.")]
+        [SerializeField] private bool renderShadowFill = true;
+
+        [SerializeField] private Color shadowFillColor = new Color(0.05f, 0.05f, 0.08f, 0.65f); // Translucent ink
+
+        // Components
         private EdgeCollider2D edgeCollider;
-        private LineRenderer lineRenderer;
         private BoxCollider2D boxCollider;
+        private LineRenderer rimRenderer;
+        private MeshFilter fillMeshFilter;
+        private MeshRenderer fillMeshRenderer;
+        private Mesh fillMesh;
         private Vector2 lastSunPosition;
 
         private void Awake()
@@ -46,10 +58,8 @@ namespace UmbraChronos.Environment
             edgeCollider = GetComponent<EdgeCollider2D>();
             boxCollider = GetComponent<BoxCollider2D>();
 
-            if (showBridgeLine)
-            {
-                SetupLineRenderer();
-            }
+            SetupVisuals();
+            SetupShadowCaster();
         }
 
         private void OnEnable()
@@ -117,13 +127,15 @@ namespace UmbraChronos.Environment
 
             Vector2 sunPos = sunTransform.position;
 
-            // Get top corners of the monolith in world space
-            Vector2 worldTopLeft, worldTopRight;
+            // Compute world corners of the monolith pillar
+            Vector2 worldTopLeft, worldTopRight, worldBottomLeft, worldBottomRight;
             if (boxCollider != null)
             {
                 Bounds b = boxCollider.bounds;
                 worldTopLeft = new Vector2(b.min.x, b.max.y);
                 worldTopRight = new Vector2(b.max.x, b.max.y);
+                worldBottomLeft = new Vector2(b.min.x, b.min.y);
+                worldBottomRight = new Vector2(b.max.x, b.min.y);
             }
             else
             {
@@ -131,57 +143,82 @@ namespace UmbraChronos.Environment
                 Vector2 center = transform.position;
                 worldTopLeft = new Vector2(center.x - half.x, center.y + half.y);
                 worldTopRight = new Vector2(center.x + half.x, center.y + half.y);
+                worldBottomLeft = new Vector2(center.x - half.x, center.y - half.y);
+                worldBottomRight = new Vector2(center.x + half.x, center.y - half.y);
             }
 
             float monolithCenterX = (worldTopLeft.x + worldTopRight.x) * 0.5f;
-            Vector2[] worldPoints;
+            Vector2[] walkableBridgeWorld;
+            Vector3[] fillVertices;
 
             if (sunPos.x <= monolithCenterX)
             {
-                // Sun is to the LEFT -> Shadow stretches to the RIGHT
+                // Sun on LEFT -> Light projects shadow to the RIGHT (+X)
                 Vector2 dirRight = (worldTopRight - sunPos).normalized;
                 Vector2 groundHit = ProjectRayToGround(worldTopRight, dirRight);
 
-                // Top surface bridge: TopLeft -> TopRight -> GroundHit
-                worldPoints = new Vector2[]
+                // Walkable top surface: from TopLeft across TopRight down to ground landing
+                walkableBridgeWorld = new Vector2[]
                 {
                     worldTopLeft,
                     worldTopRight,
                     groundHit
                 };
+
+                // Triangular / quad shadow fill under the bridge (rendered behind platforms at order -10)
+                fillVertices = new Vector3[]
+                {
+                    new Vector3(worldTopLeft.x, worldTopLeft.y, 0f),
+                    new Vector3(worldTopRight.x, worldTopRight.y, 0f),
+                    new Vector3(groundHit.x, groundHit.y, 0f),
+                    new Vector3(worldBottomRight.x, worldBottomRight.y, 0f)
+                };
             }
             else
             {
-                // Sun is to the RIGHT -> Shadow stretches to the LEFT
+                // Sun on RIGHT -> Light projects shadow to the LEFT (-X)
                 Vector2 dirLeft = (worldTopLeft - sunPos).normalized;
                 Vector2 groundHit = ProjectRayToGround(worldTopLeft, dirLeft);
 
-                // Top surface bridge: GroundHit -> TopLeft -> TopRight
-                worldPoints = new Vector2[]
+                // Walkable top surface: from ground landing up to TopLeft and across TopRight
+                walkableBridgeWorld = new Vector2[]
                 {
                     groundHit,
                     worldTopLeft,
                     worldTopRight
                 };
-            }
 
-            // Convert world points to local space of EdgeCollider2D
-            Vector2[] localPoints = new Vector2[worldPoints.Length];
-            for (int i = 0; i < worldPoints.Length; i++)
-            {
-                localPoints[i] = transform.InverseTransformPoint(worldPoints[i]);
-            }
-
-            edgeCollider.points = localPoints;
-
-            // Optional line renderer
-            if (showBridgeLine && lineRenderer != null)
-            {
-                lineRenderer.positionCount = worldPoints.Length;
-                for (int i = 0; i < worldPoints.Length; i++)
+                fillVertices = new Vector3[]
                 {
-                    lineRenderer.SetPosition(i, new Vector3(worldPoints[i].x, worldPoints[i].y, 0f));
+                    new Vector3(worldTopRight.x, worldTopRight.y, 0f),
+                    new Vector3(worldTopLeft.x, worldTopLeft.y, 0f),
+                    new Vector3(groundHit.x, groundHit.y, 0f),
+                    new Vector3(worldBottomLeft.x, worldBottomLeft.y, 0f)
+                };
+            }
+
+            // 1. Update EdgeCollider2D (Local Space)
+            Vector2[] localColliderPoints = new Vector2[walkableBridgeWorld.Length];
+            for (int i = 0; i < walkableBridgeWorld.Length; i++)
+            {
+                localColliderPoints[i] = transform.InverseTransformPoint(walkableBridgeWorld[i]);
+            }
+            edgeCollider.points = localColliderPoints;
+
+            // 2. Update Luminous Cyan Rim LineRenderer
+            if (renderWalkableRim && rimRenderer != null)
+            {
+                rimRenderer.positionCount = walkableBridgeWorld.Length;
+                for (int i = 0; i < walkableBridgeWorld.Length; i++)
+                {
+                    rimRenderer.SetPosition(i, new Vector3(walkableBridgeWorld[i].x, walkableBridgeWorld[i].y, 0f));
                 }
+            }
+
+            // 3. Update Translucent Shadow Fill Mesh
+            if (renderShadowFill && fillMesh != null)
+            {
+                UpdateFillMesh(fillVertices);
             }
         }
 
@@ -219,20 +256,89 @@ namespace UmbraChronos.Environment
             return corner + dir * maxShadowDistance;
         }
 
-        private void SetupLineRenderer()
+        private void SetupVisuals()
         {
-            lineRenderer = GetComponent<LineRenderer>();
-            if (lineRenderer == null) lineRenderer = gameObject.AddComponent<LineRenderer>();
-
-            Shader shader = Shader.Find("Sprites/Default");
-            if (shader != null)
+            // 1. Setup Walkable Cyan Rim
+            if (renderWalkableRim)
             {
-                lineRenderer.material = new Material(shader) { color = bridgeLineColor };
+                rimRenderer = GetComponent<LineRenderer>();
+                if (rimRenderer == null) rimRenderer = gameObject.AddComponent<LineRenderer>();
+
+                Shader shader = Shader.Find("Sprites/Default");
+                if (shader == null) shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+                if (shader != null)
+                {
+                    rimRenderer.material = new Material(shader) { color = rimColor };
+                }
+                rimRenderer.startWidth = rimWidth;
+                rimRenderer.endWidth = rimWidth;
+                rimRenderer.useWorldSpace = true;
+                rimRenderer.sortingOrder = 4; // Above shadows and background, crisp and readable
             }
-            lineRenderer.startWidth = 0.06f;
-            lineRenderer.endWidth = 0.06f;
-            lineRenderer.useWorldSpace = true;
-            lineRenderer.sortingOrder = 3;
+
+            // 2. Setup Translucent Shadow Fill (Dedicated child object with sortingOrder -10)
+            if (renderShadowFill)
+            {
+                Transform existingFill = transform.Find("Shadow_Translucent_Fill");
+                GameObject fillObj = existingFill != null ? existingFill.gameObject : new GameObject("Shadow_Translucent_Fill");
+                fillObj.transform.SetParent(transform, false);
+                fillObj.transform.localPosition = Vector3.zero;
+                fillObj.transform.localRotation = Quaternion.identity;
+                fillObj.transform.localScale = Vector3.one;
+
+                fillMeshFilter = fillObj.GetComponent<MeshFilter>();
+                if (fillMeshFilter == null) fillMeshFilter = fillObj.AddComponent<MeshFilter>();
+
+                fillMeshRenderer = fillObj.GetComponent<MeshRenderer>();
+                if (fillMeshRenderer == null) fillMeshRenderer = fillObj.AddComponent<MeshRenderer>();
+
+                if (fillMesh == null)
+                {
+                    fillMesh = new Mesh { name = "ShadowFillMesh" };
+                    fillMesh.MarkDynamic();
+                    fillMeshFilter.sharedMesh = fillMesh;
+                }
+
+                Shader fillShader = Shader.Find("Sprites/Default");
+                if (fillShader == null) fillShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+                if (fillShader != null)
+                {
+                    fillMeshRenderer.sharedMaterial = new Material(fillShader) { color = shadowFillColor };
+                }
+                fillMeshRenderer.sortingOrder = -10; // Behind platforms and player, but in front of sky canvas
+            }
+        }
+
+        private void UpdateFillMesh(Vector3[] worldVerts)
+        {
+            if (worldVerts == null || worldVerts.Length < 3 || fillMesh == null) return;
+
+            // Convert world vertices into fill object's local space
+            Vector3[] localVerts = new Vector3[worldVerts.Length];
+            for (int i = 0; i < worldVerts.Length; i++)
+            {
+                localVerts[i] = fillMeshFilter.transform.InverseTransformPoint(worldVerts[i]);
+            }
+
+            fillMesh.Clear();
+            fillMesh.vertices = localVerts;
+
+            // Quad triangles (0-1-2 and 0-2-3)
+            int[] triangles = new int[] { 0, 1, 2, 0, 2, 3 };
+            fillMesh.triangles = triangles;
+            fillMesh.RecalculateBounds();
+        }
+
+        private void SetupShadowCaster()
+        {
+            var caster = GetComponent<ShadowCaster2D>();
+            if (caster == null)
+            {
+                caster = gameObject.AddComponent<ShadowCaster2D>();
+            }
+
+            caster.castsShadows = true;
+            caster.useRendererSilhouette = true;
         }
     }
 }

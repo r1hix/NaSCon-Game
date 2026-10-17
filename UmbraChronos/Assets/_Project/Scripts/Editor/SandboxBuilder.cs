@@ -383,28 +383,29 @@ namespace UmbraChronos.Editor
             light2D.color = new Color(0.35f, 0.30f, 0.55f, 1f); // Deep atmospheric dusk
             light2D.intensity = 0.5f;
 
-            // 4. Interactive Celestial SunDial (Rotates with [Q] and [E]!)
+            // 4. Interactive Celestial SunDial (starts in the sky at noon!)
             GameObject sunInst = (GameObject)PrefabUtility.InstantiatePrefab(sunDialPrefab);
+            sunInst.transform.position = new Vector3(1f, 14f, 0f);
 
-            // 5. Level Geometry: Shelters, Monoliths, and Safe Havens (Open, spacious layout)
-            // Ground Floor
-            CreatePlatform("Ground Floor", new Vector3(0f, -2.5f, 0f), new Vector3(36f, 1.5f, 1f), sprite);
+            // 5. Level Geometry with Real Chasm & Comfortable Step Heights:
+            // Left Cliff (extends from -15 to -3.5, surface at y = -1.75)
+            CreatePlatform("Cliff_Left", new Vector3(-9.5f, -2.5f, 0f), new Vector3(12f, 1.5f, 1f), sprite);
+            CreatePlatform("Boundary_Wall_Left", new Vector3(-15.5f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
 
-            // Left Border Wall (prevents falling off the back edge)
-            CreatePlatform("Boundary_Wall_Left", new Vector3(-16f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
+            // Left Shelter (Overhead roof protecting spawn point)
+            CreatePlatform("Spawn_Shelter_Roof", new Vector3(-11f, 1.2f, 0f), new Vector3(5f, 0.5f, 1f), sprite);
 
-            // Haven 1: Spawn Shelter (Floating overhead monolith at y=2.2f with plenty of jump clearance)
-            CreatePlatform("Spawn_Shelter_Roof", new Vector3(-10f, 2.2f, 0f), new Vector3(6f, 0.8f, 1f), sprite);
+            // Stepping Stone Ledge (easy 1.0 unit hop from floor at y = -1.75)
+            CreatePlatform("Step_Ledge", new Vector3(-5.5f, -0.75f, 0f), new Vector3(2.5f, 0.4f, 1f), sprite);
 
-            // Haven 2: Center Ruins Floating Monolith (Safe intermediate haven with open walking floor below)
-            CreatePlatform("Center_Ruins_Roof", new Vector3(-2f, 2.2f, 0f), new Vector3(6f, 0.8f, 1f), sprite);
+            // Pushable Physics Box (at x = -8f on floor)
+            GameObject blockInst = (GameObject)PrefabUtility.InstantiatePrefab(blockPrefab);
+            blockInst.transform.position = new Vector3(-8f, -1.15f, 0f);
 
-            // Stepping Stone Ledge (optional high route)
-            CreatePlatform("High_Ledge", new Vector3(-6f, 0.2f, 0f), new Vector3(3f, 0.5f, 1f), sprite);
-
-            // 5b. Monolith Pillar with Walkable Solid Shadow Bridge!
+            // Monolith standing at edge of left cliff (x = -3.5, y = 0.0, scale 1.6 x 3.5)
+            // Base sits at y = -1.75, top is at y = 1.75 (easy 1.25 unit hop from step ledge!)
             GameObject monolithInst = (GameObject)PrefabUtility.InstantiatePrefab(monolithPrefab);
-            monolithInst.transform.position = new Vector3(-1.0f, 1.0f, 0f);
+            monolithInst.transform.position = new Vector3(-3.5f, 0.0f, 0f);
             var shadowComp = monolithInst.GetComponent<DynamicShadowCollider>();
             if (shadowComp != null)
             {
@@ -414,16 +415,18 @@ namespace UmbraChronos.Editor
                 soMonolith.ApplyModifiedProperties();
             }
 
-            // 6. Pushable Physics Box (On floor at x=-6f, can be pushed as a mobile shadow shield)
-            GameObject blockInst = (GameObject)PrefabUtility.InstantiatePrefab(blockPrefab);
-            blockInst.transform.position = new Vector3(-6f, -1.0f, 0f);
+            // Lethal Chasm Floor (deep abyss at y = -6.5f)
+            CreatePlatform("Chasm_Floor", new Vector3(0f, -6.5f, 0f), new Vector3(12f, 1.5f, 1f), sprite);
 
-            // 7. Interactive Puzzle: PressurePlate & TimedGate
+            // Right Cliff (extends from 2.5 to 15, surface at y = -1.75)
+            CreatePlatform("Cliff_Right", new Vector3(8.5f, -2.5f, 0f), new Vector3(12f, 1.5f, 1f), sprite);
+
+            // 6. Interactive Puzzle: PressurePlate & TimedGate on Right Cliff
             GameObject gateInst = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
-            gateInst.transform.position = new Vector3(7.5f, -0.25f, 0f);
+            gateInst.transform.position = new Vector3(8.0f, -0.25f, 0f);
 
             GameObject plateInst = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
-            plateInst.transform.position = new Vector3(2.0f, -1.75f, 0f);
+            plateInst.transform.position = new Vector3(4.5f, -1.65f, 0f);
             var plateComp = plateInst.GetComponent<PressurePlate>();
             if (plateComp != null)
             {
@@ -436,15 +439,15 @@ namespace UmbraChronos.Editor
                 }
             }
 
-            // 8. Goal Sanctuary Arch behind the gate
-            GameObject goalMarker = CreatePlatform("Goal_Sanctuary", new Vector3(12.5f, -1.25f, 0f), new Vector3(3.2f, 1.2f, 1f), sprite);
+            // 7. Goal Sanctuary Arch behind the gate
+            GameObject goalMarker = CreatePlatform("Goal_Sanctuary", new Vector3(11.5f, -1.25f, 0f), new Vector3(3.2f, 1.2f, 1f), sprite);
             var goalSr = goalMarker.GetComponent<SpriteRenderer>();
             if (goalSr != null)
             {
                 goalSr.color = new Color(0.98f, 0.82f, 0.4f, 1f); // Radiant Gold (#FFD166)
             }
 
-            // 9. Post Processing & Lethal Light Zone
+            // 8. Post Processing & Lethal Light Zone
             PrefabUtility.InstantiatePrefab(postProcessingPrefab);
             GameObject lightZoneInst = (GameObject)PrefabUtility.InstantiatePrefab(lethalLightPrefab);
             var lightZoneComp = lightZoneInst.GetComponent<LethalLightZone>();
@@ -459,9 +462,9 @@ namespace UmbraChronos.Editor
                 }
             }
 
-            // 10. Player & RewindManager (Spawned inside the safe spawn shelter)
+            // 9. Player & RewindManager (Spawned safely inside the spawn shelter)
             GameObject playerInst = (GameObject)PrefabUtility.InstantiatePrefab(playerPrefab);
-            playerInst.transform.position = new Vector3(-10.5f, -1.0f, 0f);
+            playerInst.transform.position = new Vector3(-11f, -1.0f, 0f);
 
             PrefabUtility.InstantiatePrefab(rewindManagerPrefab);
 

@@ -30,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.6, y: 5.5, z: 1}
+  m_LocalScale: {x: 1.6, y: 3.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -141,6 +141,7 @@ EdgeCollider2D:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5182903847291827364}
   m_Enabled: 1
+  serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
@@ -194,5 +195,8 @@ MonoBehaviour:
     m_Bits: 4294967295
   fallbackGroundY: -1.75
   maxShadowDistance: 14
-  showBridgeLine: 0
-  bridgeLineColor: {r: 0.22, g: 0.74, b: 0.97, a: 0.7}
+  renderWalkableRim: 1
+  rimColor: {r: 0.22, g: 0.74, b: 0.97, a: 0.85}
+  rimWidth: 0.08
+  renderShadowFill: 1
+  shadowFillColor: {r: 0.05, g: 0.05, b: 0.08, a: 0.65}

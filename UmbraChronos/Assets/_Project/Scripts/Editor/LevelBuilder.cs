@@ -66,25 +66,29 @@ namespace UmbraChronos.Editor
             SetupPostProcessingAndLight(sunInst);
 
             // 5. Level Geometry: Starting Cliff, Lethal Void, Monolith, and Landing Cliff
-            // Left Cliff (Player starts here)
-            CreatePlatform("Cliff_Left", new Vector3(-8.5f, -2.5f, 0f), new Vector3(9f, 2f, 1f), sprite);
-            CreatePlatform("Cliff_Left_Backdrop", new Vector3(-13.5f, 1.5f, 0f), new Vector3(1f, 8f, 1f), sprite); // Wall
+            // Left Cliff (Player starts here, surface at y = -1.75)
+            CreatePlatform("Cliff_Left", new Vector3(-9.5f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
+            CreatePlatform("Cliff_Left_Backdrop", new Vector3(-15f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite); // Wall
 
-            // Right Cliff (Sanctuary Landing)
-            CreatePlatform("Cliff_Right", new Vector3(8.5f, -2.5f, 0f), new Vector3(9f, 2f, 1f), sprite);
+            // Stepping Stone Ledge (easy 1.0 unit hop from cliff surface)
+            CreatePlatform("Step_Ledge", new Vector3(-5.5f, -0.75f, 0f), new Vector3(2.5f, 0.4f, 1f), sprite);
+
+            // Right Cliff (Sanctuary Landing, surface at y = -1.75)
+            CreatePlatform("Cliff_Right", new Vector3(9.5f, -2.5f, 0f), new Vector3(11f, 1.5f, 1f), sprite);
 
             // Lethal Chasm Floor (Deep deadly pit at y = -7f)
-            CreatePlatform("Chasm_Floor", new Vector3(0f, -7.5f, 0f), new Vector3(30f, 2f, 1f), sprite);
+            CreatePlatform("Chasm_Floor", new Vector3(0f, -7.0f, 0f), new Vector3(30f, 2f, 1f), sprite);
 
-            // Center Monolith: Standing in the chasm, reaching up to y = 2.5f!
-            // When sun is rotated with [E], casts an ink-black solid shadow bridge from x = -3.5 to x = 4.5!
-            GameObject monolith = CreateMonolithObject(sprite, new Vector3(-3.5f, -0.5f, 0f), new Vector2(1.8f, 7.0f), -1.5f, sunInst.transform);
+            // Center Monolith: Standing at left cliff edge (x = -3.5, y = 0.0, height = 3.5)
+            // Base at y = -1.75, top at y = 1.75 (easy 1.25 unit hop from step ledge!)
+            // When sun is rotated with [E], casts an ink-black shadow with cyan rim bridging the 8-unit void!
+            GameObject monolith = CreateMonolithObject(sprite, new Vector3(-3.5f, 0.0f, 0f), new Vector2(1.6f, 3.5f), -1.75f, sunInst.transform);
 
             // Sanctuary Goal Arch on the right cliff
             CreateSanctuaryArch(sprite, new Vector3(10f, -0.5f, 0f));
 
             // 6. Player & Rewind Manager
-            SetupPlayer(new Vector3(-8.5f, -0.5f, 0f));
+            SetupPlayer(new Vector3(-10.5f, -1.0f, 0f));
 
             string path = $"{LevelsFolder}/Level_01.unity";
             EditorSceneManager.SaveScene(scene, path);
@@ -115,11 +119,11 @@ namespace UmbraChronos.Editor
             CreatePlatform("Wall_Left", new Vector3(-14f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
             CreatePlatform("Wall_Right", new Vector3(14f, 2f, 0f), new Vector3(1f, 8f, 1f), sprite);
 
-            // High Platform with Pressure Plate
-            CreatePlatform("High_Plate_Ledge", new Vector3(-4f, 0.8f, 0f), new Vector3(4.5f, 0.6f, 1f), sprite);
+            // High Platform with Pressure Plate (surface at y = 0.7)
+            CreatePlatform("High_Plate_Ledge", new Vector3(-4f, 0.5f, 0f), new Vector3(4.5f, 0.4f, 1f), sprite);
 
-            // Stepping platform to reach high ledge
-            CreatePlatform("Step_Ledge", new Vector3(-8.5f, -0.5f, 0f), new Vector3(2.5f, 0.5f, 1f), sprite);
+            // Stepping platform to reach high ledge (surface at y = -0.4, easy 1.1 unit hops!)
+            CreatePlatform("Step_Ledge", new Vector3(-8.5f, -0.6f, 0f), new Vector3(2.5f, 0.4f, 1f), sprite);
 
             // TimedGate sealing the Vault Exit
             GameObject gatePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabInteractFolder}/TimedGate.prefab");
@@ -129,7 +133,7 @@ namespace UmbraChronos.Editor
             gateInst.transform.position = new Vector3(6.5f, -0.25f, 0f);
 
             GameObject plateInst = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
-            plateInst.transform.position = new Vector3(-4.0f, 1.35f, 0f);
+            plateInst.transform.position = new Vector3(-4.0f, 0.85f, 0f);
 
             var plateComp = plateInst.GetComponent<PressurePlate>();
             if (plateComp != null)
@@ -176,36 +180,38 @@ namespace UmbraChronos.Editor
             GameObject sunInst = SetupSunDial(sprite, new Vector2(0f, 0f), 16f, 90f);
             SetupPostProcessingAndLight(sunInst);
 
-            // 4. Geometry: Central Hub Island, Left Pedestal (Switch 1), Right Pedestal (Switch 2), Final Sanctuary
-            // Center Island (Where player starts)
+            // 4. Geometry: Central Hub Island, Left Pedestal (Switch 1), Right Pedestal (Switch 2 & Sanctuary)
+            // Center Island (Where player starts, surface at y = -1.75)
             CreatePlatform("Center_Hub", new Vector3(0f, -2.5f, 0f), new Vector3(8f, 1.5f, 1f), sprite);
 
-            // Left Pedestal across Chasm 1 (Switch 1)
-            CreatePlatform("Left_Pedestal", new Vector3(-9.5f, -1.0f, 0f), new Vector3(4f, 1.0f, 1f), sprite);
+            // Left & Right Stepping Ledges on Center Hub (easy 1.0 unit hop from floor)
+            CreatePlatform("Step_Ledge_Left", new Vector3(-2.5f, -0.75f, 0f), new Vector3(2f, 0.4f, 1f), sprite);
+            CreatePlatform("Step_Ledge_Right", new Vector3(2.5f, -0.75f, 0f), new Vector3(2f, 0.4f, 1f), sprite);
 
-            // Right Pedestal across Chasm 2 (Switch 2)
-            CreatePlatform("Right_Pedestal", new Vector3(9.5f, -1.0f, 0f), new Vector3(4f, 1.0f, 1f), sprite);
+            // Center Monolith: Base at y = -1.75, top at y = 1.75
+            // When sun is turned with [Q] -> casts shadow bridge across Chasm 1 to Left Pedestal
+            // When sun is turned with [E] -> casts shadow bridge across Chasm 2 to Right Pedestal
+            CreateMonolithObject(sprite, new Vector3(0f, 0.0f, 0f), new Vector2(1.6f, 3.5f), -1.75f, sunInst.transform);
 
-            // Deep Lethal Void
-            CreatePlatform("Eclipse_Abyss", new Vector3(0f, -8.0f, 0f), new Vector3(40f, 2f, 1f), sprite);
+            // Deep Lethal Abyss
+            CreatePlatform("Eclipse_Abyss", new Vector3(0f, -7.5f, 0f), new Vector3(40f, 2f, 1f), sprite);
 
-            // Center Tall Monolith that can cast bridges to BOTH sides depending on Q/E rotation!
-            CreateMonolithObject(sprite, new Vector3(0f, 1.0f, 0f), new Vector2(1.8f, 7.5f), -1.5f, sunInst.transform);
+            // Left Pedestal across Chasm 1 (surface at y = -1.75)
+            CreatePlatform("Left_Pedestal", new Vector3(-9.5f, -2.5f, 0f), new Vector3(5f, 1.5f, 1f), sprite);
 
-            // TimedGate sealing the Sanctuary
+            // Right Pedestal across Chasm 2 (surface at y = -1.75)
+            CreatePlatform("Right_Pedestal", new Vector3(10.5f, -2.5f, 0f), new Vector3(7f, 1.5f, 1f), sprite);
+
+            // TimedGate sealing the Sanctuary on Right Pedestal
             GameObject gatePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabInteractFolder}/TimedGate.prefab");
             GameObject platePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabInteractFolder}/PressurePlate.prefab");
 
             GameObject gateInst = (GameObject)PrefabUtility.InstantiatePrefab(gatePrefab);
-            gateInst.transform.position = new Vector3(0f, 3.5f, 0f); // Overhead gate to sanctuary arch
+            gateInst.transform.position = new Vector3(10.0f, -0.25f, 0f);
 
-            // Plate on Left Pedestal
+            // Plate 1 on Left Pedestal (Holding this opens the gate on Right Pedestal!)
             GameObject plate1 = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
-            plate1.transform.position = new Vector3(-9.5f, -0.25f, 0f);
-
-            // Plate on Right Pedestal
-            GameObject plate2 = (GameObject)PrefabUtility.InstantiatePrefab(platePrefab);
-            plate2.transform.position = new Vector3(9.5f, -0.25f, 0f);
+            plate1.transform.position = new Vector3(-9.5f, -1.65f, 0f);
 
             var plateComp1 = plate1.GetComponent<PressurePlate>();
             if (plateComp1 != null)
@@ -215,9 +221,8 @@ namespace UmbraChronos.Editor
                 so.ApplyModifiedProperties();
             }
 
-            // High Sanctuary Arch
-            CreatePlatform("Sanctuary_Roof", new Vector3(0f, 2.5f, 0f), new Vector3(5f, 0.5f, 1f), sprite);
-            CreateSanctuaryArch(sprite, new Vector3(0f, 4.0f, 0f));
+            // Sanctuary Arch behind the gate on Right Pedestal
+            CreateSanctuaryArch(sprite, new Vector3(12.5f, -1.25f, 0f));
 
             // Player starts on Central Hub
             SetupPlayer(new Vector3(0f, -1.0f, 0f));
