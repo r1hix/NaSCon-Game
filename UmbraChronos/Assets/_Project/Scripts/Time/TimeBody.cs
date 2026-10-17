@@ -30,6 +30,7 @@ namespace UmbraChronos.Time
         [SerializeField] private int maxFrames = 300;
 
         private readonly LinkedList<TimeSnapshot> historyBuffer = new LinkedList<TimeSnapshot>();
+        private readonly List<TimeSnapshot> lastRewoundActions = new List<TimeSnapshot>();
         private Rigidbody2D rb;
         private bool isRewinding;
         private bool wasKinematic;
@@ -85,6 +86,7 @@ namespace UmbraChronos.Time
             {
                 TimeSnapshot snapshot = historyBuffer.First.Value;
                 historyBuffer.RemoveFirst();
+                lastRewoundActions.Add(snapshot);
 
                 transform.position = snapshot.position;
                 transform.rotation = Quaternion.Euler(0f, 0f, snapshot.rotation);
@@ -104,6 +106,8 @@ namespace UmbraChronos.Time
         public void OnStartRewind()
         {
             isRewinding = true;
+            lastRewoundActions.Clear();
+
             if (rb != null)
             {
                 wasKinematic = rb.bodyType == RigidbodyType2D.Kinematic;
@@ -131,6 +135,23 @@ namespace UmbraChronos.Time
             {
                 OnStopRewind();
             }
+        }
+
+        /// <summary>
+        /// Returns the optimal trajectory for the Umbral Echo.
+        /// If the player recently rewound, returns the exact path rewound (playing forward from current rewound pos).
+        /// Otherwise returns the player's recent forward history.
+        /// </summary>
+        public List<TimeSnapshot> GetEchoTrajectory()
+        {
+            if (lastRewoundActions.Count >= 5)
+            {
+                var forwardRewound = new List<TimeSnapshot>(lastRewoundActions);
+                forwardRewound.Reverse();
+                return forwardRewound;
+            }
+
+            return GetHistoryClone();
         }
 
         /// <summary>

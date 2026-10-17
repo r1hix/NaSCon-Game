@@ -102,7 +102,7 @@ cd GameDev
 * **Do NOT work in the same scene file.**
 * Work inside personal sandbox scenes:
   * Shaf (Mac): `Assets/_Project/Scenes/Sandboxes/Sandbox_Shaf.unity`
-  * Partner (Win): `Assets/_Project/Scenes/Sandboxes/Sandbox_Partner.unity`
+  * Chendline (Win): `Assets/_Project/Scenes/Sandboxes/Sandbox_Chendline.unity`
 * **Everything is a Prefab:** Save player, mechanics, and interactive props as Prefabs in `Assets/_Project/Prefabs/`. When you update a prefab and push to Git, your teammate's scene will automatically receive the updates without merge conflicts.
 * Always pull before starting work: `git pull --rebase origin main`.
 
@@ -146,5 +146,5 @@ Assets/
 
 ## 👥 Authors
 * **Shaf** (Mac Developer — Player, Rewind & Polish)
-* **Partner** (Windows Developer — Shadow Systems, Level Design & Audio)
+* **Chendline** (Windows Developer — Shadow Systems, Level Design & Audio)
 * Built for **NaSCon '26 Vibe Coding Game Dev Competition** at FAST-NUCES.

@@ -47,7 +47,7 @@
 * **Lighting:** 2D Light System (Global Light 2D, Freeform Light 2D, Shadow Caster 2D).
 * **Cross-Platform Target:**
   * Developer 1 (Shaf): **macOS (Apple Silicon arm64)**.
-  * Developer 2 (Partner): **Windows 11 PC (x86_64)**.
+  * Developer 2 (Chendline): **Windows 11 PC (x86_64)**.
   * Target Builds: Windows `.exe` / macOS `.app` / WebGL.
 
 ---
@@ -59,7 +59,7 @@
 * **Never edit the same scene.**
 * **All feature work happens in personal sandbox scenes:**
   * `Assets/_Project/Scenes/Sandboxes/Sandbox_Shaf.unity`
-  * `Assets/_Project/Scenes/Sandboxes/Sandbox_Partner.unity`
+  * `Assets/_Project/Scenes/Sandboxes/Sandbox_Chendline.unity`
 * Formal game levels are authored by ONE person at a time (`Level_01.unity`, `Level_02.unity`, etc.).
 
 ### Rule 2: Prefab-First Architecture
@@ -132,7 +132,7 @@ Assets/
 │   │   └── Player/           # Player, UmbralEchoGhost
 │   ├── Scenes/
 │   │   ├── Levels/           # Level_01, Level_02, Level_03
-│   │   └── Sandboxes/        # Sandbox_Shaf, Sandbox_Partner
+│   │   └── Sandboxes/        # Sandbox_Shaf, Sandbox_Chendline
 │   ├── Scripts/
 │   │   ├── Core/             # TimeEvents.cs, GameManager.cs
 │   │   ├── Environment/      # SunDial.cs, DynamicShadowCollider.cs, PressurePlate.cs, LethalLightZone.cs
@@ -179,10 +179,12 @@ Assets/
 
 ## 6. Task Division & Ownership
 
+> 📖 **Master Step-by-Step Schedule:** Refer to [`SPECSHEET.md`](file:///Users/shaf/Desktop/projects/NaSCon%20%2726/GameDev/SPECSHEET.md) for the hour-by-hour parallel development checklist, component contracts, level designs, and submission countdown.
+
 | Developer | Core Responsibilities | Key Deliverables |
 | :--- | :--- | :--- |
-| **Shaf (Mac)** | **Player Experience, Time Mechanics & Polish** | • `PlayerController.cs` (Snappy 2D movement, jump buffering, coyote time)<br>• `TimeBody.cs` & `RewindManager.cs` (Circular buffer state recorder)<br>• `UmbralEcho.cs` (Ghost recording & playback)<br>• Post-processing / Rewind screen VFX (Chromatic aberration, scanlines)<br>• HUD UI (Time dial indicator, Rewind energy meter) |
-| **Partner (Win)** | **Shadow Generation, Level Design & Puzzle Logic** | • `SunDialController.cs` (Rotates 2D Light smoothly via input)<br>• `DynamicShadowCollider.cs` (Generates walkable edge/polygon colliders from shadow casters)<br>• Puzzle prefabs: `PressurePlate.cs`, `TimedGate.cs`, `LethalLightZone.cs`<br>• Level blockouts (`Level_01`, `Level_02`, `Level_03`)<br>• Audio integration (SFX for ticking, rewinds, footfalls) |
+| **Shaf (Mac)** | **Player Experience, Time Mechanics & Polish** | • `PlayerController.cs` (Snappy 2D movement, jump buffering, coyote time)<br>• `TimeBody.cs` & `RewindManager.cs` (Circular buffer state recorder)<br>• `UmbralEcho.cs` (Ghost recording & playback)<br>• `PressurePlate.cs` & `TimedGate.cs` (Zero-jitter puzzle sensors)<br>• `LethalLightZone.cs` (Deadly sunlight raycast zones)<br>• Post-processing / Rewind screen VFX (Chromatic aberration, scanlines)<br>• HUD UI (Time dial indicator, Rewind energy meter)<br>• Audio & SFX integration |
+| **Chendline (Win)** | **Shadow Generation, Sun Control & Level Design** | • `SunDialController.cs` (Rotates 2D Light smoothly via input, invokes `TimeEvents.OnSunAngleChanged`)<br>• `DynamicShadowCollider.cs` (Generates walkable edge colliders from cast shadows)<br>• Level blockouts & puzzle assembly (`Level_01`, `Level_02`, `Level_03`)<br>• Testing & balancing in `Sandbox_Chendline.unity`<br>• Standalone Windows build generation |
 
 ---
 

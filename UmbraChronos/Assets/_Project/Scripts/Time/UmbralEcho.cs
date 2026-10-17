@@ -14,6 +14,8 @@ namespace UmbraChronos.Time
         [Header("Echo Settings")]
         [Tooltip("Seconds the echo remains solid after finishing its playback before dissolving")]
         [SerializeField] private float lingerDuration = 2.5f;
+        [Tooltip("If true, the player can pass through the echo without being pushed or dragged")]
+        [SerializeField] private bool ignorePlayerCollision = true;
 
         [Header("Visuals")]
         [SerializeField] private SpriteRenderer spriteRenderer;
@@ -35,6 +37,25 @@ namespace UmbraChronos.Time
             {
                 spriteRenderer.color = echoColor;
             }
+
+            if (ignorePlayerCollision)
+            {
+                IgnorePlayerCollider();
+            }
+        }
+
+        private void IgnorePlayerCollider()
+        {
+            var player = GameObject.FindWithTag("Player");
+            if (player != null)
+            {
+                Collider2D playerCol = player.GetComponent<Collider2D>();
+                Collider2D myCol = GetComponent<Collider2D>();
+                if (playerCol != null && myCol != null)
+                {
+                    Physics2D.IgnoreCollision(playerCol, myCol, true);
+                }
+            }
         }
 
         /// <summary>
@@ -46,6 +67,11 @@ namespace UmbraChronos.Time
             {
                 Destroy(gameObject);
                 return;
+            }
+
+            if (ignorePlayerCollision)
+            {
+                IgnorePlayerCollider();
             }
 
             playbackFrames = trajectory;
