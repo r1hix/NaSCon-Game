@@ -228,15 +228,18 @@ namespace UmbraChronos.Editor
             EditorSceneManager.SaveScene(scene, path);
             Debug.Log($"[LevelBuilder] Saved Contiguous Master Level to {path}");
 
-            // Configure Build Settings so Level_Master.unity is Scene 0
-            EditorBuildSettingsScene[] buildScenes = new EditorBuildSettingsScene[]
+            // Configure Build Settings: MainMenu.unity first if it exists, then Level_Master.unity
+            string menuPath = "Assets/_Project/Scenes/UI/MainMenu.unity";
+            var buildScenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
+            if (File.Exists(menuPath))
             {
-                new EditorBuildSettingsScene(path, true),
-                new EditorBuildSettingsScene($"{LevelsFolder}/Level_01.unity", true),
-                new EditorBuildSettingsScene($"{LevelsFolder}/Level_02.unity", true),
-                new EditorBuildSettingsScene($"{LevelsFolder}/Level_03.unity", true)
-            };
-            EditorBuildSettings.scenes = buildScenes;
+                buildScenes.Add(new EditorBuildSettingsScene(menuPath, true));
+            }
+            buildScenes.Add(new EditorBuildSettingsScene(path, true));
+            buildScenes.Add(new EditorBuildSettingsScene($"{LevelsFolder}/Level_01.unity", true));
+            buildScenes.Add(new EditorBuildSettingsScene($"{LevelsFolder}/Level_02.unity", true));
+            buildScenes.Add(new EditorBuildSettingsScene($"{LevelsFolder}/Level_03.unity", true));
+            EditorBuildSettings.scenes = buildScenes.ToArray();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
