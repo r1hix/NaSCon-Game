@@ -23,6 +23,19 @@
 **/[Mm]emoryCaptures/
 **/[Rr]ecordings/
 
+# Standalone Player Builds & Packages
+*.app/
+**/*.app/
+**/packaged_mac*
+**/*_BackUpThisFolder_ButDontShipItWithYourGame/
+*.zip
+*.tar.gz
+*.7z
+
+# Video Production & Audio Stems (Trailer hosted via Google Drive per competition rules)
+Trailer_Video/
+Trailer_Audio/
+
 # AssetStore Tools
 [Aa]ssets/AssetStoreTools*
 **/[Aa]ssets/AssetStoreTools*
