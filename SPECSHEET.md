@@ -62,8 +62,8 @@ Status: DONE / IN PROGRESS / READY / QUEUED
 | Sunlit Ground Sheen & Interior Backdrops (`SunlitGroundSheen.cs`, `InteriorBackdrop.cs`) | Shaf | Sun 01:00 AM | DONE |
 | Aesthetic Levels & Sandbox Regeneration (`Level_01`, `02`, `03`, `Sandbox_Shaf`) | Shaf | Sun 02:30 AM | DONE |
 | Tutorial Level & In-World Prompts (`Level_Tutorial.unity`, `TutorialManager.cs`) | Shaf | Sun 03:00 AM | DONE |
-| Playtesting + full playthrough verification | Both | Sun 03:15 AM – 04:00 AM | READY |
-| Trailer + submission | Both | Sun 05:00 – 09:15 AM | QUEUED |
+| Playtesting + full playthrough verification | Both | Sun 03:15 AM – 04:00 AM | DONE |
+| Trailer + submission | Both | Sun 05:00 – 09:15 AM | DONE |
 
 **Already built & merged to `main`:** Unity 6 URP 2D project, `TimeEvents`, snappy `PlayerController` (coyote, jump buffer, variable jump), 5 s circular rewind buffer, `UmbralEcho`, `PressurePlate` + `TimedGate`, `DynamicShadowCollider` horizontal shadow bridges, `LethalLightZone` with Volumetric Godray Hazard System, Bioluminescent Glow Lichens, Sunlit Ground Sheen, Interior Backdrops, diegetic HUD (sundial compass, 3-tier non-overlapping rewind gauge, danger vignette, runic prompts), full Title Screen with dynamic crystal hover and ambient audio, multi-layered "Ink & Solar Flare" aesthetic styling on all levels (01, 02, 03, Sandbox, Master), and dedicated 3-room Tutorial Level with in-world animated card prompts.
 
@@ -214,9 +214,9 @@ The 3-minute video decides the Top 5 shortlisting:
 | **2:15–3:00** | Mechanics Breakdown & Outro | Concise presentation explaining the synergy of Time (Rewind + Echoes) and Shadow (Solid Light-Matter Physics). Credits & NaSCon '26 badge. | Resolving ambient piano chord |
 
 ### Submission Checklist (Sunday 09:15 AM PKT):
-- [ ] Contiguous playthrough recorded at 1080p60 (macOS screen recorder / OBS).
-- [ ] 3-minute trailer edited with title cards and audio sync.
-- [ ] Video uploaded to Google Drive ("Anyone with the link can view").
-- [ ] Standalone builds generated: macOS (`StandaloneOSX`) and Windows (`StandaloneWindows64`).
-- [ ] Clean GitHub repository with gameplay GIFs, documentation, and source code.
-- [ ] Final submission submitted on the NaSCon portal.
+- [x] Contiguous playthrough recorded at 1080p60.
+- [x] 3-minute trailer edited with title cards, audio sync, and voiceover.
+- [x] Video uploaded to Google Drive: [Umbra Chronos Trailer (Google Drive)](https://drive.google.com/file/d/1saB1NbAuA_Pa6xyD3is3jmQrD9Uj2l-J/view).
+- [x] Standalone builds generated: macOS (`StandaloneOSX`) and Windows (`StandaloneWindows64`) — [Download v1.0.0 Releases](https://github.com/r1hix/NaSCon-Game/releases/tag/v1.0.0).
+- [x] Clean GitHub repository with documentation, guides, and full source code.
+- [x] Final submission finalized for NaSCon '26.

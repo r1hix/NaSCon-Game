@@ -1,11 +1,26 @@
 # ⏳ Umbra Chronos: Echoes of the Sundial 🌑
 
 [![Event](https://img.shields.io/badge/NaSCon%20'26-Vibe%20Coding%20Game%20Dev-blueviolet?style=for-the-badge)](https://nascon.com.pk)
+[![Trailer](https://img.shields.io/badge/Trailer-Watch%20on%20Google%20Drive-E50914?style=for-the-badge&logo=google-drive)](https://drive.google.com/file/d/1saB1NbAuA_Pa6xyD3is3jmQrD9Uj2l-J/view)
+[![Releases](https://img.shields.io/badge/Standalone%20Builds-macOS%20%7C%20Windows-success?style=for-the-badge&logo=github)](https://github.com/r1hix/NaSCon-Game/releases/tag/v1.0.0)
 [![Engine](https://img.shields.io/badge/Unity-6%20(6000.6.x)-black?style=for-the-badge&logo=unity)](https://unity.com/)
 [![Render Pipeline](https://img.shields.io/badge/URP-2D%20Lighting-00599c?style=for-the-badge)](https://unity.com/features/universal-render-pipeline)
 [![Themes](https://img.shields.io/badge/Themes-Time%20%7C%20Shadow-red?style=for-the-badge)](#the-themes)
 
 > *"In the shattered clocktower of Chronos, celestial light burns like white fire. Only the dark, cast shadows of the ancient monoliths offer solid ground to walk upon."*
+
+---
+
+## 🎬 Competition Deliverables
+
+1. **Official 3-Minute Trailer (Google Drive):**
+   - 📺 **[Watch Umbra Chronos Official Trailer](https://drive.google.com/file/d/1saB1NbAuA_Pa6xyD3is3jmQrD9Uj2l-J/view)** *(2 min raw gameplay + 1 min thematic explanation)*
+2. **Standalone Playable Builds (v1.0.0):**
+   - 🍏 **macOS (Apple Silicon):** [Download `UmbraChronos-macOS-v1.0.0.zip`](https://github.com/r1hix/NaSCon-Game/releases/download/v1.0.0/UmbraChronos-macOS-v1.0.0.zip) (28.5 MB)
+   - 🪟 **Windows 64-bit:** [Download `UmbraChronos-Windows-v1.0.0.zip`](https://github.com/r1hix/NaSCon-Game/releases/download/v1.0.0/UmbraChronos-Windows-v1.0.0.zip) (38.4 MB)
+   - 📦 **GitHub Release Tag:** [View Release v1.0.0 on GitHub](https://github.com/r1hix/NaSCon-Game/releases/tag/v1.0.0)
+3. **Public GitHub Repository:**
+   - 💻 [https://github.com/r1hix/NaSCon-Game](https://github.com/r1hix/NaSCon-Game)
 
 ---
 
@@ -164,9 +179,9 @@ Assets/
 - [x] Full Title Screen Menu & Audio (`MainMenu.unity`, `MainMenuAudioManager.cs`)
 - [x] Audio design (ambient music, clock ticks, rewind whooshes, landing thuds, dynamic rewind pitch-down)
 - [x] Visual polish & camera shake (URP Bloom, vignette, chromatic aberration, radiation screen shake)
-- [ ] **3-Minute Trailer Video** (2 min screen-recorded gameplay + 1 min thematic explanation)
-- [ ] Standalone build generation (macOS `StandaloneOSX` and Windows `StandaloneWindows64`)
-- [ ] Public GitHub repository submitted before **Sunday 09:30 AM**
+- [x] **3-Minute Trailer Video** (2 min screen-recorded gameplay + 1 min thematic explanation) — [Watch on Google Drive](https://drive.google.com/file/d/1saB1NbAuA_Pa6xyD3is3jmQrD9Uj2l-J/view)
+- [x] Standalone build generation (macOS `StandaloneOSX` and Windows `StandaloneWindows64`) — [Download v1.0.0](https://github.com/r1hix/NaSCon-Game/releases/tag/v1.0.0)
+- [x] Public GitHub repository submitted before **Sunday 09:30 AM** — [r1hix/NaSCon-Game](https://github.com/r1hix/NaSCon-Game)
 
 ---
 

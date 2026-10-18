@@ -38,8 +38,12 @@ namespace UmbraChronos.Editor
             Sprite squareSprite = GetOrCreateSquareSprite();
 
             // 1. Core Player & Time Prefabs
-            GameObject echoPrefab = CreateEchoPrefab(squareSprite);
-            GameObject playerPrefab = CreatePlayerPrefab(squareSprite);
+            GameObject echoPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PlayerPrefabFolder}/UmbralEcho.prefab");
+            if (echoPrefab == null) echoPrefab = CreateEchoPrefab(squareSprite);
+
+            GameObject playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PlayerPrefabFolder}/Player.prefab");
+            if (playerPrefab == null) playerPrefab = CreatePlayerPrefab(squareSprite);
+
             GameObject rewindManagerPrefab = CreateRewindManagerPrefab(echoPrefab);
             GameObject postProcessingPrefab = CreatePostProcessingPrefab();
 

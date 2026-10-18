@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UmbraChronos.Core;
 
 namespace UmbraChronos.Core
@@ -64,8 +65,17 @@ namespace UmbraChronos.Core
                 var existing = Object.FindAnyObjectByType<AudioManager>();
                 if (existing == null)
                 {
-                    var go = new GameObject("AudioManager");
-                    go.AddComponent<AudioManager>();
+                    var prefab = Resources.Load<GameObject>("AudioManager");
+                    if (prefab != null)
+                    {
+                        var go = Object.Instantiate(prefab);
+                        go.name = "AudioManager";
+                    }
+                    else
+                    {
+                        var go = new GameObject("AudioManager");
+                        go.AddComponent<AudioManager>();
+                    }
                 }
             }
         }
@@ -74,6 +84,17 @@ namespace UmbraChronos.Core
         {
             if (Instance != null && Instance != this)
             {
+                // If existing instance has no clips but THIS instance has clips, swap it out cleanly!
+                if (Instance.bgmClockworkAbyss == null && this.bgmClockworkAbyss != null)
+                {
+                    Destroy(Instance.gameObject);
+                    Instance = this;
+                    DontDestroyOnLoad(gameObject);
+                    SetupAudioSources();
+                    StartBgm();
+                    return;
+                }
+
                 Destroy(gameObject);
                 return;
             }
@@ -88,6 +109,7 @@ namespace UmbraChronos.Core
 
         private void OnEnable()
         {
+            SceneManager.sceneLoaded += HandleSceneLoaded;
             TimeEvents.OnSunAngleChanged += HandleSunAngleChanged;
             TimeEvents.OnRewindStateChanged += HandleRewindStateChanged;
             TimeEvents.OnEchoCreated += HandleEchoCreated;
@@ -102,6 +124,7 @@ namespace UmbraChronos.Core
 
         private void OnDisable()
         {
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
             TimeEvents.OnSunAngleChanged -= HandleSunAngleChanged;
             TimeEvents.OnRewindStateChanged -= HandleRewindStateChanged;
             TimeEvents.OnEchoCreated -= HandleEchoCreated;
@@ -112,6 +135,19 @@ namespace UmbraChronos.Core
             TimeEvents.OnPlayerLanded -= HandlePlayerLanded;
             TimeEvents.OnPressurePlateChanged -= HandlePressurePlateChanged;
             TimeEvents.OnGateStateChanged -= HandleGateStateChanged;
+        }
+
+        private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (scene.name.Equals("MainMenu", System.StringComparison.OrdinalIgnoreCase))
+            {
+                if (bgmSource != null && bgmSource.isPlaying)
+                    bgmSource.Stop();
+            }
+            else
+            {
+                StartBgm();
+            }
         }
 
         private void SetupAudioSources()
@@ -187,18 +223,28 @@ namespace UmbraChronos.Core
 
         private void StartBgm()
         {
+            string currentScene = SceneManager.GetActiveScene().name;
+            if (currentScene.Equals("MainMenu", System.StringComparison.OrdinalIgnoreCase))
+                return;
+
             if (bgmSource != null && bgmClockworkAbyss != null)
             {
-                bgmSource.clip = bgmClockworkAbyss;
-                bgmSource.volume = musicVolume * masterVolume;
-                bgmSource.Play();
+                if (!bgmSource.isPlaying || bgmSource.clip != bgmClockworkAbyss)
+                {
+                    bgmSource.clip = bgmClockworkAbyss;
+                    bgmSource.volume = musicVolume * masterVolume;
+                    bgmSource.Play();
+                }
             }
 
             if (rewindWhirSource != null && sfxTapeRewind != null)
             {
-                rewindWhirSource.clip = sfxTapeRewind;
-                rewindWhirSource.volume = 0f;
-                rewindWhirSource.Play();
+                if (!rewindWhirSource.isPlaying)
+                {
+                    rewindWhirSource.clip = sfxTapeRewind;
+                    rewindWhirSource.volume = 0f;
+                    rewindWhirSource.Play();
+                }
             }
         }
 

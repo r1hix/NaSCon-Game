@@ -3885,7 +3885,7 @@ MonoBehaviour:
   startFadeDuration: 0.7
   menuMusicSource: {fileID: 809495519}
   titleAmbience: {fileID: 8300000, guid: c2fb135849c44f3a9c347342de225b44, type: 3}
-  selectSound: {fileID: 0}
+  selectSound: {fileID: 8300000, guid: f96b6641c9f04dd68e93f5052d5deb3f, type: 3}
   backSound: {fileID: 8300000, guid: 6f9ecc7411e34e9c9b9d2eff91f20bdc, type: 3}
   musicVolume: 0.7
   backVolume: 0.75
